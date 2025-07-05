@@ -1,0 +1,6 @@
+@SmartBuild.Server_HostAddress = http://localhost:5277
+
+GET {{SmartBuild.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
