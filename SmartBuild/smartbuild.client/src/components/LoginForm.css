@@ -1,0 +1,167 @@
+/* src/components/LoginForm.css */
+
+/* 1. Card principal */
+.login-card {
+  background: #fff;
+  max-width: 420px;
+  width: 100%;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* 2. Encabezados */
+.login-card h2 {
+  font-size: 1.875rem;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+.login-card .subtitle {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* 3. Grupos de formulario */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* 4. Inputs (email, password y text) */
+.login-card .input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  padding-right: 3rem;               /* espacio para el icono */
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color .2s;
+}
+.login-card .input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* 5. Botón “ojo” */
+.password-wrapper {
+  position: relative;
+}
+.password-wrapper .toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+
+/* 6. Recordarme + Olvidé mi contraseña */
+.options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  /*background: #f3f4f6;*/
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.checkbox-label input {
+  margin: 0;
+}
+.forgot-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* 7. Botón principal */
+.submit-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+.submit-btn:hover {
+  background: #1e40af;
+}
+
+/* 8. Separador “Otras formas” */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+.divider:not(:empty)::before {
+  margin-right: 0.75rem;
+}
+.divider:not(:empty)::after {
+  margin-left: 0.75rem;
+}
+
+/* 9. Botones sociales */
+.social-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+.social-btn:hover {
+  background: #f9fafb;
+}
+
+/* 10. Pie de formulario */
+.footer {
+  text-align: center;
+  font-size: 0.875rem;
+}
+.footer a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
