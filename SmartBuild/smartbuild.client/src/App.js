@@ -5,6 +5,7 @@ import './styles.css'
 import Banner from './components/pages/Banner'
 import LoginForm from './components/pages/LoginForm'
 import ForgotPassword from './components/pages/ForgotPassword'
+import Register from './components/pages/Register'
 
 function AnimatedPanels() {
   const location = useLocation()
@@ -22,6 +23,7 @@ function AnimatedPanels() {
           <div ref={nodeRef} className="panel-content">
             <Routes location={location}>
               <Route path="/" element={<LoginForm />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
             </Routes>
           </div>

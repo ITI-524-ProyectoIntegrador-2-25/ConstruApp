@@ -9,7 +9,7 @@ export default function LoginForm() {
 
   return (
     <div className="login-card">
-      <h2>Bienvenido a ConstruAPP!</h2>
+      <h2>Bienvenido a Build Smart!</h2>
       <p className="subtitle">Inicia sesión</p>
 
       <form>
@@ -69,7 +69,7 @@ export default function LoginForm() {
       </div>
 
       <div className="footer">
-        ¿No tienes una cuenta? <a href="../pages/Register.jsx">Regístrarme</a>
+        ¿No tienes una cuenta? <a href="register">Regístrarme</a>
       </div>
     </div>
   )
