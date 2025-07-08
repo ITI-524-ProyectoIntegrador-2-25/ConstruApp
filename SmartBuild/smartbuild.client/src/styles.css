@@ -1,15 +1,6 @@
-/* ==============================
-   Reset y box-sizing global
-   ============================== */
-*,*::before,*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* Reset y box-sizing */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ==============================
-   Variables de diseño
-   ============================== */
 :root {
   --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --color-bg: #f8fafc;
@@ -20,71 +11,30 @@
   --color-text: #374151;
   --color-heading: #111827;
   --color-muted: #6b7280;
+  --space-2: 1rem;
+  --space-4: 2rem;
+  --radius-lg: 2rem;
+  --shadow-md: 0 12px 40px rgba(0,0,0,0.1);
 }
 
-/* ==============================
-   Layout principal de dos columnas
-   ============================== */
 html, body, #root {
-  height: 100%;
+  /* Permite el scroll cuando el contenido supera la altura */
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
   background: var(--color-bg);
   font-family: var(--font-base);
   color: var(--color-text);
 }
 
-.container {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
+.banner { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: var(--space-4) var(--space-4) var(--space-4) 0; background: var(--color-bg); }
 
-/* Banner */
-.banner {
-  flex: 1;
-  background: var(--color-bg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;      /* centrar verticalmente */
-  align-items: center;          /* centrar horizontalmente */
-  padding: 2rem;
-  text-align: center;
-}
+.login-panel { display: flex; align-items: center; justify-content: center; padding: var(--space-4); background: var(--color-white); border-top-left-radius: var(--radius-lg); border-bottom-left-radius: var(--radius-lg); position: relative; height: 100vh; }
 
-/* Panel de formularios */
-.login-panel {
-  flex: 1;
-  background: var(--color-white);
-  display: flex;
-  align-items: center;          /* centrar verticalmente */
-  justify-content: center;
-  padding: 2rem;
-  border-top-left-radius: 2rem;
-  border-bottom-left-radius: 2rem;
-  position: relative;
-}
+.panel-content { position: absolute; top: 0; left: 0; width: 100%; }
 
-/* Para que el contenido animado no desplace nada */
-.panel-content {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-}
-
-/* Fade-in/out para rutas */
-.fade-enter {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.fade-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
-}
-.fade-exit {
-  opacity: 1;
-}
-.fade-exit-active {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
-}
+/* Rutas animadas */
+.fade-enter { opacity: 0; transform: translateY(-10px); }
+.fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 400ms ease-out, transform 400ms ease-out; }
+.fade-exit { opacity: 1; }
+.fade-exit-active { opacity: 0; transform: translateY(10px); transition: opacity 400ms ease-out, transform 400ms ease-out; }
