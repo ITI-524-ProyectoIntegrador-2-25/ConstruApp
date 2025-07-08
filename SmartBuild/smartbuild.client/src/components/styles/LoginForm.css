@@ -234,3 +234,19 @@
 .close-btn:hover {
   color: var(--color-primary);
 }
+
+/* Fade para la alerta de error */
+.fade-alert-enter {
+  opacity: 0;
+}
+.fade-alert-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+.fade-alert-exit {
+  opacity: 1;
+}
+.fade-alert-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
