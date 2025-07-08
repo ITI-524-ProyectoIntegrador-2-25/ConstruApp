@@ -25,6 +25,7 @@ html, body, #root {
   background: var(--color-bg);
   font-family: var(--font-base);
   color: var(--color-text);
+  scrollbar-gutter: stable both-edges;
 }
 
 .banner { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: var(--space-4) var(--space-4) var(--space-4) 0; background: var(--color-bg); }
