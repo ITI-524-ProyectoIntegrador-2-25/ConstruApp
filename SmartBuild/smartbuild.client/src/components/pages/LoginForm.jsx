@@ -27,7 +27,7 @@ export default function LoginForm() {
           <div className="password-wrapper">
             <input
               type={showPwd ? 'text' : 'password'}
-              placeholder="•••••••••"
+              placeholder="••••••••"
               className="input"
             />
             <button
@@ -42,8 +42,7 @@ export default function LoginForm() {
 
         <div className="options-row">
           <label className="checkbox-label">
-            <input type="checkbox" />
-            Recordarme
+            <input type="checkbox" /> Recordarme
           </label>
           <Link to="/forgot-password" className="forgot-link">
             Olvidé mi contraseña
@@ -56,20 +55,17 @@ export default function LoginForm() {
       </form>
 
       <div className="divider">Otras formas</div>
-
       <div className="social-buttons">
-        <button type="button" className="social-btn">
-          <FaGoogle size={18} />
-          Continúa con Google
+        <button className="social-btn">
+          <FaGoogle size={18} /> Continúa con Google
         </button>
-        <button type="button" className="social-btn">
-          <FaFacebookF size={18} />
-          Continúa con Facebook
+        <button className="social-btn">
+          <FaFacebookF size={18} /> Continúa con Facebook
         </button>
       </div>
 
-      <div className="footer">
-        ¿No tienes una cuenta? <a href="register">Regístrarme</a>
+      <div className="register-footer">
+        ¿No tienes una cuenta? <Link to="/register">Regístrarme</Link>
       </div>
     </div>
   )

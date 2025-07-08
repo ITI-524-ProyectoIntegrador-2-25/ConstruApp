@@ -1,4 +1,5 @@
-// src/index.js
+
+import 'bootstrap/dist/css/bootstrap.min.css'
 import React from 'react';
 import ReactDOM from 'react-dom/client'; // o 'react-dom' si usas React 17
 import './styles.css';

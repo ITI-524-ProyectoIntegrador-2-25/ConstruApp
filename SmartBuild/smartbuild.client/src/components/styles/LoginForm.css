@@ -205,12 +205,39 @@
    ============================================================ */
 /* LoginForm: un poco más ancho y con más padding */
 .login-card {
-  max-width: 550px;    /* ancho específico del login */
+  max-width: 700px;    /* ancho específico del login */
   padding: 4rem;       /* padding interior del login */
 }
 
 /* RegisterForm: ligeramente más estrecho y padding reducido */
 .register-card {
-  max-width: 480px;    /* ancho específico del registro */
-  padding: 3rem;       /* padding interior del registro */
+  max-width: 700px;    /* ancho específico del registro */
+  padding: 4rem;       /* padding interior del registro */
+  margin: 2% auto 0;   /* margen superior reducido */
+}
+
+.login-card,
+.register-card {
+  max-width: 100%;     /* que ocupe el ancho de su col */
+  margin-top: 5rem;    /* separarlo un poco del top */
+  padding: 2rem;       /* menos padding interior en móviles */
+}
+
+@media(min-width: 992px) {
+  .login-card,
+  .register-card {
+    max-width: 550px;   /* en desktop restringir ancho */
+    padding: 3rem;      /* más padding */
+  }
+}
+
+.login-card,
+.register-card {
+  background: #fff;
+  width: 100%;
+  max-width: 550px;
+  padding: 2.5rem;           /* reduce un poco el padding */
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  /* elimina margin-top aquí */
 }
