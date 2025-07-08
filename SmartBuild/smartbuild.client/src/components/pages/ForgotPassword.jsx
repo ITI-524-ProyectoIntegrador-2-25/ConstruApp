@@ -1,7 +1,6 @@
-// src/components/ForgotPassword.jsx
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './LoginForm.css'  // Reutiliza los estilos del login
+import '../styles/LoginForm.css'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -9,12 +8,15 @@ export default function ForgotPassword() {
 
   return (
     <div className="login-card">
-      {/* Cerrar: vuelve a la ruta anterior */}
       <button
         type="button"
         className="close-btn"
         onClick={() => navigate(-1)}
         aria-label="Cerrar"
+        style={{
+          position: 'absolute', top: '1rem', right: '1rem',
+          background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer'
+        }}
       >
         ×
       </button>
@@ -30,7 +32,7 @@ export default function ForgotPassword() {
           <input
             type="email"
             className="input"
-            placeholder="Escribe tu correo electrónico"
+            placeholder="usuario@dominio.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
           />

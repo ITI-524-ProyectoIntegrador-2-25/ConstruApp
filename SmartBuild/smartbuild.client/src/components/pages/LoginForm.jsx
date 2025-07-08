@@ -1,9 +1,8 @@
-// src/components/LoginForm.jsx
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { FaGoogle, FaFacebookF } from 'react-icons/fa'
-import './LoginForm.css'
+import '../styles/LoginForm.css'
 
 export default function LoginForm() {
   const [showPwd, setShowPwd] = useState(false)
@@ -70,7 +69,7 @@ export default function LoginForm() {
       </div>
 
       <div className="footer">
-        ¿No tienes una cuenta? <Link to="/register">Regístrarme</Link>
+        ¿No tienes una cuenta? <a href="../pages/Register.jsx">Regístrarme</a>
       </div>
     </div>
   )
