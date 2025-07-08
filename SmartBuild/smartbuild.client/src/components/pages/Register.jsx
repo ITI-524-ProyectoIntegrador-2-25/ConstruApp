@@ -77,6 +77,15 @@ export default function Register() {
           />
         </div>
 
+        <div className="form-group">
+          <label>Contraseña</label>
+          <input type="password" placeholder="••••••••" className="input" />
+        </div>
+        <div className="form-group">
+          <label>Confirmar contraseña</label>
+          <input type="password" placeholder="••••••••" className="input" />
+        </div>
+
         {/* Sólo el checkbox aquí */}
         <div className="options-row">
           <label className="checkbox-label">
