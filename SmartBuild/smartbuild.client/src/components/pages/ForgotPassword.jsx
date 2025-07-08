@@ -1,18 +1,34 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import '../../components/styles/LoginForm.css'
+import { useNavigate } from 'react-router-dom'
+import '../styles/LoginForm.css' // O donde tengas tu CSS
 
 export default function ForgotPassword() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
+
+  const handleSubmit = e => {
+    e.preventDefault()
+    // lógica para enviar el email...
+  }
 
   return (
     <div className="login-card">
-      <Link to="/" className="back-link">← Volver al login</Link>
+      {/* botón cerrar */}
+      <button
+        type="button"
+        className="close-btn"
+        onClick={() => navigate(-1)}
+        aria-label="Cerrar"
+      >
+        ×
+      </button>
+
       <h2>Reiniciar mi contraseña</h2>
       <p className="subtitle">
         Introduce tu correo electrónico para restablecer tu contraseña
       </p>
-      <form>
+
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Correo electrónico</label>
           <input
@@ -21,8 +37,10 @@ export default function ForgotPassword() {
             onChange={e => setEmail(e.target.value)}
             placeholder="Escribe tu correo electrónico"
             className="input"
+            required
           />
         </div>
+
         <button type="submit" className="submit-btn">
           Reiniciar contraseña
         </button>

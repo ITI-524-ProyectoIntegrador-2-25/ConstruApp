@@ -5,7 +5,7 @@ import {
   Route,
   useLocation
 } from 'react-router-dom'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { SwitchTransition, CSSTransition } from 'react-transition-group'
 
 import './styles.css'
 
@@ -20,7 +20,7 @@ function AnimatedPanels() {
 
   return (
     <div className="login-panel">
-      <TransitionGroup component={null}>
+      <SwitchTransition mode="out-in">
         <CSSTransition
           key={location.pathname}
           classNames="fade"
@@ -37,7 +37,7 @@ function AnimatedPanels() {
             </Routes>
           </div>
         </CSSTransition>
-      </TransitionGroup>
+      </SwitchTransition>
     </div>
   )
 }

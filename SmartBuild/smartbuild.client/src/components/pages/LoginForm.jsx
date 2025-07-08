@@ -14,21 +14,25 @@ export default function LoginForm() {
 
       <form>
         <div className="form-group">
-          <label>Correo electrónico</label>
+          <label htmlFor="email">Correo electrónico</label>
           <input
+            id="email"
             type="email"
             placeholder="Escribe tu correo electrónico"
             className="input"
+            required
           />
         </div>
 
         <div className="form-group">
-          <label>Contraseña</label>
+          <label htmlFor="password">Contraseña</label>
           <div className="password-wrapper">
             <input
+              id="password"
               type={showPwd ? 'text' : 'password'}
               placeholder="••••••••"
               className="input"
+              required
             />
             <button
               type="button"
@@ -55,6 +59,7 @@ export default function LoginForm() {
       </form>
 
       <div className="divider">Otras formas</div>
+
       <div className="social-buttons">
         <button className="social-btn">
           <FaGoogle size={18} /> Continúa con Google
@@ -70,3 +75,4 @@ export default function LoginForm() {
     </div>
   )
 }
+

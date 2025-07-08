@@ -1,22 +1,24 @@
-/* src/components/styles/LoginForm.css */
-
 /* ============================================================
-   1. Card principal (común para Login + Register)
+   LoginForm.css
    ============================================================ */
+
+/* ------------------------------------------------------------
+   1. Card principal (Login + Register)
+   ------------------------------------------------------------ */
 .login-card,
 .register-card {
   background: #fff;
   width: 100%;
-  max-width: 550px;            /* valor por defecto, se ajusta más abajo */
-  padding: 4rem;               /* valor por defecto, se ajusta más abajo */
+  max-width: 550px;         /* ancho máximo en desktop */
+  padding: 2.5rem;          /* padding interior */
   border-radius: 1rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  margin: 10% auto 0;          /* 10% desde top, centrado horizontal */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  margin: 3rem auto 0;      /* 3rem desde el top, centrado horizontal */
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    2. Encabezados
-   ============================================================ */
+   ------------------------------------------------------------ */
 .login-card h2,
 .register-card h2 {
   font-size: 1.875rem;
@@ -30,9 +32,9 @@
   margin-bottom: 1rem;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    3. Grupos de formulario
-   ============================================================ */
+   ------------------------------------------------------------ */
 .form-group {
   margin-bottom: 0.5rem;
 }
@@ -43,9 +45,9 @@
   color: #374151;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    4. Inputs y select
-   ============================================================ */
+   ------------------------------------------------------------ */
 .login-card .input,
 .register-card .input {
   width: 100%;
@@ -62,9 +64,9 @@
   border-color: #2563eb;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    5. Botón “ojo” (password toggle)
-   ============================================================ */
+   ------------------------------------------------------------ */
 .password-wrapper {
   position: relative;
 }
@@ -80,13 +82,14 @@
   line-height: 0;
 }
 
-/* ============================================================
-   6. Recordarme / Términos + enlace
-   ============================================================ */
+/* ------------------------------------------------------------
+   6. Recordarme + “Olvidé mi contraseña”
+   ------------------------------------------------------------ */
 .options-row {
   display: flex;
+  justify-content: space-between;  /* separa el enlace a la derecha */
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 .checkbox-label {
   display: inline-flex;
@@ -98,20 +101,18 @@
 .checkbox-label input {
   margin: 0;
 }
-.forgot-link,
-.checkbox-label a {
+.forgot-link {
   color: #2563eb;
   text-decoration: none;
   font-size: 0.875rem;
 }
-.forgot-link:hover,
-.checkbox-label a:hover {
+.forgot-link:hover {
   text-decoration: underline;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    7. Botón principal
-   ============================================================ */
+   ------------------------------------------------------------ */
 .submit-btn {
   width: 100%;
   padding: 0.85rem;
@@ -129,9 +130,9 @@
   background: #1e40af;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    8. Separador “Otras formas”
-   ============================================================ */
+   ------------------------------------------------------------ */
 .divider {
   display: flex;
   align-items: center;
@@ -154,9 +155,9 @@
   margin-left: 0.5rem;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    9. Botones sociales
-   ============================================================ */
+   ------------------------------------------------------------ */
 .social-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -181,63 +182,55 @@
   background: #f9fafb;
 }
 
-/* ============================================================
- 10. Pie de formulario / registro
-   ============================================================ */
-.footer,
-.register-footer {
+/* ------------------------------------------------------------
+  10. Pie de formulario
+   ------------------------------------------------------------ */
+.register-footer,
+.footer {
   text-align: center;
   font-size: 0.875rem;
   margin-top: 1rem;
 }
-.footer a,
-.register-footer a {
+.register-footer a,
+.footer a {
   color: #2563eb;
   text-decoration: none;
 }
-.footer a:hover,
-.register-footer a:hover {
+.register-footer a:hover,
+.footer a:hover {
   text-decoration: underline;
 }
 
-/* ============================================================
- 11. Ajustes DE TAMAÑO ESPECÍFICOS
-   ============================================================ */
-/* LoginForm: un poco más ancho y con más padding */
-.login-card {
-  max-width: 700px;    /* ancho específico del login */
-  padding: 4rem;       /* padding interior del login */
-}
-
-/* RegisterForm: ligeramente más estrecho y padding reducido */
-.register-card {
-  max-width: 700px;    /* ancho específico del registro */
-  padding: 4rem;       /* padding interior del registro */
-  margin: 2% auto 0;   /* margen superior reducido */
-}
-
-.login-card,
-.register-card {
-  max-width: 100%;     /* que ocupe el ancho de su col */
-  margin-top: 5rem;    /* separarlo un poco del top */
-  padding: 2rem;       /* menos padding interior en móviles */
-}
-
-@media(min-width: 992px) {
+/* ------------------------------------------------------------
+ 11. Ajustes responsive
+   ------------------------------------------------------------ */
+@media (min-width: 992px) {
   .login-card,
   .register-card {
-    max-width: 550px;   /* en desktop restringir ancho */
-    padding: 3rem;      /* más padding */
+    margin: 5rem auto 0;  /* más separación arriba en desktop */
+    padding: 3rem;
   }
 }
 
-.login-card,
-.register-card {
-  background: #fff;
-  width: 100%;
-  max-width: 550px;
-  padding: 2.5rem;           /* reduce un poco el padding */
-  border-radius: 1rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  /* elimina margin-top aquí */
+/* Para que el close-btn se posicione respecto a .login-card */
+.login-card {
+  position: relative;
+}
+
+/* Estilos del botón “×” */
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 2.5rem;             /* lo puedes cambiar a right:1rem si prefieres */
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.close-btn:hover {
+  color: var(--color-primary);
 }
