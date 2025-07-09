@@ -173,7 +173,7 @@ namespace DataAccessLogic
             return response.ToList();
         }
 
-        public Response InsertClient(Cliente cliente)
+        public List<Response> InsertClient(Cliente cliente)
         {
             var msg = "";
             var parameters = new DynamicParameters();
@@ -181,19 +181,20 @@ namespace DataAccessLogic
             parameters.Add(nameof(cliente.IDCliente), cliente.IDCliente);
             parameters.Add(nameof(cliente.RazonSocial), cliente.RazonSocial);
             parameters.Add(nameof(cliente.Identificacion), cliente.Identificacion);
+            parameters.Add(nameof(cliente.Tipo), cliente.Tipo);
 
             parameters.Add("Usuario", cliente.Usuario);
-            parameters.Add("Sentence", "InsertClient");
+            parameters.Add("Sentence", "InsertCliente");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
             var response = GetDbConnection().Query<Response>("sp_Cliente_001", parameters, commandType: CommandType.StoredProcedure);
             msg = parameters.Get<string>(nameof(msg));
 
-            return (Response)response;
+            return response.ToList();
         }
 
-        public Response UpdateClient(Cliente cliente)
+        public List<Response> UpdateClient(Cliente cliente)
         {
             var msg = "";
             var parameters = new DynamicParameters();
@@ -201,6 +202,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(cliente.IDCliente), cliente.IDCliente);
             parameters.Add(nameof(cliente.RazonSocial), cliente.RazonSocial);
             parameters.Add(nameof(cliente.Identificacion), cliente.Identificacion);
+            parameters.Add(nameof(cliente.Tipo), cliente.Tipo);
 
             parameters.Add("Usuario", cliente.Usuario);
             parameters.Add("Sentence", "UpdateCliente");
@@ -210,7 +212,101 @@ namespace DataAccessLogic
             var response = GetDbConnection().Query<Response>("sp_Cliente_001", parameters, commandType: CommandType.StoredProcedure);
             msg = parameters.Get<string>(nameof(msg));
 
-            return (Response)response;
+            return response.ToList();
+        }
+        #endregion
+
+        #region Contacts
+        public List<Contacto> GetContacts(string usuario)
+        {
+            return GetContacts("sp_Contacto_001", usuario);
+        }
+
+        protected List<Contacto> GetContacts(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllContactos");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Contacto>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Contacto> GetContactInfo(int idContacto, string usuario)
+        {
+            return GetContactInfo("sp_Contacto_001", idContacto, usuario);
+        }
+
+        protected List<Contacto> GetContactInfo(string procedure, int idContacto, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idContacto), idContacto);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadContactoByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Contacto>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertContact(Contacto contacto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(contacto.IDContacto), contacto.IDContacto);
+            parameters.Add(nameof(contacto.ClientID), contacto.ClientID);
+            parameters.Add(nameof(contacto.SubcontratoID), contacto.SubcontratoID);
+            parameters.Add(nameof(contacto.Nombre), contacto.Nombre);
+            parameters.Add(nameof(contacto.PrimerApellido), contacto.PrimerApellido);
+            parameters.Add(nameof(contacto.SegundoApellido), contacto.SegundoApellido);
+            parameters.Add(nameof(contacto.Telefono), contacto.Telefono);
+            parameters.Add(nameof(contacto.CorreoElectronico), contacto.CorreoElectronico);
+
+            parameters.Add("Usuario", contacto.Usuario);
+            parameters.Add("Sentence", "InsertContacto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Contacto_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+
+        public List<Response> UpdateContact(Contacto contacto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(contacto.IDContacto), contacto.IDContacto);
+            parameters.Add(nameof(contacto.Nombre), contacto.Nombre);
+            parameters.Add(nameof(contacto.PrimerApellido), contacto.PrimerApellido);
+            parameters.Add(nameof(contacto.SegundoApellido), contacto.SegundoApellido);
+            parameters.Add(nameof(contacto.Telefono), contacto.Telefono);
+            parameters.Add(nameof(contacto.CorreoElectronico), contacto.CorreoElectronico);
+
+            parameters.Add("Usuario", contacto.Usuario);
+            parameters.Add("Sentence", "UpdateContacto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Contacto_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
         }
         #endregion
     }
