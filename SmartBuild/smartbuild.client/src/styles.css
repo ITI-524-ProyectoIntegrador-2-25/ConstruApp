@@ -1,15 +1,6 @@
-/* ==============================
-   Reset y box-sizing global
-   ============================== */
-*,*::before,*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* Reset y box-sizing */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ==============================
-   Variables de diseño
-   ============================== */
 :root {
   --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --color-bg: #f8fafc;
@@ -20,224 +11,30 @@
   --color-text: #374151;
   --color-heading: #111827;
   --color-muted: #6b7280;
-  --color-indicator: #3dd0f1;
+  --space-2: 1rem;
+  --space-4: 2rem;
+  --radius-lg: 2rem;
+  --shadow-md: 0 12px 40px rgba(0,0,0,0.1);
 }
 
-/* ==============================
-   Layout principal de dos columnas
-   ============================== */
 html, body, #root {
-  height: 100%;
+  /* Permite el scroll cuando el contenido supera la altura */
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
   background: var(--color-bg);
   font-family: var(--font-base);
   color: var(--color-text);
 }
-.container {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
 
-/* Cada columna ocupa 50% */
-.banner {
-  flex: 1;
-  background: var(--color-bg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start; /* Alinear contenido a la izquierda */
-  padding: 4rem;
-  text-align: left;
-}
-.login-panel {
-  flex: 1;
-  background: var(--color-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  border-top-left-radius: 2rem;
-  border-bottom-left-radius: 2rem;
-}
+.banner { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: var(--space-4) var(--space-4) var(--space-4) 0; background: var(--color-bg); }
 
-/* ==============================
-   Banner: imagen y textos
-   ============================== */
-.banner__image {
-  width: 90%;
-  aspect-ratio: 16 / 9;
-  border-radius: 2rem;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-  margin-bottom: 2rem; /* Solo separación inferior */
-  object-fit: cover;
-}
-.banner__title {
-  font-size: 2.5rem;
-  color: var(--color-heading);
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-.banner__text {
-  font-size: 1.125rem;
-  color: var(--color-muted);
-  line-height: 1.6;
-  max-width: 90%;
-  margin-bottom: 2rem;
-}
-/* Indicadores del carrusel: bullets */
-.banner__dots {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 2rem;
-}
-.banner__dots .dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  background: var(--color-border);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-.banner__dots .dot.active {
-  background: var(--color-primary);
-}
+.login-panel { display: flex; align-items: center; justify-content: center; padding: var(--space-4); background: var(--color-white); border-top-left-radius: var(--radius-lg); border-bottom-left-radius: var(--radius-lg); position: relative; height: 100vh; }
 
-/* ==============================
-/* ==============================
-   Formulario de login
-   ============================== */
-.login-card {
-  width: 100%;
-  max-width: 800px;
-  padding: 3rem;
-  background: var(--color-white);
-  border-radius: 3rem;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-  margin: auto;
-}
-.login-card h2 {
-  font-size: 2.75rem;
-  color: var(--color-heading);
-  margin-bottom: 1rem;
-  font-weight: 800;
-  text-align: left;
-}
-.login-card .subtitle {
-  font-size: 1.125rem;
-  color: var(--color-muted);
-  margin-bottom: 2rem;
-}
-.login-card .form-group {
-  margin-bottom: 2rem;
-}
-.login-card .input {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  padding-right: 3rem;
-  border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
-  font-size: 1.125rem;
-  background: var(--color-white);
-}
-.password-wrapper { position: relative; }
-.password-wrapper .toggle-btn {
-  position: absolute;
-  top: 50%; right: 1rem;
-  transform: translateY(-50%);
-  background: none; border: none;
-  cursor: pointer;
-}
-.options-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-.checkbox-label { display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; }
-.checkbox-label input { width: 1.25rem; height: 1.25rem; border: 1px solid var(--color-border); border-radius: 0.25rem; accent-color: var(--color-primary); }
-.forgot-link { color: var(--color-primary); text-decoration: none; font-size: 1rem; }
-.submit-btn { width: 100%; padding: 1rem; background: var(--color-primary); color: var(--color-white); font-size: 1.25rem; border: none; border-radius: 1rem; cursor: pointer; }
-.divider { display: flex; align-items: center; margin: 2.5rem 0 1.25rem; color: var(--color-muted); }
-.divider::before, .divider::after { content: ''; flex: 1; height: 2px; background: var(--color-border); }
-.social-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-.social-btn { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem 1.25rem; border: 1px solid var(--color-border); border-radius: 1rem; background: var(--color-white); color: var(--color-text); }
-.footer { text-align: center; font-size: 1rem; }
-.footer a { color: var(--color-primary); text-decoration: none; }
+.panel-content { position: absolute; top: 0; left: 0; width: 100%; }
 
-/* styles.css (al final) */
-
-.login-card {
-  /* Ya tienes max-width, padding, etc. */
-  position: relative; /* Para que close-btn se ubique respecto a este contenedor */
-}
-
-.close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--color-text);
-}
-
-.close-btn:hover {
-  color: var(--color-primary);
-}
-
-/* styles.css */
-
-/* Fade-in/out para rutas */
-.fade-enter {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.fade-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
-}
-.fade-exit {
-  opacity: 1;
-}
-.fade-exit-active {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
-}
-
-/* styles.css */
-/* ----------------------------------
-   Contenedor relativo para animar
-   ---------------------------------- */
-.login-panel {
-  position: relative;
-}
-
-/* El contenido animado quedará encima */
-.panel-content {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-}
-
-/* ----------------------------------
-   Solo animación de opacidad
-   ---------------------------------- */
-.fade-enter {
-  opacity: 0;
-}
-.fade-enter-active {
-  opacity: 1;
-  transition: opacity 400ms ease-out;
-}
-.fade-exit {
-  opacity: 1;
-}
-.fade-exit-active {
-  opacity: 0;
-  transition: opacity 400ms ease-out;
-}
-
+/* Rutas animadas */
+.fade-enter { opacity: 0; transform: translateY(-10px); }
+.fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 400ms ease-out, transform 400ms ease-out; }
+.fade-exit { opacity: 1; }
+.fade-exit-active { opacity: 0; transform: translateY(10px); transition: opacity 400ms ease-out, transform 400ms ease-out; }
