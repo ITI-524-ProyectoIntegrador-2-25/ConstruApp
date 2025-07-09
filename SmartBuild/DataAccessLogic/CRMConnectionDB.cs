@@ -139,8 +139,8 @@ namespace DataAccessLogic
             var msg = "";
             var parameters = new DynamicParameters();
 
-            parameters.Add("usuario", usuario);
-            parameters.Add("TipoSentencia", "LoadAllClientes");
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllClientes");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
@@ -162,8 +162,8 @@ namespace DataAccessLogic
 
             parameters.Add(nameof(idCliente), idCliente);
 
-            parameters.Add("usuario", usuario);
-            parameters.Add("TipoSentencia", "LoadClienteByID");
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadClienteByID");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
@@ -179,7 +179,8 @@ namespace DataAccessLogic
             var parameters = new DynamicParameters();
 
             parameters.Add(nameof(cliente.IDCliente), cliente.IDCliente);
-            parameters.Add(nameof(cliente.NombreCliente), cliente.NombreCliente);
+            parameters.Add(nameof(cliente.RazonSocial), cliente.RazonSocial);
+            parameters.Add(nameof(cliente.Identificacion), cliente.Identificacion);
 
             parameters.Add("Usuario", cliente.Usuario);
             parameters.Add("Sentence", "InsertClient");
@@ -198,7 +199,8 @@ namespace DataAccessLogic
             var parameters = new DynamicParameters();
 
             parameters.Add(nameof(cliente.IDCliente), cliente.IDCliente);
-            parameters.Add(nameof(cliente.NombreCliente), cliente.NombreCliente);
+            parameters.Add(nameof(cliente.RazonSocial), cliente.RazonSocial);
+            parameters.Add(nameof(cliente.Identificacion), cliente.Identificacion);
 
             parameters.Add("Usuario", cliente.Usuario);
             parameters.Add("Sentence", "UpdateCliente");
