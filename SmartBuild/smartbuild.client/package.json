@@ -43,7 +43,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.10"
   },
-  "homepage": "https://github.com/ITI-524-ProyectoIntegrador-2-25/ConstruApp/tree/Dashboard/SmartBuild/smartbuild.client",
+  "homepage": ".",
   "scripts": {
     "start": "cross-env HOST=0.0.0.0 react-scripts start",
     "tw:init": "tailwindcss init -p",
