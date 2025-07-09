@@ -7,94 +7,94 @@ namespace SmartBuild.Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ClientApiController : Controller
+    public class ContactApiController : Controller
     {
-        private readonly ILogger<ClientApiController> _logger;
+        private readonly ILogger<ContactApiController> _logger;
         private readonly ICRMConnectionDB _repository;
 
-        public ClientApiController(ILogger<ClientApiController> logger, ICRMConnectionDB repository)
+        public ContactApiController(ILogger<ContactApiController> logger, ICRMConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;
         }
 
-        #region Clientes
-        [Route("GetClients")]
+        #region Contactos
+        [Route("GetContacts")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Cliente))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Cliente> GetClients(string usuario)
+        public List<Contacto> GetContacts(string usuario)
         {
             try
             {
-                var clientData = _repository.GetClients(usuario);
-                return clientData;
+                var contactData = _repository.GetContacts(usuario);
+                return contactData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetClients));
+                _logger.LogError(ex, nameof(GetContacts));
                 throw;
             }
         }
 
-        [Route("GetClientInfo")]
+        [Route("GetContactInfo")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Cliente))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Cliente> GetClientInfo(int idCliente, string usuario)
+        public List<Contacto> GetContactInfo(int idContacto, string usuario)
         {
             try
             {
-                var clientData = _repository.GetClientInfo(idCliente, usuario);
-                return clientData;
+                var contactData = _repository.GetContactInfo(idContacto, usuario);
+                return contactData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetClientInfo));
+                _logger.LogError(ex, nameof(GetContactInfo));
                 throw;
             }
         }
 
-        [Route("InsertClient")]
+        [Route("InsertContact")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Cliente))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> InsertClient(Cliente cliente)
+        public List<Response> InsertContact(Contacto contacto)
         {
             try
             {
-                var res = _repository.InsertClient(cliente);
+                var res = _repository.InsertContact(contacto);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(InsertClient));
+                _logger.LogError(ex, nameof(InsertContact));
                 throw;
             }
         }
 
-        [Route("UpdateClient")]
+        [Route("UpdateContact")]
         [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Cliente))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> UpdateClient(Cliente cliente)
+        public List<Response> UpdateContact(Contacto contacto)
         {
             try
             {
-                var res = _repository.UpdateClient(cliente);
+                var res = _repository.UpdateContact(contacto);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(UpdateClient));
+                _logger.LogError(ex, nameof(UpdateContact));
                 throw;
             }
         }
