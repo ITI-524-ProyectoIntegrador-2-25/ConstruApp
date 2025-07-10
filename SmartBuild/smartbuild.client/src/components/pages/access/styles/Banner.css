@@ -5,7 +5,7 @@
    -------------------------------------------------- */
 .banner__image-container {
   width: 100%;
-  max-width: 1000px;    /* Máximo ancho permitido */
+  max-width: 900px;    /* Máximo ancho permitido */
   margin: 10rem 0 1rem 0;    /* Solo separa abajo, nada de auto */
 }
 
@@ -19,7 +19,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;   /* Todo a la izquierda */
-  padding: 3rem 5rem 3rem 0rem; 
+  padding: 3em 5rem 3rem 0rem; 
   text-align: left;
 }
 
