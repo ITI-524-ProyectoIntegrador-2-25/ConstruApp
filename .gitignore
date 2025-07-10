@@ -40,7 +40,6 @@ out/
 
 # Visual Studio
 .vscode/
-*.sln
 *.vcxproj.user
 *.vs/
 .vsconfig
