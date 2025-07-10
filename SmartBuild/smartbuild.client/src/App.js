@@ -13,9 +13,9 @@ import ForgotPassword from './components/pages/access/scripts/ForgotPassword'
 // protected pages
 import Dashboard   from './components/pages/dashboard/Dashboard'
 import Planilla    from './components/pages/planilla/Planilla'
-import Actividades from './components/pages/productividad/Actividades.jsx'
-import Clientes    from './components/pages/productividad/Clientes.jsx/index.js'
-import Empleados   from './components/pages/productividad/Empleados.jsx/index.js'
+import Actividades from './components/pages/productividad/Actividades'
+import Clientes    from './components/pages/productividad/Clientes'
+import Empleados   from './components/pages/productividad/Empleados'
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
