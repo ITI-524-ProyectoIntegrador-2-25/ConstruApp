@@ -1,13 +1,20 @@
+// src/App.js
 import React, { useMemo } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation
+} from 'react-router-dom';
 import { SwitchTransition, CSSTransition } from 'react-transition-group';
-import Banner from './components/pages/Banner';
-import LoginForm from './components/pages/LoginForm';
-import ForgotPassword from './components/pages/ForgotPassword';
-import Register from './components/pages/Register';
-import './styles.css';
 
-function AnimatedPanels() {
+// Ajusta las rutas a como quedan en tu nuevo árbol
+import Banner         from './components/pages/access/scripts/Banner';
+import LoginForm      from './components/pages/access/scripts/LoginForm';
+import ForgotPassword from './components/pages/access/scripts/ForgotPassword';
+import Register       from './components/pages/access/scripts/Register';
+
+export function AnimatedPanels() {
   const location = useLocation();
   const nodeRefs = useMemo(() => ({
     '/': React.createRef(),
@@ -29,8 +36,8 @@ function AnimatedPanels() {
         >
           <div ref={ref} className="panel-content">
             <Routes location={location}>
-              <Route path="/" element={<LoginForm />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/"                element={<LoginForm />} />
+              <Route path="/register"        element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
             </Routes>
           </div>
@@ -45,12 +52,12 @@ export default function App() {
     <BrowserRouter>
       <div className="container">
         <div className="row">
-          {/* Banner: visible solo en pantallas ≥1400px (xxl) */}
-          <div className="col-xxl-7 d-none d-xxl-block">
+          {/* Banner visible en md+ */}
+          <div className="col-md-7 d-none d-md-block">
             <Banner />
           </div>
-          {/* Panel: ocupa 100% en <1400px, 5/12 en ≥1400px */}
-          <div className="col-12 col-xxl-5">
+          {/* Panel de login */}
+          <div className="col-12 col-md-5">
             <AnimatedPanels />
           </div>
         </div>

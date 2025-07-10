@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { CSSTransition } from 'react-transition-group'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import '../../components/styles/LoginForm.css'
+import '../styles/LoginForm.css'
 
 
 export default function Register() {

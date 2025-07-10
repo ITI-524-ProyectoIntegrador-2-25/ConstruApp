@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import slide1 from '../../assets/img/dashboard.png'
-import slide2 from '../../assets/img/img2.webp'
-import slide3 from '../../assets/img/img3.jpg'
+import slide1 from '../../../../assets/img/dashboard.png'
+import slide2 from '../../../../assets/img/img2.webp'
+import slide3 from '../../../../assets/img/img3.jpg'
 import '../styles/Banner.css'  // si tu Banner.css está en otro folder, ajusta esta ruta
 
 const slides = [
