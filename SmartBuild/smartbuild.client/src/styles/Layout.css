@@ -1,0 +1,341 @@
+/* ==========================================================================
+   layout.css — Estilos para Sidebar con desplegable y logout
+   ========================================================================== */
+
+:root {
+  --sidebar-width: 240px;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-text: #374151;
+  --sidebar-muted: #6b7280;
+  --sidebar-icon: #9ca3af;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-active-bg: #e4efff;
+  --sidebar-active-text: #2563eb;
+  --logout-color: #ef4444;
+}
+
+/* ------------------------------------------------------------
+   1) Contenedor sidebar
+   ------------------------------------------------------------ */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+}
+
+/* ------------------------------------------------------------
+   2) Logo
+   ------------------------------------------------------------ */
+.sidebar__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.sidebar__logo img {
+  width: 40px;
+  height: auto;
+}
+
+/* ------------------------------------------------------------
+   3) Navegación
+   ------------------------------------------------------------ */
+.sidebar__nav {
+  flex: 1;
+}
+.sidebar__nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar__nav li {
+  margin-bottom: 0.5rem;
+}
+
+/* Link base */
+.navlink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 16px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Botón en lugar de NavLink */
+.navlink--button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Iconos */
+.navlink svg {
+  color: var(--sidebar-icon);
+}
+
+/* Hover */
+.navlink:hover {
+  background: var(--sidebar-hover-bg);
+}
+
+/* Activo */
+.navlink.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+.navlink.active svg {
+  color: var(--sidebar-active-text);
+}
+
+/* ------------------------------------------------------------
+   4) Flecha en Productividad
+   ------------------------------------------------------------ */
+.arrow {
+  margin-left: auto;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--sidebar-icon);
+  transition: transform 0.2s;
+}
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+/* ------------------------------------------------------------
+   5) Submenú
+   ------------------------------------------------------------ */
+.submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 2.5rem;
+}
+.submenu li {
+  margin-bottom: 0.5rem;
+}
+
+/* Links de submenú (más pequeños y muted) */
+.sublink {
+  padding: 6px 16px;
+  font-size: 14px;
+  color: var(--sidebar-muted);
+}
+.sublink:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text);
+}
+.sublink.active {
+  color: var(--sidebar-active-text);
+}
+
+/* ------------------------------------------------------------
+   6) Logout abajo
+   ------------------------------------------------------------ */
+.sidebar__logout {
+  padding: 1rem 0;
+}
+.sidebar__logout .navlink {
+  padding: 8px 16px;
+  color: var(--logout-color);
+}
+.sidebar__logout .navlink svg {
+  color: var(--logout-color);
+}
+.sidebar__logout .navlink:hover {
+  background: var(--sidebar-hover-bg);
+}
+
+/* ==========================================================================
+   NAVBAR: búsqueda y perfil
+   ========================================================================== */
+
+/* ------------------------------------------------------------
+   Contenedor de la barra de búsqueda: ocupa espacio central
+   ------------------------------------------------------------ */
+.navbar__search {
+  flex: 1;                            /* empuja logo y acciones */
+  max-width: 500px;                   /* ancho máximo */
+  margin: 0 1rem;                     /* separación lateral */
+}
+.navbar__search input {
+  width: 100%;
+  padding: 0.6rem 1rem;               /* alto y separación interna */
+  border: none;                       /* nada de bordes visibles */
+  border-radius: 0.75rem;             /* esquinas redondeadas */
+  background: #f1f3f5;                /* gris muy claro */
+  font-size: 0.95rem;
+  color: var(--color-text);
+  transition: background 0.2s;
+}
+.navbar__search input::placeholder {
+  color: var(--color-muted);
+}
+.navbar__search input:focus {
+  outline: none;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2); /* halo azul suave */
+}
+
+/* ------------------------------------------------------------
+   Icono de campana + badge
+   ------------------------------------------------------------ */
+.navbar__icon {
+  position: relative;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.navbar__icon:hover {
+  background: #f3f4f6;
+}
+.badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  background: #10B981;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------
+   Avatar & dropdown (UserMenu)
+   ------------------------------------------------------------ */
+/* Avatar circular */
+.navbar__avatar {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.navbar__avatar:hover {
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+
+/* Menú desplegable */
+.usermenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--color-white);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+/* Cuando React monte el menú lo hará visible */
+.navbar__avatar > .usermenu {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enlaces y botón interno */
+.usermenu a,
+.usermenu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.usermenu a:hover,
+.usermenu button:hover {
+  background: #f3f4f6;
+}
+
+/* Separador */
+.usermenu hr {
+  margin: 0.5rem 0;
+  border-color: var(--color-border);
+}
+
+/* Logout destacado en rojo */
+.usermenu button {
+  color: #ef4444;
+}
+.usermenu button svg {
+  color: #ef4444;
+}
+
+
+/* =============================================================
+   Fix: search input no debe tapar los iconos
+   ============================================================= */
+
+.navbar__search {
+  /* deja un margen a la derecha para separar del grupo de iconos */
+  margin-right: 1rem;
+  
+  /* opcional: si usas flex, limita su crecimiento */
+  flex: 0 1 400px;       /* crecerá hasta 400px y luego cederá espacio */
+  max-width: 400px;
+  position: relative;
+  z-index: 1;            /* por debajo de los iconos */
+}
+
+/* =============================================================
+   Fix: los iconos de notificación y avatar encima de todo
+   ============================================================= */
+.navbar__actions {
+  position: relative;
+  z-index: 10;           /* por encima del input */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;          /* separación horizontal */
+}
+
+.navbar__icon,
+.navbar__avatar {
+  position: relative;
+  z-index: 11;           /* asegúrate de que ambos estén encima */
+  cursor: pointer;
+}
+
+/* un poco de espaciado extra entre campana y avatar */
+.navbar__icon {
+  margin-right: 0.5rem;
+}
+
+/* =============================================================
+   Asegura que el dropdown de usuario siempre flote arriba
+   ============================================================= */
+.usermenu {
+  z-index: 20;           /* más arriba que cualquier otro elemento */
+}

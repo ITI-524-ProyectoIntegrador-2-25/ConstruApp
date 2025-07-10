@@ -1,6 +1,19 @@
-/* Reset y box-sizing */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ==========================================================================
+   styles.css — Reset global, variables y animación de rutas
+   ========================================================================== */
 
+/* ------------------------------------------------------------
+   0. Reset de márgenes y box-sizing
+   ------------------------------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------
+   1. Variables globales
+   ------------------------------------------------------------ */
 :root {
   --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --color-bg: #f8fafc;
@@ -17,8 +30,10 @@
   --shadow-md: 0 12px 40px rgba(0,0,0,0.1);
 }
 
+/* ------------------------------------------------------------
+   2. Layout base (AccessLayout)
+   ------------------------------------------------------------ */
 html, body, #root {
-  /* Permite el scroll cuando el contenido supera la altura */
   height: auto;
   min-height: 100%;
   overflow: auto;
@@ -28,14 +43,77 @@ html, body, #root {
   scrollbar-gutter: stable both-edges;
 }
 
-.banner { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: var(--space-4) var(--space-4) var(--space-4) 0; background: var(--color-bg); }
+/* Banner (columna izquierda) */
+.banner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+  background: var(--color-bg);
+}
 
-.login-panel { display: flex; align-items: center; justify-content: center; padding: var(--space-4); background: var(--color-white); border-top-left-radius: var(--radius-lg); border-bottom-left-radius: var(--radius-lg); position: relative; height: 100vh; }
+/* Panel de acceso (columna derecha) */
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-white);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  position: relative;
+  height: 100vh;
+}
 
-.panel-content { position: absolute; top: 0; left: 0; width: 100%; }
+/* Contenedor de la ruta (SwitchTransition) */
+.panel-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* oculto por defecto para eliminar parpadeo */
+  visibility: hidden;
+}
 
-/* Rutas animadas */
-.fade-enter { opacity: 0; transform: translateY(-10px); }
-.fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 400ms ease-out, transform 400ms ease-out; }
-.fade-exit { opacity: 1; }
-.fade-exit-active { opacity: 0; transform: translateY(10px); transition: opacity 400ms ease-out, transform 400ms ease-out; }
+/* ==========================================================================
+   3. Animaciones CSSTransition “fade” con control de visibilidad
+   ========================================================================== */
+
+/* ———————— Appear y Enter inicial (oculto) ———————— */
+.fade-appear,
+.fade-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+  visibility: hidden !important;
+}
+
+/* ———————— Cuando la transición está activa ———————— */
+.fade-appear-active,
+.fade-enter-active {
+  visibility: visible !important;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+
+/* ———————— Después de completarse ———————— */
+.fade-appear-done,
+.fade-enter-done {
+  visibility: visible !important;
+}
+
+/* ———————— Saliendo ———————— */
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+.fade-exit-done {
+  visibility: hidden !important;
+}
