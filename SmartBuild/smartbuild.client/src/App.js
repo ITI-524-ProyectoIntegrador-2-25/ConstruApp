@@ -1,67 +1,47 @@
-// src/App.js
-import React, { useMemo } from 'react';
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useLocation
-} from 'react-router-dom';
-import { SwitchTransition, CSSTransition } from 'react-transition-group';
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-// Ajusta las rutas a como quedan en tu nuevo árbol
-import Banner         from './components/pages/access/scripts/Banner';
-import LoginForm      from './components/pages/access/scripts/LoginForm';
-import ForgotPassword from './components/pages/access/scripts/ForgotPassword';
-import Register       from './components/pages/access/scripts/Register';
+// layouts
+import AccessLayout from './components/layout/AccessLayout'
+import MainLayout   from './components/layout/MainLayout'
 
-export function AnimatedPanels() {
-  const location = useLocation();
-  const nodeRefs = useMemo(() => ({
-    '/': React.createRef(),
-    '/register': React.createRef(),
-    '/forgot-password': React.createRef(),
-  }), []);
-  const ref = nodeRefs[location.pathname] || React.createRef();
+// access pages
+import LoginForm      from './components/pages/access/scripts/LoginForm'
+import Register       from './components/pages/access/scripts/Register'
+import ForgotPassword from './components/pages/access/scripts/ForgotPassword'
 
-  return (
-    <div className="login-panel">
-      <SwitchTransition mode="out-in">
-        <CSSTransition
-          key={location.pathname}
-          nodeRef={ref}
-          classNames="fade"
-          timeout={400}
-          mountOnEnter
-          unmountOnExit
-        >
-          <div ref={ref} className="panel-content">
-            <Routes location={location}>
-              <Route path="/"                element={<LoginForm />} />
-              <Route path="/register"        element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-            </Routes>
-          </div>
-        </CSSTransition>
-      </SwitchTransition>
-    </div>
-  );
-}
+// protected pages
+import Dashboard   from './components/pages/dashboard/Dashboard'
+import Planilla    from './components/pages/planilla/Planilla'
+import Actividades from './components/pages/productividad/Actividades'
+import Clientes    from './components/pages/productividad/Clientes'
+import Empleados   from './components/pages/productividad/Empleados'
+import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="container">
-        <div className="row">
-          {/* Banner visible en md+ */}
-          <div className="col-md-7 d-none d-md-block">
-            <Banner />
-          </div>
-          {/* Panel de login */}
-          <div className="col-12 col-md-5">
-            <AnimatedPanels />
-          </div>
-        </div>
-      </div>
+      <Routes>
+        {/* RUTAS DE ACCESO: usan AccessLayout */}
+<Route element={<AccessLayout />}>
+  <Route index                element={<LoginForm />} />
+  <Route path="register"      element={<Register />} />
+  <Route path="forgot-password" element={<ForgotPassword />} />
+</Route>
+
+        {/* RUTAS PROTEGIDAS: usan MainLayout */}
+        <Route path="dashboard/*" element={<MainLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="planilla"                      element={<Planilla />} />
+          <Route path="productividad/actividades"     element={<Actividades />} />
+          <Route path="productividad/clientes"        element={<Clientes />} />
+          <Route path="productividad/empleados"       element={<Empleados />} />
+          <Route path="usuario"                       element={<UserProfile />} />
+        </Route>
+
+        {/* Cualquier otra → login */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
-  );
+  )
 }
