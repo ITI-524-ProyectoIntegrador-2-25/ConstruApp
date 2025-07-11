@@ -1,20 +1,38 @@
 // src/components/layout/Sidebar.jsx
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LogOut, Briefcase, BarChart2, Users, Home } from 'lucide-react'
-// Asegúrate de que Logo.svg está en src/assets/img/Logo.svg
+import {
+  LogOut,
+  Briefcase,
+  BarChart2,
+  Users,
+  Home,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react'
 import Logo from '../../assets/img/Logo.svg'
 
 export default function Sidebar() {
-  const [openProd, setOpenProd] = useState(false)
+  const [openProd, setOpenProd]   = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <aside className="sidebar">
-      {/* Solo el logo, sin texto */}
-      <div className="sidebar__logo">
-        <img src={Logo} alt="" />
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      {/* HEADER: logo + toggle */}
+      <div className="sidebar__header">
+        <div className="sidebar__logo">
+          <img src={Logo} alt="" />
+        </div>
+        <button
+          className="sidebar__toggle-btn"
+          onClick={() => setCollapsed(c => !c)}
+          aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+        >
+          {collapsed ? <ChevronRight size={20}/> : <ChevronLeft size={20}/>}
+        </button>
       </div>
 
+      {/* NAVEGACIÓN */}
       <nav className="sidebar__nav">
         <ul>
           <li>
@@ -35,6 +53,7 @@ export default function Sidebar() {
               <Briefcase size={20}/> <span>Productividad</span>
               <span className={`arrow ${openProd ? 'open' : ''}`} />
             </button>
+            {/* SIEMPRE renderiza el <ul>, se ocultará vía CSS cuando collapsed=true */}
             {openProd && (
               <ul className="submenu">
                 <li>
@@ -63,6 +82,7 @@ export default function Sidebar() {
         </ul>
       </nav>
 
+      {/* LOGOUT */}
       <div className="sidebar__logout">
         <NavLink to="/logout" className="navlink">
           <LogOut size={20}/> <span>Cerrar sesión</span>

@@ -1,9 +1,7 @@
-/* ==========================================================================
-   layout.css — Estilos para Sidebar con desplegable y logout
-   ========================================================================== */
-
 :root {
-  --sidebar-width: 240px;
+  /* Sidebar */
+  --sidebar-expanded-width: 240px;
+  --sidebar-collapsed-width: 64px;
   --sidebar-bg: #ffffff;
   --sidebar-border: #e5e7eb;
   --sidebar-text: #374151;
@@ -13,15 +11,20 @@
   --sidebar-active-bg: #e4efff;
   --sidebar-active-text: #2563eb;
   --logout-color: #ef4444;
+
+  /* Navbar */
+  --navbar-search-bg: #f1f3f5;
+  --navbar-search-focus-halo: rgba(37,99,235,0.2);
 }
 
-/* ------------------------------------------------------------
-   1) Contenedor sidebar
-   ------------------------------------------------------------ */
+/* ===============================
+   Sidebar
+   =============================== */
 .sidebar {
   position: fixed;
-  top: 0; left: 0;
-  width: var(--sidebar-width);
+  top: 0;
+  left: 0;
+  width: var(--sidebar-expanded-width);
   height: 100vh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -29,69 +32,89 @@
   flex-direction: column;
   padding: 1.5rem 0;
   box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+  overflow: visible; /* para toggle */
+  transition: width 200ms ease-in-out;
+}
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
 }
 
-/* ------------------------------------------------------------
-   2) Logo
-   ------------------------------------------------------------ */
-.sidebar__logo {
+/* Header: logo + toggle */
+.sidebar__header {
+  position: relative;
   display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
 }
 .sidebar__logo img {
   width: 40px;
   height: auto;
+  transition: width 200ms ease-in-out;
+}
+.sidebar.collapsed .sidebar__logo img {
+  width: 32px;
+}
+.sidebar__toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: -16px;
+  transform: translateY(-50%);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 20;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar__toggle-btn:hover {
+  background: #f3f4f6;
+  color: var(--sidebar-active-text);
 }
 
-/* ------------------------------------------------------------
-   3) Navegación
-   ------------------------------------------------------------ */
+/* Navigation */
 .sidebar__nav {
   flex: 1;
 }
 .sidebar__nav ul {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 .sidebar__nav li {
   margin-bottom: 0.5rem;
 }
 
-/* Link base */
-.navlink {
+/* Base link */
+.navlink,
+.navlink--button {
   display: flex;
   align-items: center;
-  gap: 12px;
   width: 100%;
   padding: 8px 16px;
+  gap: 12px;
   font-size: 16px;
   color: var(--sidebar-text);
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-}
-
-/* Botón en lugar de NavLink */
-.navlink--button {
   background: none;
   border: none;
+  text-decoration: none;
+  border-radius: 8px;
   cursor: pointer;
-  text-align: left;
+  transition: background 0.2s, color 0.2s;
 }
-
-/* Iconos */
 .navlink svg {
   color: var(--sidebar-icon);
+  flex-shrink: 0;
 }
-
-/* Hover */
-.navlink:hover {
+.navlink:hover,
+.navlink--button:hover {
   background: var(--sidebar-hover-bg);
 }
-
-/* Activo */
 .navlink.active {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
@@ -100,12 +123,11 @@
   color: var(--sidebar-active-text);
 }
 
-/* ------------------------------------------------------------
-   4) Flecha en Productividad
-   ------------------------------------------------------------ */
+/* Submenu arrow */
 .arrow {
   margin-left: auto;
-  width: 0; height: 0;
+  width: 0;
+  height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 6px solid var(--sidebar-icon);
@@ -115,23 +137,23 @@
   transform: rotate(180deg);
 }
 
-/* ------------------------------------------------------------
-   5) Submenú
-   ------------------------------------------------------------ */
+/* Submenu items */
 .submenu {
   list-style: none;
-  padding: 0;
   margin: 0.5rem 0 0 2.5rem;
+  padding: 0;
+  transition: opacity 200ms;
 }
 .submenu li {
   margin-bottom: 0.5rem;
 }
-
-/* Links de submenú (más pequeños y muted) */
 .sublink {
   padding: 6px 16px;
   font-size: 14px;
   color: var(--sidebar-muted);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
 }
 .sublink:hover {
   background: var(--sidebar-hover-bg);
@@ -141,14 +163,11 @@
   color: var(--sidebar-active-text);
 }
 
-/* ------------------------------------------------------------
-   6) Logout abajo
-   ------------------------------------------------------------ */
+/* Logout */
 .sidebar__logout {
   padding: 1rem 0;
 }
 .sidebar__logout .navlink {
-  padding: 8px 16px;
   color: var(--logout-color);
 }
 .sidebar__logout .navlink svg {
@@ -158,46 +177,65 @@
   background: var(--sidebar-hover-bg);
 }
 
-/* ==========================================================================
-   NAVBAR: búsqueda y perfil
-   ========================================================================== */
+/* Collapsed state: hide text & submenu */
+.sidebar.collapsed .navlink span,
+.sidebar.collapsed .navlink--button span,
+.sidebar.collapsed .sidebar__logout span,
+.sidebar.collapsed .submenu {
+  display: none;
+}
+.sidebar.collapsed .navlink,
+.sidebar.collapsed .navlink--button {
+  justify-content: center;
+  padding: 8px 0;
+}
 
-/* ------------------------------------------------------------
-   Contenedor de la barra de búsqueda: ocupa espacio central
-   ------------------------------------------------------------ */
+/* ===============================
+   Navbar: búsqueda y perfil
+   =============================== */
+
+/* Search */
 .navbar__search {
-  flex: 1;                            /* empuja logo y acciones */
-  max-width: 500px;                   /* ancho máximo */
-  margin: 0 1rem;                     /* separación lateral */
+  flex: 0 1 400px;
+  max-width: 400px;
+  margin: 0 1rem;
+  position: relative;
+  z-index: 1;
 }
 .navbar__search input {
   width: 100%;
-  padding: 0.6rem 1rem;               /* alto y separación interna */
-  border: none;                       /* nada de bordes visibles */
-  border-radius: 0.75rem;             /* esquinas redondeadas */
-  background: #f1f3f5;                /* gris muy claro */
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--navbar-search-bg);
   font-size: 0.95rem;
-  color: var(--color-text);
   transition: background 0.2s;
 }
 .navbar__search input::placeholder {
-  color: var(--color-muted);
+  color: var(--sidebar-muted);
 }
 .navbar__search input:focus {
   outline: none;
   background: #ffffff;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.2); /* halo azul suave */
+  box-shadow: 0 0 0 2px var(--navbar-search-focus-halo);
 }
 
-/* ------------------------------------------------------------
-   Icono de campana + badge
-   ------------------------------------------------------------ */
+/* Actions container */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Notification icon + badge */
 .navbar__icon {
   position: relative;
-  cursor: pointer;
   padding: 0.25rem;
   border-radius: 50%;
   transition: background 0.2s;
+  cursor: pointer;
 }
 .navbar__icon:hover {
   background: #f3f4f6;
@@ -219,10 +257,7 @@
   justify-content: center;
 }
 
-/* ------------------------------------------------------------
-   Avatar & dropdown (UserMenu)
-   ------------------------------------------------------------ */
-/* Avatar circular */
+/* Avatar & dropdown */
 .navbar__avatar {
   position: relative;
   width: 2.5rem;
@@ -231,36 +266,31 @@
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s;
+  z-index: 11;
 }
 .navbar__avatar:hover {
   box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
 }
-
-/* Menú desplegable */
 .usermenu {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: var(--color-white);
+  min-width: 12rem;
+  background: #fff;
   border-radius: 0.75rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;
-  min-width: 12rem;
-  z-index: 50;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 200ms ease-out, transform 200ms ease-out;
+  z-index: 20;
 }
-
-/* Cuando React monte el menú lo hará visible */
 .navbar__avatar > .usermenu {
   opacity: 1;
   transform: translateY(0);
 }
-
-/* Enlaces y botón interno */
 .usermenu a,
 .usermenu button {
   display: flex;
@@ -268,7 +298,7 @@
   gap: 0.5rem;
   padding: 0.5rem 0.25rem;
   font-size: 0.9rem;
-  color: var(--color-text);
+  color: var(--sidebar-text);
   background: none;
   border: none;
   text-decoration: none;
@@ -279,63 +309,113 @@
 .usermenu button:hover {
   background: #f3f4f6;
 }
-
-/* Separador */
 .usermenu hr {
   margin: 0.5rem 0;
-  border-color: var(--color-border);
+  border-color: var(--sidebar-border);
 }
-
-/* Logout destacado en rojo */
 .usermenu button {
-  color: #ef4444;
+  color: var(--logout-color);
 }
 .usermenu button svg {
-  color: #ef4444;
+  color: var(--logout-color);
 }
 
-
-/* =============================================================
-   Fix: search input no debe tapar los iconos
-   ============================================================= */
-
-.navbar__search {
-  /* deja un margen a la derecha para separar del grupo de iconos */
-  margin-right: 1rem;
+/* ========================
+   Toggle Button Fix
+   ======================== */
+.sidebar__toggle-btn {
+  /* ya existente… */
+  position: absolute;
+  top: 50%;
+  right: -16px;
+  width: 32px;
+  height: 32px;
+  transform: translateY(-50%);
   
-  /* opcional: si usas flex, limita su crecimiento */
-  flex: 0 1 400px;       /* crecerá hasta 400px y luego cederá espacio */
-  max-width: 400px;
-  position: relative;
-  z-index: 1;            /* por debajo de los iconos */
+  /* Asegura área clicable completa */
+  z-index: 9999;          /* encima de TODO */
+  pointer-events: auto;   /* por si algo lo bloqueaba */
 }
 
-/* =============================================================
-   Fix: los iconos de notificación y avatar encima de todo
-   ============================================================= */
-.navbar__actions {
-  position: relative;
-  z-index: 10;           /* por encima del input */
+/* Asegura que la sidebar no recorte al toggle */
+.sidebar {
+  overflow: visible !important;
+}
+
+.sidebar__logo-svg text {
+  display: none;
+}
+
+/* ------------------------------------------------------------
+   1) Ocultar cualquier texto en el logo
+   ------------------------------------------------------------ */
+.sidebar__logo {
   display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  font-size: 0;        /* texto interno se vuelve invisble */
+}
+.sidebar__logo img {
+  width: 40px;         /* imagen sigue visible */
+  height: auto;
+  font-size: initial;  /* restablece para el img si lo necesitase */
+}
+
+/* ------------------------------------------------------------
+   2) Reposicionar el toggle debajo del logo
+   ------------------------------------------------------------ */
+.sidebar__header {
+  display: flex;
+  flex-direction: column;   /* logo arriba, toggle abajo */
   align-items: center;
-  gap: 0.75rem;          /* separación horizontal */
+  padding: 0 1rem;
 }
 
-.navbar__icon,
-.navbar__avatar {
-  position: relative;
-  z-index: 11;           /* asegúrate de que ambos estén encima */
+/* elimina toda regla previa .sidebar__toggle-btn con position:absolute */
+/* y sustituye por esta: */
+.sidebar__toggle-btn {
+  margin-top: 1rem;         /* justo debajo del logo */
+  background: none;
+  border: none;
   cursor: pointer;
+  color: var(--sidebar-icon);
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+}
+.sidebar__toggle-btn:hover {
+  color: var(--sidebar-active-text);
 }
 
-/* un poco de espaciado extra entre campana y avatar */
-.navbar__icon {
-  margin-right: 0.5rem;
+.sidebar__logo svg text {
+  display: none !important;
 }
 
-/* =============================================================
-   Asegura que el dropdown de usuario siempre flote arriba
-   ============================================================= */
-.usermenu {
-  z-index: 20;           /* más arriba que cualquier otro elemento */
+/* ------------------------------------------------------------
+   Header (logo + toggle) en flujo
+   ------------------------------------------------------------ */
+.sidebar__header {
+  display: flex;
+  flex-direction: column;    /* logo arriba, toggle debajo */
+  align-items: center;
+  padding: 1rem 0;
+}
+.sidebar__logo-svg {
+  width: 40px;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
+/* ------------------------------------------------------------
+   Toggle button en flujo
+   ------------------------------------------------------------ */
+.sidebar__toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sidebar-icon);
+  transition: color 0.2s;
+}
+.sidebar__toggle-btn:hover {
+  color: var(--sidebar-active-text);
 }

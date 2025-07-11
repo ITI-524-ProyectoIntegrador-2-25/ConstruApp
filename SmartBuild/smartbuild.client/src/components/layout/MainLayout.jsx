@@ -1,24 +1,18 @@
 // src/components/layout/MainLayout.jsx
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Navbar  from './Navbar'
-import { Outlet } from 'react-router-dom'
-// Si tienes estilos específicos para el layout:
-import '../../styles/Layout.css'
 
 export default function MainLayout() {
   return (
-    <div className="app-container">
-      {/* Barra lateral */}
+    <div className="app">
       <Sidebar />
 
-      {/* Zona principal */}
-      <div className="main-content">
-        {/* Barra superior con avatar */}
+      <div className="main">
         <Navbar />
-
-        {/* Aquí dentro carga Dashboard, Planilla, etc */}
-        <div className="page-content">
+        <div className="content">
+          {/* Aquí montará Dashboard, Planilla, Actividades, etc. */}
           <Outlet />
         </div>
       </div>

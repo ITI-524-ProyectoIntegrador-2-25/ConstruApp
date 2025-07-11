@@ -18,7 +18,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="navbar__logo">SmartBuild</div>
+      <div className="navbar__logo"></div>
       <div className="navbar__search">
         <input placeholder="Buscar..." />
       </div>
