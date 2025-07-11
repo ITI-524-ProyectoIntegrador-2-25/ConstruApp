@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function Actividades() {
+export default function UserProfile() {
   return (
     <div className="page-blank">
-      <h1>Actividades</h1>
+      <h1>Perfil de Usuario</h1>
     </div>
   )
 }
