@@ -409,6 +409,25 @@ namespace DataAccessLogic
 
             return response.ToList();
         }
+
+        public List<Response> LoginUsuario(string correo, string contrasena)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Correo", correo);
+            parameters.Add("Contrasena", contrasena);
+
+            parameters.Add("Usuario", correo);
+            parameters.Add("Sentence", "LoginUsuario");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Usuario_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
         #endregion
 
 

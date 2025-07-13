@@ -7,6 +7,16 @@ public class Program
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
         var env = builder.Environment;
         builder.Configuration
@@ -52,6 +62,8 @@ public class Program
         builder.Services.AddScoped<ICRMConnectionDB, CRMConnectionDB>();
 
         var app = builder.Build();
+
+        app.UseCors("AllowAll");
 
         app.UseDefaultFiles();
         app.UseStaticFiles();

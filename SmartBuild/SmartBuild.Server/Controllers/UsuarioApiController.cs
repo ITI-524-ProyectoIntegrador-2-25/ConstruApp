@@ -99,6 +99,26 @@ namespace SmartBuild.Server.Controllers
                 throw;
             }
         }
+
+        [Route("LoginUsuario")]
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Usuario))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public List<Response> LoginUsuario(string correo, string contrasena)
+        {
+            try
+            {
+                var userData = _repository.LoginUsuario(correo, contrasena);
+                return userData;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, nameof(LoginUsuario));
+                throw;
+            }
+        }
         #endregion
     }
 }
