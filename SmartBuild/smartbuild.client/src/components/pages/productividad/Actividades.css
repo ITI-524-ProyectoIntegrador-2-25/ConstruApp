@@ -1,0 +1,249 @@
+/* src/styles/Actividades.css */
+
+.actividades-page {
+  padding: 1.5rem;
+  background: #f8fafc;
+}
+.actividades-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.actividades-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #374151;
+}
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-add:hover {
+  background: #1e40af;
+}
+
+.actividades-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+.filter-group select,
+.filter-group input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 0.95rem;
+}
+.btn-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.btn-search:hover {
+  background: #1e40af;
+}
+
+.actividades-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.actividad-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+.actividad-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+.actividad-desc {
+  flex: 1;
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+.actividad-horas {
+  font-weight: 600;
+  color: #2563eb;
+  font-size: 0.95rem;
+}
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* src/styles/Actividades.css */
+.actividades-page {
+  padding: 1.5rem;
+}
+.actividades-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.actividades-filters select,
+.actividades-filters input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+.actividades-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.actividad-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.actividad-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.card-header .empleado {
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.card-body .fila {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+.times div {
+  font-size: 0.875rem;
+}
+
+/* src/components/pages/productividad/Actividades.css */
+
+/* … tus estilos previos … */
+
+/* contenedor para el botón */
+.actividades-new {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem; /* separa el botón de la lista */
+}
+
+/* estilo del botón nuevo */
+.btn-nueva {
+  display: inline-block;
+  background: var(--clr-primary);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn-nueva:hover {
+  background: #1e40af; /* tono un poco más oscuro al pasar */
+}
+
+.actividades-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-btn:hover {
+  color: var(--clr-primary); /* o el color que uses */
+}
+
+.actividades-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.back-btn:hover {
+  color: var(--clr-primary);
+}
+
+.actividades-header {
+  /* asegúrate de que no exista ningún justify-content heredado */
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start !important; /* obliga a que todo quede a la izquierda */
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.actividades-title {
+  margin: 0;              /* quita márgenes extra */
+  padding: 0;             /* quita paddings extra */
+  font-size: 1.5rem;
+  font-weight: 600;
+}

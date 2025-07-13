@@ -1,10 +1,8 @@
 // src/components/pages/dashboard/DashboardLayout.jsx
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-
-// IMPORTA DESDE 'components/layout', no desde 'pages/layout'
 import Sidebar from '../../layout/Sidebar'
-import Navbar  from '../../layout/Navbar'
+import Navbar  from '../../layout/Navbar'  // si lo tienes
 
 export default function DashboardLayout() {
   return (
@@ -13,7 +11,6 @@ export default function DashboardLayout() {
       <div className="main">
         <Navbar />
         <div className="content">
-          {/* Ahí se montarán Dashboard, Planilla, Actividades, etc. */}
           <Outlet />
         </div>
       </div>
