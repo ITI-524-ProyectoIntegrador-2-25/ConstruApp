@@ -9,22 +9,22 @@ import '../styles/LoginForm.css'
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function Register() {
-  const [firstName, setFirstName]       = useState('')
-  const [lastName, setLastName]         = useState('')
-  const [position, setPosition]         = useState('')
-  const [email, setEmail]               = useState('')
-  const [password, setPassword]         = useState('')
+  const [firstName, setFirstName]             = useState('')
+  const [lastName, setLastName]               = useState('')
+  const [position, setPosition]               = useState('')
+  const [email, setEmail]                     = useState('')
+  const [password, setPassword]               = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole]                 = useState('')
-  const [strength, setStrength]         = useState({ score: 0, label: '', color: 'danger' })
-  const [error, setError]               = useState('')
-  const termsRef                        = useRef(null)
-  const alertRef                        = useRef(null)
-  const [showPwd, setShowPwd]           = useState(false)
-  const [showPwd2, setShowPwd2]         = useState(false)
-  const navigate                        = useNavigate()
+  const [role, setRole]                       = useState('')
+  const [strength, setStrength]               = useState({ score: 0, label: '', color: 'danger' })
+  const [error, setError]                     = useState('')
+  const termsRef                              = useRef(null)
+  const alertRef                              = useRef(null)
+  const [showPwd, setShowPwd]                 = useState(false)
+  const [showPwd2, setShowPwd2]               = useState(false)
+  const navigate                              = useNavigate()
 
-  // Evalúa la fuerza de la contraseña
+  // Evalúa fuerza de contraseña
   const evaluateStrength = pwd => {
     let score = 0
     if (pwd.length >= 8)         score++
@@ -44,58 +44,76 @@ export default function Register() {
     e.preventDefault()
 
     // 1) Validaciones básicas
-    if (!firstName)                return setError('El nombre es obligatorio')
-    if (!lastName)                 return setError('El apellido es obligatorio')
-    if (!position)                 return setError('El puesto es obligatorio')
+    if (!firstName)                           return setError('El nombre es obligatorio')
+    if (!lastName)                            return setError('El apellido es obligatorio')
+    if (!position)                            return setError('El puesto es obligatorio')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Email no válido')
-    if (password.length < 8)       return setError('La contraseña debe tener al menos 8 caracteres')
-    if (password !== confirmPassword) return setError('Las contraseñas no coinciden')
-    if (!role)                     return setError('Debes seleccionar un rol')
-    if (!termsRef.current.checked) return setError('Debes aceptar los Términos y Condiciones')
+    if (password.length < 8)                  return setError('La contraseña debe tener al menos 8 caracteres')
+    if (password !== confirmPassword)         return setError('Las contraseñas no coinciden')
+    if (!role)                                return setError('Debes seleccionar un rol')
+    if (!termsRef.current.checked)            return setError('Debes aceptar los Términos y Condiciones')
 
     setError('')
-    const now = new Date().toISOString()
 
-    // 2) Payload completo según API
-    const payload = {
-      usuario:       `${firstName}.${lastName}`,
-      quienIngreso: 'web-app',
-      cuandoIngreso: now,
-      quienModifico: 'web-app',
-      cuandoModifico: now,
-      idUsuario:     0,
-      nombre:        firstName,
-      apellido:      lastName,
-      correo:        email,
-      contrasena:    password,
-      puesto:        position,
-      rol:           role,
-      estado:        true
+    // 2) Comprobar si ya existe un usuario con ese correo
+    try {
+      const checkRes = await fetch(
+        `${API_BASE}/UsuarioApi/GetUsuario?usuario=${encodeURIComponent(email)}`,
+        {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }
+      )
+      if (!checkRes.ok) throw new Error(`Status ${checkRes.status}`)
+      const existing = await checkRes.json()
+      if (Array.isArray(existing) && existing.length > 0) {
+        return setError('Ya existe una cuenta con ese correo')
+      }
+    } catch (err) {
+      console.error('Error comprobando usuario:', err)
+      return setError('No se pudo verificar el correo, intenta nuevamente')
     }
 
+    // 3) Payload completo según API
+    const now = new Date().toISOString()
+    const payload = {
+      usuario:        `${firstName}.${lastName}`,
+      quienIngreso:  'web-app',
+      cuandoIngreso:  now,
+      quienModifico:  'web-app',
+      cuandoModifico:  now,
+      idUsuario:      0,
+      nombre:         firstName,
+      apellido:       lastName,
+      correo:         email,
+      contrasena:     password,
+      puesto:         position,
+      rol:            role,
+      estado:         true
+    }
+
+    // 4) Insertar nuevo usuario
     try {
-      const res = await fetch(`${API_BASE}/UsuarioApi/InsertUsuario`, {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept':       'text/plain'
-        },
-        body: JSON.stringify(payload)
-      })
-
+      const res = await fetch(
+        `${API_BASE}/UsuarioApi/InsertUsuario`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept':       'text/plain'
+          },
+          body: JSON.stringify(payload)
+        }
+      )
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || `Status ${res.status}`)
+        const txt = await res.text()
+        throw new Error(txt || `Status ${res.status}`)
       }
-
-      // Si la respuesta es JSON, también puedes hacer:
-      // const data = await res.json()
-      // console.log(data)
-
+      // En general podrías leer la respuesta con res.json() si devolviera JSON
       navigate('/')  // redirige a login
     } catch (err) {
-      console.error('Fetch error:', err)
-      setError('Hubo un problema al comunicarse con el servidor.')
+      console.error('Error al crear usuario:', err)
+      setError('Hubo un problema creando la cuenta. Intenta más tarde.')
     }
   }
 
@@ -179,7 +197,7 @@ export default function Register() {
               onClick={() => setShowPwd(v => !v)}
               aria-label={showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
-              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}
+              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}  
             </button>
           </div>
           <div className="mt-2">
@@ -236,7 +254,7 @@ export default function Register() {
           </select>
         </div>
 
-        {/* Error */}
+        {/* Mostrar error */}
         <CSSTransition
           in={!!error}
           timeout={300}
