@@ -7,6 +7,9 @@ import {
   BarChart2,
   Users,
   Home,
+  ClipboardList,
+  UserPlus,
+  UserCheck,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -28,7 +31,7 @@ export default function Sidebar() {
           onClick={() => setCollapsed(c => !c)}
           aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
         >
-          {collapsed ? <ChevronRight size={20}/> : <ChevronLeft size={20}/>}
+          {collapsed ? <ChevronRight size={20}/> : <ChevronLeft size={20}/> }
         </button>
       </div>
 
@@ -53,22 +56,32 @@ export default function Sidebar() {
               <Briefcase size={20}/> <span>Productividad</span>
               <span className={`arrow ${openProd ? 'open' : ''}`} />
             </button>
-            {/* SIEMPRE renderiza el <ul>, se ocultará vía CSS cuando collapsed=true */}
+
+            {/* Submenú con iconos */}
             {openProd && (
               <ul className="submenu">
                 <li>
-                  <NavLink to="/dashboard/productividad/actividades" className="navlink sublink">
-                    Actividades
+                  <NavLink
+                    to="/dashboard/productividad/actividades"
+                    className="navlink sublink"
+                  >
+                    <ClipboardList size={18}/> <span>Actividades</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/productividad/clientes" className="navlink sublink">
-                    Clientes
+                  <NavLink
+                    to="/dashboard/productividad/clientes"
+                    className="navlink sublink"
+                  >
+                    <UserPlus size={18}/> <span>Clientes</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/productividad/empleados" className="navlink sublink">
-                    Empleados
+                  <NavLink
+                    to="/dashboard/productividad/empleados"
+                    className="navlink sublink"
+                  >
+                    <UserCheck size={18}/> <span>Empleados</span>
                   </NavLink>
                 </li>
               </ul>

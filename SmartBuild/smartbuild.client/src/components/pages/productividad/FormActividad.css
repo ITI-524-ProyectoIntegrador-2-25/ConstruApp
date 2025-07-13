@@ -1,0 +1,153 @@
+/* src/styles/ActividadForm.css */
+
+.actividad-form-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+}
+.actividad-form-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2563eb;
+}
+.actividad-form-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #374151;
+}
+
+.actividad-form .form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.actividad-form label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+.actividad-form input,
+.actividad-form select,
+.actividad-form textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.actividad-form input:focus,
+.actividad-form select:focus,
+.actividad-form textarea:focus {
+  border-color: #2563eb;
+}
+
+.btn-submit {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit:hover {
+  background: #1e40af;
+}
+
+.actividad-form .time-group {
+  display: flex;
+  gap: 1rem;
+}
+.actividad-form .time-group > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* src/components/pages/productividad/FormActividad.css */
+
+/* Mensaje de error */
+.actividad-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Layout de los inputs de hora en línea */
+.actividad-form .time-group {
+  display: flex;
+  gap: 1rem;
+}
+.actividad-form .time-group > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* estilos ya existentes… */
+
+/* icono dentro del time input */
+.time-input {
+  position: relative;
+}
+.time-input input {
+  padding-left: 2rem;
+}
+.time-input .icon-clock {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+/* mensaje de error de tiempo */
+.actividad-error {
+  margin-top: 0.5rem;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* botón deshabilitado */
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actividad-form-header {
+  padding: 1rem;
+}
+.actividad-form-header__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-btn:hover {
+  color: var(--clr-primary);
+}

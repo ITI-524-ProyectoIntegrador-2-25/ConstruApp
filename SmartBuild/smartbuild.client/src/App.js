@@ -15,6 +15,8 @@ import ForgotPassword from './components/pages/access/scripts/ForgotPassword'
 import Dashboard   from './components/pages/dashboard/Dashboard'
 import Planilla    from './components/pages/planilla/Planilla'
 import Actividades from './components/pages/productividad/Actividades'
+import FormActividades from './components/pages/productividad/FormActividades'
+import DetalleActividades from './components/pages/productividad/DetalleActividades'
 import Clientes    from './components/pages/productividad/Clientes'
 import Empleados   from './components/pages/productividad/Empleados'
 import UserProfile from './components/pages/usuario/UserProfile'
@@ -35,9 +37,12 @@ export default function App() {
           <Route index                                  element={<Dashboard   />} />
           <Route path="planilla"                        element={<Planilla    />} />
           <Route path="productividad/actividades"       element={<Actividades />} />
+          <Route path="productividad/actividades/nueva" element={<FormActividades />} />
+          <Route path="productividad/actividades/:id"  element={<DetalleActividades />} />
           <Route path="productividad/clientes"          element={<Clientes    />} />
           <Route path="productividad/empleados"         element={<Empleados   />} />
           <Route path="usuario"                         element={<UserProfile />} />
+          
         </Route>
 
         {/** Cualquier otra ruta → redirigir al login **/}

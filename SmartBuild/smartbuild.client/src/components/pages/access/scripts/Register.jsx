@@ -1,27 +1,28 @@
 // src/components/pages/Register.jsx
 import React, { useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { CSSTransition } from 'react-transition-group'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../styles/LoginForm.css'
 
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+
 export default function Register() {
-  const [firstName, setFirstName]       = useState('')
-  const [lastName, setLastName]         = useState('')
-  const [position, setPosition]         = useState('')
-  const [email, setEmail]               = useState('')
-  const [password, setPassword]         = useState('')
+  const [firstName, setFirstName]             = useState('')
+  const [lastName, setLastName]               = useState('')
+  const [position, setPosition]               = useState('')
+  const [email, setEmail]                     = useState('')
+  const [password, setPassword]               = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole]                 = useState('')
-  const [projects, setProjects]         = useState([])
-  const [companies, setCompanies]       = useState([])
-  const [strength, setStrength]         = useState({ score: 0, label: '', color: 'danger' })
-  const [error, setError]               = useState('')
-  const termsRef                        = useRef(null)
-  const alertRef                        = useRef(null)
-  const [showPwd, setShowPwd]           = useState(false)
-  const [showPwd2, setShowPwd2]         = useState(false)
+  const [role, setRole]                       = useState('')
+  const [strength, setStrength]               = useState({ score: 0, label: '', color: 'danger' })
+  const [error, setError]                     = useState('')
+  const termsRef                              = useRef(null)
+  const alertRef                              = useRef(null)
+  const [showPwd, setShowPwd]                 = useState(false)
+  const [showPwd2, setShowPwd2]               = useState(false)
+  const navigate                              = useNavigate()
 
   // Evalúa fuerza de contraseña
   const evaluateStrength = pwd => {
@@ -39,53 +40,80 @@ export default function Register() {
     })
   }
 
-  // Handlers de campos
-  const onFirstNameChange = e => {
-    const v = e.target.value
-    if (/^[A-Za-zÀ-ÿ\s]*$/.test(v) && v.length <= 32) {
-      setFirstName(v)
-      error && setError('')
-    }
-  }
-  const onLastNameChange = e => {
-    const v = e.target.value
-    if (/^[A-Za-zÀ-ÿ\s]*$/.test(v) && v.length <= 32) {
-      setLastName(v)
-      error && setError('')
-    }
-  }
-  const onPositionChange   = e => { const v = e.target.value; if (/^[A-Za-zÀ-ÿ\s]*$/.test(v) && v.length <= 32) { setPosition(v); error && setError('') } }
-  const onEmailChange      = e => { const v = e.target.value; if (v.length <= 32) { setEmail(v); error && setError('') } }
-  const onPwdChange        = e => { const v = e.target.value; if (v.length <= 32) { setPassword(v); evaluateStrength(v); error && setError('') } }
-  const onConfirmPwdChange = e => { const v = e.target.value; if (v.length <= 32) { setConfirmPassword(v); error && setError('') } }
-  const onProjectsChange   = e => { setProjects(Array.from(e.target.selectedOptions, o => o.value)); error && setError('') }
-  const onCompaniesChange  = e => { setCompanies(Array.from(e.target.selectedOptions, o => o.value)); error && setError('') }
-
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault()
-    if (!firstName) {
-      setError('El nombre es obligatorio')
-    } else if (!lastName) {
-      setError('El apellido es obligatorio')
-    } else if (!position) {
-      setError('El puesto es obligatorio')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Email no válido')
-    } else if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres')
-    } else if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
-    } else if (!role) {
-      setError('Debes seleccionar un rol')
-    } else if (projects.length === 0) {
-      setError('Selecciona al menos un proyecto')
-    } else if (companies.length === 0) {
-      setError('Selecciona al menos una empresa')
-    } else if (!termsRef.current.checked) {
-      setError('Debes aceptar los Términos y Condiciones')
-    } else {
-      setError('')
-      // … lógica de envío …
+
+    // 1) Validaciones básicas
+    if (!firstName)                           return setError('El nombre es obligatorio')
+    if (!lastName)                            return setError('El apellido es obligatorio')
+    if (!position)                            return setError('El puesto es obligatorio')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Email no válido')
+    if (password.length < 8)                  return setError('La contraseña debe tener al menos 8 caracteres')
+    if (password !== confirmPassword)         return setError('Las contraseñas no coinciden')
+    if (!role)                                return setError('Debes seleccionar un rol')
+    if (!termsRef.current.checked)            return setError('Debes aceptar los Términos y Condiciones')
+
+    setError('')
+
+    // 2) Comprobar si ya existe un usuario con ese correo
+    try {
+      const checkRes = await fetch(
+        `${API_BASE}/UsuarioApi/GetUsuario?usuario=${encodeURIComponent(email)}`,
+        {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }
+      )
+      if (!checkRes.ok) throw new Error(`Status ${checkRes.status}`)
+      const existing = await checkRes.json()
+      if (Array.isArray(existing) && existing.length > 0) {
+        return setError('Ya existe una cuenta con ese correo')
+      }
+    } catch (err) {
+      console.error('Error comprobando usuario:', err)
+      return setError('No se pudo verificar el correo, intenta nuevamente')
+    }
+
+    // 3) Payload completo según API
+    const now = new Date().toISOString()
+    const payload = {
+      usuario:        `${firstName}.${lastName}`,
+      quienIngreso:  'web-app',
+      cuandoIngreso:  now,
+      quienModifico:  'web-app',
+      cuandoModifico:  now,
+      idUsuario:      0,
+      nombre:         firstName,
+      apellido:       lastName,
+      correo:         email,
+      contrasena:     password,
+      puesto:         position,
+      rol:            role,
+      estado:         true
+    }
+
+    // 4) Insertar nuevo usuario
+    try {
+      const res = await fetch(
+        `${API_BASE}/UsuarioApi/InsertUsuario`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept':       'text/plain'
+          },
+          body: JSON.stringify(payload)
+        }
+      )
+      if (!res.ok) {
+        const txt = await res.text()
+        throw new Error(txt || `Status ${res.status}`)
+      }
+      // En general podrías leer la respuesta con res.json() si devolviera JSON
+      navigate('/')  // redirige a login
+    } catch (err) {
+      console.error('Error al crear usuario:', err)
+      setError('Hubo un problema creando la cuenta. Intenta más tarde.')
     }
   }
 
@@ -103,7 +131,7 @@ export default function Register() {
             type="text"
             className="input"
             value={firstName}
-            onChange={onFirstNameChange}
+            onChange={e => { setFirstName(e.target.value); error && setError('') }}
             placeholder="Nombre"
           />
         </div>
@@ -116,12 +144,12 @@ export default function Register() {
             type="text"
             className="input"
             value={lastName}
-            onChange={onLastNameChange}
+            onChange={e => { setLastName(e.target.value); error && setError('') }}
             placeholder="Apellido"
           />
         </div>
 
-        {/* Puesto profesional */}
+        {/* Puesto */}
         <div className="form-group">
           <label htmlFor="position">Escribe tu puesto de trabajo</label>
           <input
@@ -129,12 +157,12 @@ export default function Register() {
             type="text"
             className="input"
             value={position}
-            onChange={onPositionChange}
+            onChange={e => { setPosition(e.target.value); error && setError('') }}
             placeholder="Puesto profesional"
           />
         </div>
 
-        {/* Correo electrónico */}
+        {/* Correo */}
         <div className="form-group">
           <label htmlFor="email">Escribe tu correo electrónico</label>
           <input
@@ -142,75 +170,75 @@ export default function Register() {
             type="email"
             className="input"
             value={email}
-            onChange={onEmailChange}
+            onChange={e => { setEmail(e.target.value); error && setError('') }}
             placeholder="Correo electrónico"
           />
         </div>
 
-{/* Contraseña */}
-<div className="form-group">
-  <label htmlFor="password">Escribe tu contraseña</label>
-  <div className="password-wrapper">
-    <input
-      id="password"
-      type={showPwd ? 'text' : 'password'}
-      className="input"
-      value={password}
-      onChange={onPwdChange}
-      placeholder="••••••••"
-    />
-    <button
-      type="button"
-      className="toggle-btn"
-      onClick={() => setShowPwd(!showPwd)}
-      aria-label={showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-    >
-      {showPwd ? <Eye size={20}/> : <EyeOff size={20}/>}
-    </button>
-  </div>
-  <div className="mt-2">
-    <div className="d-flex justify-content-between mb-1">
-      <small>Fuerza: {strength.label}</small>
-      <small>{password.length}/32</small>
-    </div>
-    <div className="progress">
-      <div
-        className={`progress-bar bg-${strength.color}`}
-        role="progressbar"
-        style={{ width: `${(strength.score/4)*100}%` }}
-        aria-valuenow={strength.score}
-        aria-valuemin={0}
-        aria-valuemax={4}
-      />
-    </div>
-  </div>
-</div>
+        {/* Contraseña */}
+        <div className="form-group">
+          <label htmlFor="password">Escribe tu contraseña</label>
+          <div className="password-wrapper">
+            <input
+              id="password"
+              type={showPwd ? 'text' : 'password'}
+              className="input"
+              value={password}
+              onChange={e => {
+                setPassword(e.target.value)
+                evaluateStrength(e.target.value)
+                error && setError('')
+              }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="toggle-btn"
+              onClick={() => setShowPwd(v => !v)}
+              aria-label={showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}  
+            </button>
+          </div>
+          <div className="mt-2">
+            <div className="d-flex justify-content-between mb-1">
+              <small>Fuerza: {strength.label}</small>
+              <small>{password.length}/32</small>
+            </div>
+            <div className="progress">
+              <div
+                className={`progress-bar bg-${strength.color}`}
+                role="progressbar"
+                style={{ width: `${(strength.score/4)*100}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
-{/* Confirmar contraseña */}
-<div className="form-group">
-  <label htmlFor="confirmPassword">Confirmar contraseña</label>
-  <div className="password-wrapper">
-    <input
-      id="confirmPassword"
-      type={showPwd2 ? 'text' : 'password'}
-      className="input"
-      value={confirmPassword}
-      onChange={onConfirmPwdChange}
-      placeholder="••••••••"
-    />
-    <button
-      type="button"
-      className="toggle-btn"
-      onClick={() => setShowPwd2(!showPwd2)}
-      aria-label={showPwd2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-    >
-      {showPwd2 ? <Eye size={20}/> : <EyeOff size={20}/>}
-    </button>
-  </div>
-</div>
+        {/* Confirmar contraseña */}
+        <div className="form-group">
+          <label htmlFor="confirmPassword">Confirmar contraseña</label>
+          <div className="password-wrapper">
+            <input
+              id="confirmPassword"
+              type={showPwd2 ? 'text' : 'password'}
+              className="input"
+              value={confirmPassword}
+              onChange={e => { setConfirmPassword(e.target.value); error && setError('') }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="toggle-btn"
+              onClick={() => setShowPwd2(v => !v)}
+              aria-label={showPwd2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              {showPwd2 ? <EyeOff size={20}/> : <Eye size={20}/>}
+            </button>
+          </div>
+        </div>
 
-
-        {/* Rol (permiso) */}
+        {/* Rol */}
         <div className="form-group">
           <label htmlFor="role">Selecciona un rol</label>
           <select
@@ -226,8 +254,7 @@ export default function Register() {
           </select>
         </div>
 
-
-        {/* Alerta de errores */}
+        {/* Mostrar error */}
         <CSSTransition
           in={!!error}
           timeout={300}
@@ -235,30 +262,24 @@ export default function Register() {
           unmountOnExit
           nodeRef={alertRef}
         >
-          <div
-            ref={alertRef}
-            className="alert alert-danger alert-dismissible"
-            role="alert"
-          >
+          <div ref={alertRef} className="alert alert-danger" role="alert">
             {error}
             <button
               type="button"
               className="btn-close"
-              aria-label="Close"
               onClick={() => setError('')}
             />
           </div>
         </CSSTransition>
 
-        {/* Términos y condiciones */}
+        {/* Términos */}
         <div className="options-row">
           <label className="checkbox-label">
             <input
               type="checkbox"
               ref={termsRef}
               onChange={() => error && setError('')}
-            />
-            Estoy de acuerdo con&nbsp;
+            /> Estoy de acuerdo con&nbsp;
             <Link to="#">Términos y Condiciones</Link>
           </label>
         </div>
