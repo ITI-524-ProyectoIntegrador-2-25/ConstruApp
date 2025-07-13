@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Models.CRM;
 using Models.GNR;
+using Models.GPR;
 using System.Data;
 using System.Data.Common;
 
@@ -309,5 +310,294 @@ namespace DataAccessLogic
             return response.ToList();
         }
         #endregion
+
+
+        #region Empleados
+        public List<Empleado> GetEmpleados(string usuario)
+        {
+            return GetEmpleado("sp_Empleado_001", usuario);
+        }
+
+        protected List<Empleado> GetEmpleado(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters(); 
+            
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllEmpleado");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Empleado>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Empleado> GetEmpleadobyInfo(int idEmpleado, string usuario)
+        {
+            return GetEmpleadobyInfo("sp_Empleado_001", idEmpleado, usuario);
+        }
+
+        protected List<Empleado> GetEmpleadobyInfo(string procedure, int idEmpleado, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idEmpleado), idEmpleado);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadEmpleadoByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Empleado>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertEmpleado(Empleado Empleado)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Empleado.IDEmpleado), Empleado.IDEmpleado);
+            parameters.Add(nameof(Empleado.Nombre), Empleado.Nombre);
+            parameters.Add(nameof(Empleado.Apellido), Empleado.Apellido);
+            parameters.Add(nameof(Empleado.Identificacion), Empleado.Identificacion);
+            parameters.Add(nameof(Empleado.Puesto), Empleado.Puesto);
+            parameters.Add(nameof(Empleado.SalarioHora), Empleado.SalarioHora);
+            parameters.Add(nameof(Empleado.FechaIngreso), Empleado.FechaIngreso);
+            parameters.Add(nameof(Empleado.Correo), Empleado.Correo);
+            parameters.Add(nameof(Empleado.Activo), Empleado.Activo); 
+
+            parameters.Add("Usuario", Empleado.Usuario);
+            parameters.Add("Sentence", "InsertEmpleado");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Empleado_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+
+        public List<Response> UpdateEmpleado(Empleado Empleado)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Empleado.IDEmpleado), Empleado.IDEmpleado);
+            parameters.Add(nameof(Empleado.Nombre), Empleado.Nombre);
+            parameters.Add(nameof(Empleado.Apellido), Empleado.Apellido);
+            parameters.Add(nameof(Empleado.Identificacion), Empleado.Identificacion);
+            parameters.Add(nameof(Empleado.Puesto), Empleado.Puesto);
+            parameters.Add(nameof(Empleado.SalarioHora), Empleado.SalarioHora);
+            parameters.Add(nameof(Empleado.FechaIngreso), Empleado.FechaIngreso);
+            parameters.Add(nameof(Empleado.Correo), Empleado.Correo);
+            parameters.Add(nameof(Empleado.Activo), Empleado.Activo);
+
+            parameters.Add("Usuario", Empleado.Usuario);
+            parameters.Add("Sentence", "UpdateEmpleado");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Empleado_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+        #endregion
+
+
+        #region Usuario
+        public List<Usuario> GetUsuario(string usuario)
+        {
+            return GetUsuario("sp_Usuario_001", usuario);
+        }
+
+        protected List<Usuario> GetUsuario(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllUsuario");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Usuario>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Usuario> GetUsuariobyInfo(int idUsuario, string usuario)
+        {
+            return GetUserInfo("sp_Usuario_001", idUsuario, usuario);
+        }
+
+        protected List<Usuario> GetUserInfo(string procedure, int idUsuario, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idUsuario), idUsuario);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadUsuarioByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Usuario>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertUsuario(Usuario Usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Usuario.IDUsuario), Usuario.IDUsuario);
+            parameters.Add(nameof(Usuario.Nombre), Usuario.Nombre);
+            parameters.Add(nameof(Usuario.Apellido), Usuario.Apellido);
+            parameters.Add(nameof(Usuario.Correo), Usuario.Correo);
+            parameters.Add(nameof(Usuario.Contrasena), Usuario.Contrasena);
+            parameters.Add(nameof(Usuario.Puesto), Usuario.Puesto);
+            parameters.Add(nameof(Usuario.Rol), Usuario.Rol);
+            parameters.Add(nameof(Usuario.Estado), Usuario.Estado);
+
+            parameters.Add("Usuario", Usuario.Usuario);
+            parameters.Add("Sentence", "InsertUsuario");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Usuario_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+
+        public List<Response> UpdateUsuario(Usuario Usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Usuario.IDUsuario), Usuario.IDUsuario);
+            parameters.Add(nameof(Usuario.Nombre), Usuario.Nombre);
+            parameters.Add(nameof(Usuario.Apellido), Usuario.Apellido);
+            parameters.Add(nameof(Usuario.Correo), Usuario.Correo);
+            parameters.Add(nameof(Usuario.Contrasena), Usuario.Contrasena);
+            parameters.Add(nameof(Usuario.Puesto), Usuario.Puesto);
+            parameters.Add(nameof(Usuario.Rol), Usuario.Rol);
+            parameters.Add(nameof(Usuario.Estado), Usuario.Estado);
+
+            parameters.Add("Usuario", Usuario.Usuario);
+            parameters.Add("Sentence", "UpdateUsuario");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Usuario_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+        #endregion
+
+
+        #region Planilla
+        public List<Planilla> GetPlanilla(string Usuario)
+        {
+            return GetPlanilla("sp_Planilla_001", Usuario);
+        }
+
+        protected List<Planilla> GetPlanilla(string procedure, string Usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", Usuario);
+            parameters.Add("Sentence", "LoadAllPlanilla");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Planilla>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Planilla> GetPlanillabyInfo(int idPlanilla, string Usuario)
+        {
+            return GetPlanillaInfo("sp_Planilla_001", idPlanilla, Usuario);
+        }
+
+        protected List<Planilla> GetPlanillaInfo(string procedure, int idPlanilla, string Usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idPlanilla), idPlanilla);
+
+            parameters.Add("Usuario", Usuario);
+            parameters.Add("Sentence", "LoadPlanillaByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Planilla>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertPlanilla(Planilla Planilla)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Planilla.IDPlanilla), Planilla.IDPlanilla);
+            parameters.Add(nameof(Planilla.Nombre), Planilla.Nombre);
+            parameters.Add(nameof(Planilla.FechaInicio), Planilla.FechaInicio);
+            parameters.Add(nameof(Planilla.FechaFin), Planilla.FechaFin);
+            parameters.Add(nameof(Planilla.Estado), Planilla.Estado);
+
+            parameters.Add("Usuario", Planilla.Usuario);
+            parameters.Add("Sentence", "InsertPlanilla");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Planilla_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+
+        public List<Response> UpdatePlanilla(Planilla Planilla)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(Planilla.IDPlanilla), Planilla.IDPlanilla);
+            parameters.Add(nameof(Planilla.Nombre), Planilla.Nombre);
+            parameters.Add(nameof(Planilla.FechaInicio), Planilla.FechaInicio);
+            parameters.Add(nameof(Planilla.FechaFin), Planilla.FechaFin);
+            parameters.Add(nameof(Planilla.Estado), Planilla.Estado);
+
+            parameters.Add("Usuario", Planilla.Usuario);
+            parameters.Add("Sentence", "UpdatePlanilla");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Planilla_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+        #endregion
     }
 }
+                        
