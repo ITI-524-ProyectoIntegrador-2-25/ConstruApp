@@ -1,0 +1,421 @@
+:root {
+  /* Sidebar */
+  --sidebar-expanded-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-text: #374151;
+  --sidebar-muted: #6b7280;
+  --sidebar-icon: #9ca3af;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-active-bg: #e4efff;
+  --sidebar-active-text: #2563eb;
+  --logout-color: #ef4444;
+
+  /* Navbar */
+  --navbar-search-bg: #f1f3f5;
+  --navbar-search-focus-halo: rgba(37,99,235,0.2);
+}
+
+/* ===============================
+   Sidebar
+   =============================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-expanded-width);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+  overflow: visible; /* para toggle */
+  transition: width 200ms ease-in-out;
+}
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+/* Header: logo + toggle */
+.sidebar__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+}
+.sidebar__logo img {
+  width: 40px;
+  height: auto;
+  transition: width 200ms ease-in-out;
+}
+.sidebar.collapsed .sidebar__logo img {
+  width: 32px;
+}
+.sidebar__toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: -16px;
+  transform: translateY(-50%);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 20;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar__toggle-btn:hover {
+  background: #f3f4f6;
+  color: var(--sidebar-active-text);
+}
+
+/* Navigation */
+.sidebar__nav {
+  flex: 1;
+}
+.sidebar__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sidebar__nav li {
+  margin-bottom: 0.5rem;
+}
+
+/* Base link */
+.navlink,
+.navlink--button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  gap: 12px;
+  font-size: 16px;
+  color: var(--sidebar-text);
+  background: none;
+  border: none;
+  text-decoration: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.navlink svg {
+  color: var(--sidebar-icon);
+  flex-shrink: 0;
+}
+.navlink:hover,
+.navlink--button:hover {
+  background: var(--sidebar-hover-bg);
+}
+.navlink.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+.navlink.active svg {
+  color: var(--sidebar-active-text);
+}
+
+/* Submenu arrow */
+.arrow {
+  margin-left: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--sidebar-icon);
+  transition: transform 0.2s;
+}
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Submenu items */
+.submenu {
+  list-style: none;
+  margin: 0.5rem 0 0 2.5rem;
+  padding: 0;
+  transition: opacity 200ms;
+}
+.submenu li {
+  margin-bottom: 0.5rem;
+}
+.sublink {
+  padding: 6px 16px;
+  font-size: 14px;
+  color: var(--sidebar-muted);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.sublink:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text);
+}
+.sublink.active {
+  color: var(--sidebar-active-text);
+}
+
+/* Logout */
+.sidebar__logout {
+  padding: 1rem 0;
+}
+.sidebar__logout .navlink {
+  color: var(--logout-color);
+}
+.sidebar__logout .navlink svg {
+  color: var(--logout-color);
+}
+.sidebar__logout .navlink:hover {
+  background: var(--sidebar-hover-bg);
+}
+
+/* Collapsed state: hide text & submenu */
+.sidebar.collapsed .navlink span,
+.sidebar.collapsed .navlink--button span,
+.sidebar.collapsed .sidebar__logout span,
+.sidebar.collapsed .submenu {
+  display: none;
+}
+.sidebar.collapsed .navlink,
+.sidebar.collapsed .navlink--button {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* ===============================
+   Navbar: búsqueda y perfil
+   =============================== */
+
+/* Search */
+.navbar__search {
+  flex: 0 1 400px;
+  max-width: 400px;
+  margin: 0 1rem;
+  position: relative;
+  z-index: 1;
+}
+.navbar__search input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--navbar-search-bg);
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.navbar__search input::placeholder {
+  color: var(--sidebar-muted);
+}
+.navbar__search input:focus {
+  outline: none;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px var(--navbar-search-focus-halo);
+}
+
+/* Actions container */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Notification icon + badge */
+.navbar__icon {
+  position: relative;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.navbar__icon:hover {
+  background: #f3f4f6;
+}
+.badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  background: #10B981;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Avatar & dropdown */
+.navbar__avatar {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  z-index: 11;
+}
+.navbar__avatar:hover {
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+.usermenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 12rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  z-index: 20;
+}
+.navbar__avatar > .usermenu {
+  opacity: 1;
+  transform: translateY(0);
+}
+.usermenu a,
+.usermenu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.9rem;
+  color: var(--sidebar-text);
+  background: none;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.usermenu a:hover,
+.usermenu button:hover {
+  background: #f3f4f6;
+}
+.usermenu hr {
+  margin: 0.5rem 0;
+  border-color: var(--sidebar-border);
+}
+.usermenu button {
+  color: var(--logout-color);
+}
+.usermenu button svg {
+  color: var(--logout-color);
+}
+
+/* ========================
+   Toggle Button Fix
+   ======================== */
+.sidebar__toggle-btn {
+  /* ya existente… */
+  position: absolute;
+  top: 50%;
+  right: -16px;
+  width: 32px;
+  height: 32px;
+  transform: translateY(-50%);
+  
+  /* Asegura área clicable completa */
+  z-index: 9999;          /* encima de TODO */
+  pointer-events: auto;   /* por si algo lo bloqueaba */
+}
+
+/* Asegura que la sidebar no recorte al toggle */
+.sidebar {
+  overflow: visible !important;
+}
+
+.sidebar__logo-svg text {
+  display: none;
+}
+
+/* ------------------------------------------------------------
+   1) Ocultar cualquier texto en el logo
+   ------------------------------------------------------------ */
+.sidebar__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  font-size: 0;        /* texto interno se vuelve invisble */
+}
+.sidebar__logo img {
+  width: 40px;         /* imagen sigue visible */
+  height: auto;
+  font-size: initial;  /* restablece para el img si lo necesitase */
+}
+
+/* ------------------------------------------------------------
+   2) Reposicionar el toggle debajo del logo
+   ------------------------------------------------------------ */
+.sidebar__header {
+  display: flex;
+  flex-direction: column;   /* logo arriba, toggle abajo */
+  align-items: center;
+  padding: 0 1rem;
+}
+
+/* elimina toda regla previa .sidebar__toggle-btn con position:absolute */
+/* y sustituye por esta: */
+.sidebar__toggle-btn {
+  margin-top: 1rem;         /* justo debajo del logo */
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sidebar-icon);
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+}
+.sidebar__toggle-btn:hover {
+  color: var(--sidebar-active-text);
+}
+
+.sidebar__logo svg text {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------
+   Header (logo + toggle) en flujo
+   ------------------------------------------------------------ */
+.sidebar__header {
+  display: flex;
+  flex-direction: column;    /* logo arriba, toggle debajo */
+  align-items: center;
+  padding: 1rem 0;
+}
+.sidebar__logo-svg {
+  width: 40px;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
+/* ------------------------------------------------------------
+   Toggle button en flujo
+   ------------------------------------------------------------ */
+.sidebar__toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sidebar-icon);
+  transition: color 0.2s;
+}
+.sidebar__toggle-btn:hover {
+  color: var(--sidebar-active-text);
+}

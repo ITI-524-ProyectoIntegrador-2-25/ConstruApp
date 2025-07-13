@@ -2,103 +2,103 @@
 using Microsoft.AspNetCore.Mvc;
 using Models.CRM;
 using Models.GNR;
+using Models.GPR;
 
 namespace SmartBuild.Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ContactApiController : Controller
+    public class PlanillaApiController : Controller
     {
-        private readonly ILogger<ContactApiController> _logger;
+        private readonly ILogger<PlanillaApiController> _logger;
         private readonly ICRMConnectionDB _repository;
 
-        public ContactApiController(ILogger<ContactApiController> logger, ICRMConnectionDB repository)
+        public PlanillaApiController(ILogger<PlanillaApiController> logger, ICRMConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;
         }
 
-        #region Contactos
-        [Route("GetContacts")]
+        #region Planilla
+        [Route("GetPlanilla")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Planilla))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Contacto> GetContacts(string usuario)
+        public List<Planilla> GetPlanilla(string usuario)
         {
             try
             {
-                var contactData = _repository.GetContacts(usuario);
-                return contactData;
+                var PlanillaData = _repository.GetPlanilla(usuario);
+                return PlanillaData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetContacts));
+                _logger.LogError(ex, nameof(GetPlanilla));
                 throw;
             }
         }
 
-        [Route("GetContactInfo")]
+        [Route("GetPlanillabyInfo")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Planilla))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Contacto> GetContactInfo(int idContacto, string usuario)
+        public List<Planilla> GetPlanillabyInfo(int idPlanilla, string Usuario)
         {
             try
             {
-                var contactData = _repository.GetContactInfo(idContacto, usuario);
-                return contactData;
+                var PlanillaData = _repository.GetPlanillabyInfo(idPlanilla, Usuario);
+                return PlanillaData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetContactInfo));
+                _logger.LogError(ex, nameof(GetPlanillabyInfo));
                 throw;
             }
         }
 
-        [Route("InsertContact")]
+        [Route("InsertPlanilla")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Planilla))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> InsertContact(Contacto contacto)
+        public List<Response> InsertPlanilla(Planilla planilla)
         {
             try
             {
-                var res = _repository.InsertContact(contacto);
+                var res = _repository.InsertPlanilla(planilla);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(InsertContact));
+                _logger.LogError(ex, nameof(InsertPlanilla));
                 throw;
             }
         }
 
-        [Route("UpdateContact")]
+        [Route("UpdatePlanilla")]
         [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Contacto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Planilla))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> UpdateContact(Contacto contacto)
+        public List<Response> UpdatePlanilla(Planilla planilla)
         {
             try
             {
-                var res = _repository.UpdateContact(contacto);
+                var res = _repository.UpdatePlanilla(planilla);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(UpdateContact));
+                _logger.LogError(ex, nameof(UpdatePlanilla));
                 throw;
             }
         }
         #endregion
     }
 }
-        

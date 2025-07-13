@@ -1,18 +1,26 @@
+// src/components/pages/access/scripts/LoginForm.jsx
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { FaGoogle, FaFacebookF } from 'react-icons/fa'
 import '../styles/LoginForm.css'
 
 export default function LoginForm() {
   const [showPwd, setShowPwd] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = e => {
+    e.preventDefault()
+    // aquí podrías validar credenciales...
+    navigate('/dashboard')  // ← redirige al Dashboard
+  }
 
   return (
     <div className="login-card">
       <h2>Bienvenido a Build Smart!</h2>
       <p className="subtitle">Inicia sesión</p>
 
-      <form>
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="email">Correo electrónico</label>
           <input
@@ -75,4 +83,3 @@ export default function LoginForm() {
     </div>
   )
 }
-
