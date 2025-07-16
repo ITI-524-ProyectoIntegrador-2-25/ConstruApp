@@ -617,6 +617,207 @@ namespace DataAccessLogic
             return response.ToList();
         }
         #endregion
+
+
+        #region Presupuesto
+        public List<Presupuesto> GetPresupuestos(string usuario)
+        {
+            return GetPresupuesto("sp_Presupuesto_001", usuario);
+        }
+
+        protected List<Presupuesto> GetPresupuesto(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllPresupuestos");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Presupuesto>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Presupuesto> GetPresupuestoByID(int idPresupuesto, string usuario)
+        {
+            return GetPresupuestobyInfo("sp_Presupuesto_001", idPresupuesto, usuario);
+        }
+
+        protected List<Presupuesto> GetPresupuestobyInfo(string procedure, int idPresupuesto, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idPresupuesto), idPresupuesto);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadPresupuestoByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Presupuesto>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertPresupuesto(Presupuesto presupuesto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(presupuesto.IDPresupuesto), presupuesto.IDPresupuesto);
+            parameters.Add(nameof(presupuesto.ClienteID), presupuesto.ClienteID);
+            parameters.Add(nameof(presupuesto.FechaInicio), presupuesto.FechaInicio);
+            parameters.Add(nameof(presupuesto.FechaFin), presupuesto.FechaFin);
+            parameters.Add(nameof(presupuesto.Penalizacion), presupuesto.Penalizacion);
+            parameters.Add(nameof(presupuesto.MontoPenalizacion), presupuesto.MontoPenalizacion);
+            parameters.Add(nameof(presupuesto.Descripcion), presupuesto.Descripcion);
+            parameters.Add(nameof(presupuesto.MateriaPrimaCotizada), presupuesto.MateriaPrimaCotizada);
+            parameters.Add(nameof(presupuesto.ManoObraCotizada), presupuesto.ManoObraCotizada);
+            parameters.Add(nameof(presupuesto.MateriaPrimaCostoReal), presupuesto.MateriaPrimaCostoReal);
+            parameters.Add(nameof(presupuesto.ManoObraCostoReal), presupuesto.ManoObraCostoReal);
+            parameters.Add(nameof(presupuesto.SubContratoCostoReal), presupuesto.SubContratoCostoReal);
+            parameters.Add(nameof(presupuesto.OtrosGastos), presupuesto.OtrosGastos);
+            parameters.Add(nameof(presupuesto.FechaFinReal), presupuesto.FechaFinReal);
+
+            parameters.Add("Usuario", presupuesto.Usuario);
+            parameters.Add("Sentence", "InsertPresupuesto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Presupuesto_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> UpdatePresupuesto(Presupuesto presupuesto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(presupuesto.IDPresupuesto), presupuesto.IDPresupuesto);
+            parameters.Add(nameof(presupuesto.ClienteID), presupuesto.ClienteID);
+            parameters.Add(nameof(presupuesto.FechaInicio), presupuesto.FechaInicio);
+            parameters.Add(nameof(presupuesto.FechaFin), presupuesto.FechaFin);
+            parameters.Add(nameof(presupuesto.Penalizacion), presupuesto.Penalizacion);
+            parameters.Add(nameof(presupuesto.MontoPenalizacion), presupuesto.MontoPenalizacion);
+            parameters.Add(nameof(presupuesto.Descripcion), presupuesto.Descripcion);
+            parameters.Add(nameof(presupuesto.MateriaPrimaCotizada), presupuesto.MateriaPrimaCotizada);
+            parameters.Add(nameof(presupuesto.ManoObraCotizada), presupuesto.ManoObraCotizada);
+            parameters.Add(nameof(presupuesto.MateriaPrimaCostoReal), presupuesto.MateriaPrimaCostoReal);
+            parameters.Add(nameof(presupuesto.ManoObraCostoReal), presupuesto.ManoObraCostoReal);
+            parameters.Add(nameof(presupuesto.SubContratoCostoReal), presupuesto.SubContratoCostoReal);
+            parameters.Add(nameof(presupuesto.OtrosGastos), presupuesto.OtrosGastos);
+            parameters.Add(nameof(presupuesto.FechaFinReal), presupuesto.FechaFinReal);
+
+            parameters.Add("Usuario", presupuesto.Usuario);
+            parameters.Add("Sentence", "UpdatePresupuesto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_Presupuesto_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+
+            return response.ToList();
+        }
+        #endregion
+
+
+        #region GastosAdicionales
+        public List<GastoAdicional> GetGastosAdicionales(string usuario)
+        {
+            return GetGastoAdicional("sp_GastosAdicionales_001", usuario);
+        }
+
+        protected List<GastoAdicional> GetGastoAdicional(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllGastos");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<GastoAdicional>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<GastoAdicional> GetGastoAdicionalByID(int idGasto, string usuario)
+        {
+            return GetGastoAdicionalByInfo("sp_GastosAdicionales_001", idGasto, usuario);
+        }
+
+        protected List<GastoAdicional> GetGastoAdicionalByInfo(string procedure, int idGasto, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idGasto), idGasto);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadGastoByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<GastoAdicional>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertGastoAdicional(GastoAdicional gasto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(gasto.IDGasto), gasto.IDGasto);
+            parameters.Add(nameof(gasto.PresupuestoID), gasto.PresupuestoID);
+            parameters.Add(nameof(gasto.Fecha), gasto.Fecha);
+            parameters.Add(nameof(gasto.Descripcion), gasto.Descripcion);
+            parameters.Add(nameof(gasto.Monto), gasto.Monto);
+            parameters.Add(nameof(gasto.EstadoPago), gasto.EstadoPago);
+
+            parameters.Add("Usuario", gasto.Usuario);
+            parameters.Add("Sentence", "InsertGasto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_GastosAdicionales_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> UpdateGastoAdicional(GastoAdicional gasto)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(gasto.IDGasto), gasto.IDGasto);
+            parameters.Add(nameof(gasto.PresupuestoID), gasto.PresupuestoID);
+            parameters.Add(nameof(gasto.Fecha), gasto.Fecha);
+            parameters.Add(nameof(gasto.Descripcion), gasto.Descripcion);
+            parameters.Add(nameof(gasto.Monto), gasto.Monto);
+            parameters.Add(nameof(gasto.EstadoPago), gasto.EstadoPago);
+
+            parameters.Add("Usuario", gasto.Usuario);
+            parameters.Add("Sentence", "UpdateGasto");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_GastosAdicionales_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+        #endregion
+
+
     }
 }
                         
