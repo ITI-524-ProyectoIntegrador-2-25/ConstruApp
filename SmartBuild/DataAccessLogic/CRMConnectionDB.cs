@@ -817,6 +817,194 @@ namespace DataAccessLogic
         }
         #endregion
 
+        #region MateriaPrima
+
+        public List<MateriaPrima> GetMateriasPrimas(string usuario)
+        {
+            return GetMateriaPrima("sp_MateriaPrima_001", usuario);
+        }
+
+        protected List<MateriaPrima> GetMateriaPrima(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllMateriaPrima");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<MateriaPrima>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<MateriaPrima> GetMateriaPrimaByID(int idMateriaPrima, string usuario)
+        {
+            return GetMateriaPrimaByInfo("sp_MateriaPrima_001", idMateriaPrima, usuario);
+        }
+
+        protected List<MateriaPrima> GetMateriaPrimaByInfo(string procedure, int idMateriaPrima, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idMateriaPrima), idMateriaPrima);
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadMateriaPrimaByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<MateriaPrima>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertMateriaPrima(MateriaPrima materiaPrima)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(materiaPrima.PresupuestoID), materiaPrima.PresupuestoID);
+            parameters.Add(nameof(materiaPrima.Proveedor), materiaPrima.Proveedor);
+            parameters.Add(nameof(materiaPrima.Descripcion), materiaPrima.Descripcion);
+            parameters.Add(nameof(materiaPrima.CostoUnitario), materiaPrima.CostoUnitario);
+            parameters.Add(nameof(materiaPrima.Cantidad), materiaPrima.Cantidad);
+            parameters.Add(nameof(materiaPrima.CantidadMinima), materiaPrima.CantidadMinima);
+            parameters.Add(nameof(materiaPrima.UnidadMedida), materiaPrima.UnidadMedida);
+            parameters.Add(nameof(materiaPrima.Planificado), materiaPrima.Planificado);
+
+            parameters.Add("Usuario", materiaPrima.Usuario); 
+            parameters.Add("Sentence", "InsertMateriaPrima");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_MateriaPrima_001", parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> UpdateMateriaPrima(MateriaPrima materiaPrima)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(materiaPrima.IDMateriaPrima), materiaPrima.IDMateriaPrima);
+            parameters.Add(nameof(materiaPrima.PresupuestoID), materiaPrima.PresupuestoID);
+            parameters.Add(nameof(materiaPrima.Proveedor), materiaPrima.Proveedor);
+            parameters.Add(nameof(materiaPrima.Descripcion), materiaPrima.Descripcion);
+            parameters.Add(nameof(materiaPrima.CostoUnitario), materiaPrima.CostoUnitario);
+            parameters.Add(nameof(materiaPrima.Cantidad), materiaPrima.Cantidad);
+            parameters.Add(nameof(materiaPrima.CantidadMinima), materiaPrima.CantidadMinima);
+            parameters.Add(nameof(materiaPrima.UnidadMedida), materiaPrima.UnidadMedida);
+            parameters.Add(nameof(materiaPrima.Planificado), materiaPrima.Planificado);
+
+            parameters.Add("Usuario", materiaPrima.Usuario); 
+            parameters.Add("Sentence", "UpdateMateriaPrima");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_MateriaPrima_001", parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        #endregion
+
+
+        #region PagoSubcontrato
+        public List<PagoSubContrato> GetPagosSubcontrato(string usuario)
+        {
+            return GetPagoSubcontrato("sp_PagoSubcontrato_001", usuario);
+        }
+
+        protected List<PagoSubContrato> GetPagoSubcontrato(string procedure, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadAllPagoSubcontrato");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<PagoSubContrato>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<PagoSubContrato> GetPagoSubcontratoByID(int idPago, string usuario)
+        {
+            return GetPagoSubcontratoByID("sp_PagoSubcontrato_001", idPago, usuario);
+        }
+
+        protected List<PagoSubContrato> GetPagoSubcontratoByID(string procedure, int idPago, string usuario)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(idPago), idPago);
+
+            parameters.Add("Usuario", usuario);
+            parameters.Add("Sentence", "LoadPagoSubcontratoByID");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<PagoSubContrato>(procedure, parameters, commandType: CommandType.StoredProcedure);
+
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> InsertPagoSubcontrato(PagoSubContrato pago)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(pago.IDPago), pago.IDPago);
+            parameters.Add(nameof(pago.SubcontratoID), pago.SubcontratoID);
+            parameters.Add(nameof(pago.MontoPagado), pago.MontoPagado);
+            parameters.Add(nameof(pago.FechaPago), pago.FechaPago);
+
+            parameters.Add("Usuario", pago.Usuario);
+            parameters.Add("Sentence", "InsertPagoSubcontrato");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_PagoSubcontrato_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+
+        public List<Response> UpdatePagoSubcontrato(PagoSubContrato pago)
+        {
+            var msg = "";
+            var parameters = new DynamicParameters();
+
+            parameters.Add(nameof(pago.IDPago), pago.IDPago);
+            parameters.Add(nameof(pago.SubcontratoID), pago.SubcontratoID);
+            parameters.Add(nameof(pago.MontoPagado), pago.MontoPagado);
+            parameters.Add(nameof(pago.FechaPago), pago.FechaPago);
+
+            parameters.Add("Usuario", pago.Usuario);
+            parameters.Add("Sentence", "UpdatePagoSubcontrato");
+
+            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+
+            var response = GetDbConnection().Query<Response>("sp_PagoSubcontrato_001", parameters, commandType: CommandType.StoredProcedure);
+            msg = parameters.Get<string>(nameof(msg));
+            return response.ToList();
+        }
+        #endregion
+
+
+
+
 
     }
 }
