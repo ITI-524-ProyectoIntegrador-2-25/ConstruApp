@@ -57,6 +57,21 @@ namespace DataAccessLogic
         #endregion
 
 
+        #region MateriaPrima
+        List<MateriaPrima> GetMateriasPrimas(string usuario);
+        List<MateriaPrima> GetMateriaPrimaByID(int idMateriaPrima, string usuario);
+        List<Response> InsertMateriaPrima(MateriaPrima materiaPrima);
+        List<Response> UpdateMateriaPrima(MateriaPrima materiaPrima);
+
+        #endregion
+
+        #region PagoSubContrato
+        List<PagoSubContrato> GetPagosSubcontrato(string usuario);
+        List<PagoSubContrato> GetPagoSubcontratoByID(int idPago, string usuario);
+        List<Response> InsertPagoSubcontrato(PagoSubContrato pagoSubcontrato);
+        List<Response> UpdatePagoSubcontrato(PagoSubContrato pagoSubcontrato);
+        #endregion
+
     }
 }
                 
