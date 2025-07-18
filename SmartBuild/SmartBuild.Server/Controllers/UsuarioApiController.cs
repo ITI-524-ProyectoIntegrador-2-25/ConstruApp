@@ -1,8 +1,6 @@
 ﻿using DataAccessLogic;
 using Microsoft.AspNetCore.Mvc;
-using Models.CRM;
 using Models.GNR;
-using Models.GPR;
 
 namespace SmartBuild.Server.Controllers
 {
@@ -10,10 +8,10 @@ namespace SmartBuild.Server.Controllers
     [Route("[controller]")]
     public class UsuarioApiController : Controller
     {
-        private readonly ILogger<EmpleadoApiController> _logger;
-        private readonly ICRMConnectionDB _repository;
+        private readonly ILogger<UsuarioApiController> _logger;
+        private readonly IGNRConnectionDB _repository;
 
-        public UsuarioApiController(ILogger<EmpleadoApiController> logger, ICRMConnectionDB repository)
+        public UsuarioApiController(ILogger<UsuarioApiController> logger, IGNRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;

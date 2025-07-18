@@ -59,7 +59,9 @@ public class Program
         });
 
         // Inyeccion de dependencias (ajusta segun tu implementacion)
+        builder.Services.AddScoped<IGNRConnectionDB, GNRConnectionDB>();
         builder.Services.AddScoped<ICRMConnectionDB, CRMConnectionDB>();
+        builder.Services.AddScoped<IGPRConnectionDB, GPRConnectionDB>();
 
         var app = builder.Build();
 

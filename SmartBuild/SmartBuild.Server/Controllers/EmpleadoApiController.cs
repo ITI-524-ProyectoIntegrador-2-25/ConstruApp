@@ -10,10 +10,10 @@ namespace SmartBuild.Server.Controllers
     [Route("[controller]")]
     public class EmpleadoApiController : Controller
     {
-        private readonly ILogger<ContactApiController> _logger;
-        private readonly ICRMConnectionDB _repository;
+        private readonly ILogger<EmpleadoApiController> _logger;
+        private readonly IGPRConnectionDB _repository;
 
-        public EmpleadoApiController(ILogger<ContactApiController> logger, ICRMConnectionDB repository)
+        public EmpleadoApiController(ILogger<EmpleadoApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;

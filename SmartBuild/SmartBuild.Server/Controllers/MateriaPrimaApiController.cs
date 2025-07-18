@@ -10,9 +10,9 @@ namespace SmartBuild.Server.Controllers
     public class MateriaPrimaApiController : Controller
     {
         private readonly ILogger<MateriaPrimaApiController> _logger;
-        private readonly ICRMConnectionDB _repository;
+        private readonly IGPRConnectionDB _repository;
 
-        public MateriaPrimaApiController(ILogger<MateriaPrimaApiController> logger, ICRMConnectionDB repository)
+        public MateriaPrimaApiController(ILogger<MateriaPrimaApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;

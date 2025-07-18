@@ -10,9 +10,9 @@ namespace SmartBuild.Server.Controllers
     public class PagoSubcontratoApiController : Controller
     {
         private readonly ILogger<PagoSubcontratoApiController> _logger;
-        private readonly ICRMConnectionDB _repository;
+        private readonly IGPRConnectionDB _repository;
 
-        public PagoSubcontratoApiController(ILogger<PagoSubcontratoApiController> logger, ICRMConnectionDB repository)
+        public PagoSubcontratoApiController(ILogger<PagoSubcontratoApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;
