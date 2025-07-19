@@ -1,6 +1,5 @@
 ﻿using DataAccessLogic;
 using Microsoft.AspNetCore.Mvc;
-using Models.CRM;
 using Models.GNR;
 using Models.GPR;
 
@@ -11,9 +10,9 @@ namespace SmartBuild.Server.Controllers
     public class PlanillaApiController : Controller
     {
         private readonly ILogger<PlanillaApiController> _logger;
-        private readonly ICRMConnectionDB _repository;
+        private readonly IGPRConnectionDB _repository;
 
-        public PlanillaApiController(ILogger<PlanillaApiController> logger, ICRMConnectionDB repository)
+        public PlanillaApiController(ILogger<PlanillaApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;

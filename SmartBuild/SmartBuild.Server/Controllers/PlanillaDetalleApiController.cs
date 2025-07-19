@@ -1,105 +1,103 @@
 ﻿using DataAccessLogic;
 using Microsoft.AspNetCore.Mvc;
-using Models.GPR;
 using Models.GNR;
+using Models.GPR;
 
 namespace SmartBuild.Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class GastosAdicionalesApiController : Controller
+    public class PlanillaDetalleApiController : Controller
     {
-        private readonly ILogger<GastosAdicionalesApiController> _logger;
+        private readonly ILogger<PlanillaDetalleApiController> _logger;
         private readonly IGPRConnectionDB _repository;
 
-        public GastosAdicionalesApiController(ILogger<GastosAdicionalesApiController> logger, IGPRConnectionDB repository)
+        public PlanillaDetalleApiController(ILogger<PlanillaDetalleApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;
         }
 
-        #region GastosAdicionales
-
-        [Route("GetGastosAdicionales")]
+        #region PlanillaDetalle
+        [Route("GetPlanillaDetalle")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GastoAdicional))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlanillaDetalle))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<GastoAdicional> GetGastosAdicionales(string usuario)
+        public List<PlanillaDetalle> GetPlanillasDetalle(string usuario)
         {
             try
             {
-                var data = _repository.GetGastosAdicionales(usuario);
-                return data;
+                var planillaData = _repository.GetPlanillasDetalle(usuario);
+                return planillaData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetGastosAdicionales));
+                _logger.LogError(ex, nameof(GetPlanillasDetalle));
                 throw;
             }
         }
 
-        [Route("GetGastoAdicionalByID")]
+        [Route("GetPlanillaDetallebyInfo")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GastoAdicional))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlanillaDetalle))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<GastoAdicional> GetGastoAdicionalInfo(int idGastoAdicional, string usuario)
+        public List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idPlanillaDetalle, string Usuario)
         {
             try
             {
-                var data = _repository.GetGastoAdicionalByID(idGastoAdicional, usuario);
-                return data;
+                var planillaData = _repository.GetPlanillaDetallebyInfo(idPlanillaDetalle, Usuario);
+                return planillaData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetGastoAdicionalInfo));
+                _logger.LogError(ex, nameof(GetPlanillaDetallebyInfo));
                 throw;
             }
         }
 
-        [Route("InsertGastoAdicional")]
+        [Route("InsertPlanillaDetalle")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GastoAdicional))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Planilla))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> InsertGastoAdicional(GastoAdicional gastoAdicional)
+        public List<Response> InsertPlanillaDetalle(PlanillaDetalle planillaDetalle)
         {
             try
             {
-                var res = _repository.InsertGastoAdicional(gastoAdicional);
+                var res = _repository.InsertPlanillaDetalle(planillaDetalle);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(InsertGastoAdicional));
+                _logger.LogError(ex, nameof(InsertPlanillaDetalle));
                 throw;
             }
         }
 
-        [Route("UpdateGastoAdicional")]
+        [Route("UpdatePlanillaDetalle")]
         [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GastoAdicional))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlanillaDetalle))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> UpdateGastoAdicional(GastoAdicional gastoAdicional)
+        public List<Response> UpdatePlanillaDetalle(PlanillaDetalle planillaDetalle)
         {
             try
             {
-                var res = _repository.UpdateGastoAdicional(gastoAdicional);
+                var res = _repository.UpdatePlanillaDetalle(planillaDetalle);
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(UpdateGastoAdicional));
+                _logger.LogError(ex, nameof(UpdatePlanillaDetalle));
                 throw;
             }
         }
-
         #endregion
     }
 }

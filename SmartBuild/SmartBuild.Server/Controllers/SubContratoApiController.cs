@@ -7,97 +7,99 @@ namespace SmartBuild.Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class PresupuestoApiController : Controller
+    public class SubcontratoApiController : Controller
     {
-        private readonly ILogger<PresupuestoApiController> _logger;
+        private readonly ILogger<SubcontratoApiController> _logger;
         private readonly IGPRConnectionDB _repository;
 
-        public PresupuestoApiController(ILogger<PresupuestoApiController> logger, IGPRConnectionDB repository)
+        public SubcontratoApiController(ILogger<SubcontratoApiController> logger, IGPRConnectionDB repository)
         {
             _logger = logger;
             _repository = repository;
         }
 
-        #region Presupuestos
-        [Route("GetPresupuestos")]
+        #region Subcontrato
+
+        [Route("GetSubcontratos")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Presupuesto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubContrato))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Presupuesto> GetPresupuestos(string usuario)
+        public List<SubContrato> GetSubcontratos(string usuario)
         {
             try
             {
-                var presupuestoData = _repository.GetPresupuestos(usuario);
-                return presupuestoData;
+                var pagos = _repository.GetSubcontratos(usuario);
+                return pagos;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetPresupuestos));
+                _logger.LogError(ex, nameof(GetSubcontratos));
                 throw;
             }
         }
 
-        [Route("GetPresupuestoByID")]
+        [Route("GetSubcontratoByID")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Presupuesto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubContrato))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Presupuesto> GetPresupuestoByID(int idPresupuesto, string usuario)
+        public List<SubContrato> GetSubcontratoByID(int id, string usuario)
         {
             try
             {
-                var presupuestoData = _repository.GetPresupuestoByID(idPresupuesto, usuario);
-                return presupuestoData;
+                var pago = _repository.GetSubcontratoByID(id, usuario);
+                return pago;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(GetPresupuestoByID));
+                _logger.LogError(ex, nameof(GetSubcontratoByID));
                 throw;
             }
         }
 
-        [Route("InsertPresupuesto")]
+        [Route("InsertSubcontrato")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Presupuesto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Response))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> InsertPresupuesto(Presupuesto presupuesto)
+        public List<Response> InsertSubcontrato(SubContrato subContrato)
         {
             try
             {
-                var res = _repository.InsertPresupuesto(presupuesto);
-                return res;
+                var result = _repository.InsertSubcontrato(subContrato);
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(InsertPresupuesto));
+                _logger.LogError(ex, nameof(InsertSubcontrato));
                 throw;
             }
         }
 
-        [Route("UpdatePresupuesto")]
+        [Route("UpdateSubcontrato")]
         [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Presupuesto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Response))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<Response> UpdatePresupuesto(Presupuesto presupuesto)
+        public List<Response> UpdateSubcontrato(SubContrato subContrato)
         {
             try
             {
-                var res = _repository.UpdatePresupuesto(presupuesto);
-                return res;
+                var result = _repository.UpdateSubcontrato(subContrato);
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, nameof(UpdatePresupuesto));
+                _logger.LogError(ex, nameof(UpdateSubcontrato));
                 throw;
             }
         }
+
         #endregion
     }
 }
