@@ -1,16 +1,16 @@
-/* src/styles/Actividades.css */
+/* src/styles/planillas.css */
 
-.actividades-page {
+.planilla-page {
   padding: 1.5rem;
   background: #f8fafc;
 }
-.actividades-header {
+.planilla-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }
-.actividades-header h2 {
+.planilla-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: #374151;
@@ -30,7 +30,7 @@
   background: #1e40af;
 }
 
-.actividades-filters {
+.planilla-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -67,12 +67,12 @@
   background: #1e40af;
 }
 
-.actividades-list {
+.planilla-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
 }
-.actividad-card {
+.planilla-card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
@@ -81,20 +81,20 @@
   display: flex;
   flex-direction: column;
 }
-.actividad-meta {
+.planilla-meta {
   display: flex;
   justify-content: space-between;
   font-size: 0.875rem;
   color: #6b7280;
   margin-bottom: 0.5rem;
 }
-.actividad-desc {
+.planilla-desc {
   flex: 1;
   font-size: 1rem;
   color: #374151;
   margin-bottom: 0.75rem;
 }
-.actividad-horas {
+.planilla-horas {
   font-weight: 600;
   color: #2563eb;
   font-size: 0.95rem;
@@ -106,28 +106,28 @@
   font-style: italic;
 }
 
-/* src/styles/Actividades.css */
-.actividades-page {
+/* src/styles/planillas.css */
+.planilla-page {
   padding: 1.5rem;
 }
-.actividades-filters {
+.planilla-filters {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-.actividades-filters select,
-.actividades-filters input {
+.planilla-filters select,
+.planilla-filters input {
   padding: 0.5rem 1rem;
   border: 1px solid #ccc;
   border-radius: 0.5rem;
 }
 
-.actividades-list {
+.planilla-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
 }
-.actividad-card {
+.planilla-card {
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 0.75rem;
@@ -139,7 +139,7 @@
   padding: 1rem;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.actividad-card:hover {
+.planilla-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
@@ -169,12 +169,12 @@
   font-size: 0.875rem;
 }
 
-/* src/components/pages/productividad/Actividades.css */
+/* src/components/pages/productividad/planillas.css */
 
 /* … tus estilos previos … */
 
 /* contenedor para el botón */
-.actividades-new {
+.planilla-new {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 1rem; /* separa el botón de la lista */
@@ -195,7 +195,7 @@
   background: #1e40af; /* tono un poco más oscuro al pasar */
 }
 
-.actividades-header {
+.planilla-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -215,7 +215,7 @@
   color: var(--clr-primary); /* o el color que uses */
 }
 
-.actividades-header {
+.planilla-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -232,7 +232,7 @@
   color: var(--clr-primary);
 }
 
-.actividades-header {
+.planilla-header {
   display: flex !important;
   align-items: center;
   justify-content: flex-start !important;
@@ -240,9 +240,41 @@
   margin-bottom: 1rem;
 }
 
-.actividades-title {
+.planilla-title {
   margin: 0;             
   padding: 0;            
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+/* src/styles/Planilla.css */
+
+/* agrupa filtros + botón en la misma fila */
+.planilla-controls {
+  display: flex;
+  flex-wrap: wrap;           /* en móvil baja a dos filas si hace falta */
+  align-items: center;       /* todos a la misma altura */
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;       /* espacio justo antes de la lista */
+}
+
+/* tus filtros siguen igual, sólo asegúrate de tener gap suficiente */
+.planilla-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* quita cualquier margen extra del botón */
+.planilla-new .btn-nueva {
+  margin: 0;
+}
+
+/* lista de cards justo debajo */
+.planilla-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 0;
 }

@@ -55,24 +55,7 @@ export default function Register() {
 
     setError('')
 
-    // 2) Comprobar si ya existe un usuario con ese correo
-    try {
-      const checkRes = await fetch(
-        `${API_BASE}/UsuarioApi/GetUsuario?usuario=${encodeURIComponent(email)}`,
-        {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }
-      )
-      if (!checkRes.ok) throw new Error(`Status ${checkRes.status}`)
-      const existing = await checkRes.json()
-      if (Array.isArray(existing) && existing.length > 0) {
-        return setError('Ya existe una cuenta con ese correo')
-      }
-    } catch (err) {
-      console.error('Error comprobando usuario:', err)
-      return setError('No se pudo verificar el correo, intenta nuevamente')
-    }
+
 
     // 3) Payload completo según API
     const now = new Date().toISOString()
