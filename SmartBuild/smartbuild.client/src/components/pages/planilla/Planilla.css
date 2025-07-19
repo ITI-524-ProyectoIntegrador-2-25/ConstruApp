@@ -171,3 +171,82 @@
 .btn-payment:hover {
   background: #1e40af;
 }
+
+/* src/components/pages/planilla/Planilla.css */
+.planilla-page {
+  padding: 1.5rem;
+}
+.planilla-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 0.75rem;
+}
+.planilla-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+.planilla-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.filter-group label {
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+.filter-group select {
+  padding: 0.4rem 0.8rem;
+}
+.planilla-new {
+  margin-bottom: 1rem;
+}
+.btn-nueva {
+  color: var(--clr-primary, #2563eb);
+  text-decoration: none;
+  font-weight: 500;
+}
+.planilla-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.planilla-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s;
+}
+.planilla-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.card-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.card-proyecto {
+  display: block;
+  color: #666;
+  margin-top: 0.25rem;
+}
+.card-body {
+  margin-top: 0.75rem;
+}
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.no-results {
+  color: #666;
+  font-style: italic;
+}
