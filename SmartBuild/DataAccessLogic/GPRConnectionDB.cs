@@ -183,6 +183,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(actividad.IDActividad), actividad.IDActividad);
             parameters.Add(nameof(actividad.ActividadID), actividad.ActividadID);
             parameters.Add(nameof(actividad.PresupuestoID), actividad.PresupuestoID);
+            parameters.Add(nameof(actividad.Descripcion), actividad.Descripcion);
             parameters.Add(nameof(actividad.FechaInicioProyectada), actividad.FechaFinProyectada);
             parameters.Add(nameof(actividad.FechaFinProyectada), actividad.FechaFinProyectada);
             parameters.Add(nameof(actividad.FechaInicioReal), actividad.FechaInicioReal);
@@ -208,6 +209,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(actividad.IDActividad), actividad.IDActividad);
             parameters.Add(nameof(actividad.ActividadID), actividad.ActividadID);
             parameters.Add(nameof(actividad.PresupuestoID), actividad.PresupuestoID);
+            parameters.Add(nameof(actividad.Descripcion), actividad.Descripcion);
             parameters.Add(nameof(actividad.FechaInicioProyectada), actividad.FechaFinProyectada);
             parameters.Add(nameof(actividad.FechaFinProyectada), actividad.FechaFinProyectada);
             parameters.Add(nameof(actividad.FechaInicioReal), actividad.FechaInicioReal);
@@ -810,10 +812,10 @@ namespace DataAccessLogic
 
         #endregion
 
-        #region Subcontrado
+        #region Subcontrato
         public List<SubContrato> GetSubcontratos(string usuario)
         {
-            return GetSubcontratos("sp_Subcontrado_001", usuario);
+            return GetSubcontratos("sp_Subcontrato_001", usuario);
         }
 
         protected List<SubContrato> GetSubcontratos(string procedure, string usuario)
@@ -822,7 +824,7 @@ namespace DataAccessLogic
             var parameters = new DynamicParameters();
 
             parameters.Add("Usuario", usuario);
-            parameters.Add("Sentence", "LoadAllSubcontrado");
+            parameters.Add("Sentence", "LoadAllSubcontrato");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
@@ -834,7 +836,7 @@ namespace DataAccessLogic
 
         public List<SubContrato> GetSubcontratoByID(int idSubcontrato, string usuario)
         {
-            return GetSubcontratoByID("sp_Subcontrado_001", idSubcontrato, usuario);
+            return GetSubcontratoByID("sp_Subcontrato_001", idSubcontrato, usuario);
         }
 
         protected List<SubContrato> GetSubcontratoByID(string procedure, int idSubcontrato, string usuario)
@@ -845,7 +847,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(idSubcontrato), idSubcontrato);
 
             parameters.Add("Usuario", usuario);
-            parameters.Add("Sentence", "LoadSubcontradoByID");
+            parameters.Add("Sentence", "LoadSubcontratoByID");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
@@ -870,11 +872,11 @@ namespace DataAccessLogic
             parameters.Add(nameof(subContrato.MontoCotizado), subContrato.MontoCotizado);
 
             parameters.Add("Usuario", subContrato.Usuario);
-            parameters.Add("Sentence", "InsertSubcontrado");
+            parameters.Add("Sentence", "InsertSubcontrato");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
-            var response = GetDbConnection().Query<Response>("sp_Subcontrado_001", parameters, commandType: CommandType.StoredProcedure);
+            var response = GetDbConnection().Query<Response>("sp_Subcontrato_001", parameters, commandType: CommandType.StoredProcedure);
             msg = parameters.Get<string>(nameof(msg));
             return response.ToList();
         }
@@ -894,11 +896,11 @@ namespace DataAccessLogic
             parameters.Add(nameof(subContrato.MontoCotizado), subContrato.MontoCotizado);
 
             parameters.Add("Usuario", subContrato.Usuario);
-            parameters.Add("Sentence", "UpdateSubcontrado");
+            parameters.Add("Sentence", "UpdateSubcontrato");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
-            var response = GetDbConnection().Query<Response>("sp_Subcontrado_001", parameters, commandType: CommandType.StoredProcedure);
+            var response = GetDbConnection().Query<Response>("sp_Subcontrato_001", parameters, commandType: CommandType.StoredProcedure);
             msg = parameters.Get<string>(nameof(msg));
             return response.ToList();
         }

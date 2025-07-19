@@ -16,5 +16,8 @@
         public decimal? SubContratoCostoReal { get; set; }
         public decimal? OtrosGastos { get; set; }
         public DateTime? FechaFinReal { get; set; }
+
+        public string? NombreCliente { get; set; }
+        public string? TipoCliente { get; set; }
     }
 }
