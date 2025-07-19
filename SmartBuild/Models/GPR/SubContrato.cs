@@ -3,7 +3,6 @@
     public class SubContrato : Base
     {
         public int? IDSubcontrato { get; set; }
-        public int? ContactoID { get; set; }
         public string? Descripcion { get; set; }
         public DateTime? FechaInicioProyectada { get; set; }
         public DateTime? FechaFinProyectada { get; set; }

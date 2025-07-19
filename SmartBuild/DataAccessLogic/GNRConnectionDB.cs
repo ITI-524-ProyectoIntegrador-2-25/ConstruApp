@@ -237,7 +237,7 @@ namespace DataAccessLogic
             parameters.Add("contrasena", contrasena);
 
             parameters.Add("Usuario", "LoginUsuario");
-            parameters.Add("Sentence", "LoadAllUsuario");
+            parameters.Add("Sentence", "LoginUsuario");
 
             parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
