@@ -52,16 +52,16 @@ export default function LoginForm() {
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Correo electrónico</label>
+          <label htmlFor="email">Escribe tu correo electrónico</label>
           <input
-            id="email" type="email" placeholder="Correo"
+            id="email" type="email" placeholder="Correo electrónico"
             className="input" value={email}
             onChange={e => setEmail(e.target.value)} required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Contraseña</label>
+          <label htmlFor="password">Escribe tu contraseña</label>
           <div className="password-wrapper">
             <input
               id="password"

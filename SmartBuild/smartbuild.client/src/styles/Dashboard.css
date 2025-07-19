@@ -1,41 +1,71 @@
-/* src/styles/Dashboard.css */
-
-/* ==================================
-   Variables base
-   ================================== */
 :root {
-  --clr-bg:       #f7f8fa;
-  --clr-card:     #ffffff;
-  --clr-border:   #dddddd;
-  --clr-text:     #2c2c2c;
-  --clr-muted:    #555555;
+  --clr-bg:       #f8fafc;
+  --clr-white:    #ffffff;
+  --clr-border:   #e5e7eb;
+  --clr-text:     #374151;
+  --clr-muted:    #6b7280;
   --clr-primary:  #2563eb;
-  --radius:       0.5rem;
-  --shadow:       0 2px 8px rgba(0,0,0,0.05);
-  --spacing:      1rem;
+  --radius:       0.75rem;
+  --shadow:       0 4px 16px rgba(0, 0, 0, 0.08);
+  --spacing:      1.5rem;
 }
 
-/* ==================================
-   Contenedor general
-   ================================== */
 .dashboard-page {
   background: var(--clr-bg);
   padding: var(--spacing);
 }
 
-/* ==================================
-   Título de la sección
-   ================================== */
-.dashboard-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--clr-text);
-  margin-bottom: calc(var(--spacing) * 1.5);
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-/* ==================================
-   Barra de filtros
-   ================================== */
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  margin: 0;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-text);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+.back-btn:hover {
+  background: var(--clr-border);
+}
+
+.btn-add {
+  background: var(--clr-primary);
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-add:hover {
+  background: #1e40af;
+}
+
 .dashboard-filters {
   display: flex;
   flex-wrap: wrap;
@@ -43,30 +73,30 @@
   align-items: center;
   margin-bottom: var(--spacing);
 }
+
 .filter-group {
   display: flex;
   align-items: center;
-  background: var(--clr-card);
+  background: var(--clr-white);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
   padding: 0.4rem 0.75rem;
 }
+
 .filter-icon {
   margin-right: 0.5rem;
   color: var(--clr-muted);
 }
-.dashboard-filters select {
+
+.dashboard-filters select,
+.dashboard-filters input {
   border: none;
   background: transparent;
   font-size: 1rem;
   color: var(--clr-text);
-  cursor: pointer;
   outline: none;
 }
 
-/* ==================================
-   Botones de acción
-   ================================== */
 .btn-search {
   background: var(--clr-primary);
   color: #ffffff;
@@ -77,10 +107,11 @@
   cursor: pointer;
 }
 .btn-search:hover {
-  background: #1e4bb8;
+  background: #1e40af;
 }
+
 .btn-icon {
-  background: var(--clr-card);
+  background: var(--clr-white);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
   padding: 0.5rem;
@@ -89,20 +120,14 @@
   align-items: center;
 }
 
-/* ==================================
-   Grid de proyectos
-   ================================== */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing);
 }
 
-/* ==================================
-   Tarjeta de proyecto
-   ================================== */
 .project-card {
-  background: var(--clr-card);
+  background: var(--clr-white);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -115,25 +140,25 @@
 }
 .project-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
 
-/* Imagen de la tarjeta */
 .card-image img {
   width: 100%;
   height: 180px;
   object-fit: cover;
 }
 
-/* Información interna */
 .card-info {
   padding: var(--spacing);
   flex: 1;
 }
+
 .card-info h3 {
   margin: 0 0 0.5rem;
   font-size: 1.25rem;
 }
+
 .card-info p {
   margin: 0;
   font-size: 0.9rem;
@@ -143,12 +168,39 @@
   gap: 0.5rem;
 }
 
-/* ==================================
-   Mensaje cuando no hay resultados
-   ================================== */
 .no-results {
   grid-column: 1 / -1;
   text-align: center;
   color: var(--clr-muted);
   padding: var(--spacing);
+}
+
+/* ====================
+   Responsive
+====================== */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-add {
+    align-self: flex-end;
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn-search, .btn-icon {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
 }

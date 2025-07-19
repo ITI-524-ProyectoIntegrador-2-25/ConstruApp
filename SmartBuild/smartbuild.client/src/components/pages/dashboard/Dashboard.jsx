@@ -1,12 +1,13 @@
 // src/components/pages/dashboard/Dashboard.jsx
 import React, { useState, useEffect } from 'react'
-import { NavLink, Link } from 'react-router-dom'
-import { Calendar, Filter } from 'lucide-react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { Calendar, Filter, ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const [presupuestos, setPresupuestos] = useState([])
   const [results, setResults]           = useState([])
   const [filtroDesc, setFiltroDesc]     = useState('')
@@ -62,7 +63,16 @@ export default function Dashboard() {
   return (
     <div className="dashboard-page">
       <header className="dashboard-header">
-        <h2 className="dashboard-title">Proyectos</h2>
+        <div className="title-group">
+          <button
+            className="back-btn"
+            onClick={() => navigate(-1)}
+            title="Volver"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="dashboard-title">Proyectos</h1>
+        </div>
         <Link to="proyectos/nuevo" className="btn-add">
           + Agregar proyecto
         </Link>
