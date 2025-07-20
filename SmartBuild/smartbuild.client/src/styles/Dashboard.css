@@ -237,7 +237,7 @@
     background: var(--clr-primary);
     color: var(--clr-white);
     position: fixed;
-    bottom: calc(3.5rem + 3.5rem);
+    bottom: calc(3rem + 3rem);
     right: 2.5rem;
     z-index: 1000;
     display: flex;
@@ -251,8 +251,6 @@
   .btn-add::after {
     content: '+';
     text-indent: -5.5px;
-    top: 50%;
-    left: 50%;
     transform: translate(-5%, -5%);
     font-size: 2.8rem;
     font-weight: 600;
