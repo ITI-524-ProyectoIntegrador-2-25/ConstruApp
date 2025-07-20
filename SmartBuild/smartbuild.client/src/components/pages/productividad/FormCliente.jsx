@@ -2,10 +2,18 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
+import Select from 'react-select'
 import '../../../styles/Dashboard.css'
 import './FormCliente.css'
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+
+// Opciones fijas para “Tipo de cliente”
+const tipoOptions = [
+  { value: 'Publico', label: 'Público' },
+  { value: 'Privado', label: 'Privado' },
+  { value: 'Fisico', label: 'Físico' }
+]
 
 export default function FormCliente() {
   const navigate = useNavigate()
@@ -14,55 +22,50 @@ export default function FormCliente() {
   const [form, setForm] = useState({
     razonSocial:    '',
     identificacion: '',
-    tipo:           '',
+    tipo:           null,    // ahora un objeto {value,label}
     nombreContacto: ''
   })
   const [error, setError] = useState('')
 
+  // inputs estándar (texto, número, etc.)
   const handleChange = e => {
     const { name, value } = e.target
     setForm(f => ({ ...f, [name]: value }))
     setError('')
   }
 
-const handleSubmit = async e => {
-  e.preventDefault()
-
-  if (!form.razonSocial || !form.identificacion) {
-    setError('Razón social e identificación son obligatorios')
-    return
+  // handler para react-select
+  const handleSelect = option => {
+    setForm(f => ({ ...f, tipo: option }))
+    setError('')
   }
 
-  try {
-    // 1) Leer raw y parsear
-    const usuarioStr = localStorage.getItem('currentUser')
-    console.log('🌐 currentUser raw:', usuarioStr)
-    if (!usuarioStr) throw new Error('Usuario no autenticado')
-    const user = JSON.parse(usuarioStr)
-    console.log('🧑 user object:', user)
+  const handleSubmit = async e => {
+    e.preventDefault()
 
-    // 2) Extraer correo real
-    const correoUser = user.correo
-                    || user.usuario
-                    || user.email
-                    || user.username
-                    || user.userName
-    if (!correoUser) throw new Error('No se encontró el email del usuario')
-
-    // 3) Payload
-    const payload = {
-      usuario:        correoUser,
-      razonSocial:    form.razonSocial,
-      identificacion: form.identificacion,
-      tipo:           form.tipo,
-      nombreContacto: form.nombreContacto
+    if (!form.razonSocial || !form.identificacion || !form.tipo) {
+      setError('Razón social, identificación y tipo son obligatorios')
+      return
     }
 
-      console.log('Payload enviado al API:', payload) // <-- Agregado
-      // Llamada POST al API
+    try {
+      // obtén el usuario del localStorage
+      const usuarioStr = localStorage.getItem('currentUser')
+      if (!usuarioStr) throw new Error('Usuario no autenticado')
+      const user = JSON.parse(usuarioStr)
+      const correoUser = user.correo || user.usuario
+
+      // payload: extraemos el valor de tipo
+      const payload = {
+        usuario:        correoUser,
+        razonSocial:    form.razonSocial,
+        identificacion: form.identificacion,
+        tipo:           form.tipo.value,
+        nombreContacto: form.nombreContacto
+      }
+
       const res = await fetch(
-        `${API_BASE}/ClientApi/InsertClient`,
-        {
+        `${API_BASE}/ClientApi/InsertClient`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,7 +79,6 @@ const handleSubmit = async e => {
         throw new Error(txt || `Status ${res.status}`)
       }
 
-      // Regresar al listado
       navigate(-1)
     } catch (err) {
       console.error('Error al guardar cliente:', err)
@@ -104,6 +106,7 @@ const handleSubmit = async e => {
       )}
 
       <form onSubmit={handleSubmit} className="form-dashboard">
+        {/* Razón social */}
         <div className="form-group">
           <label>Razón social</label>
           <input
@@ -115,6 +118,7 @@ const handleSubmit = async e => {
           />
         </div>
 
+        {/* Identificación */}
         <div className="form-group">
           <label>Identificación</label>
           <input
@@ -126,20 +130,22 @@ const handleSubmit = async e => {
           />
         </div>
 
+        {/* Tipo de cliente (react-select) */}
         <div className="form-group">
           <label>Tipo de cliente</label>
-          <select
+          <Select
             name="tipo"
+            options={tipoOptions}
             value={form.tipo}
-            onChange={handleChange}
-          >
-            <option value="">Seleccionar tipo</option>
-            <option value="Publico">Publico</option>
-            <option value="Privado">Privado</option>
-            <option value="Fisico">Fisico</option>
-          </select>
+            onChange={handleSelect}
+            placeholder="Seleccionar tipo…"
+            className="react-select-container"
+            classNamePrefix="react-select"
+            isClearable
+          />
         </div>
 
+        {/* Nombre del contacto */}
         <div className="form-group">
           <label>Nombre del contacto</label>
           <input

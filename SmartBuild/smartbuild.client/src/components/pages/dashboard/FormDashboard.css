@@ -102,3 +102,17 @@
   margin: 1rem 0;
   font-size: 0.9rem;
 }
+
+/* react-select */
+.react-select__control {
+  border: 1px solid var(--clr-border);
+  border-radius: 0.5rem;
+  padding: 0.1rem;
+}
+.react-select__control--is-focused {
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+  border-color: var(--clr-primary);
+}
+.react-select__menu {
+  z-index: 1000;
+}
