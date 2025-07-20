@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
+import './FormDashboard.css'  
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
