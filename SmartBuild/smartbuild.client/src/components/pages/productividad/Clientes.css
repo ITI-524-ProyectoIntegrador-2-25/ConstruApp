@@ -11,9 +11,9 @@
 }
 
 /* ============================================================================ 
-   Contenedor general 
+   Contenedor general para Clientes 
 ============================================================================ */
-.dashboard-page {
+.clientes-page {
   background: var(--clr-bg);
   padding: var(--spacing);
   min-height: 100vh;
@@ -21,9 +21,9 @@
 }
 
 /* ============================================================================ 
-   Header: título y CTA 
+   Header: título y CTA en Clientes 
 ============================================================================ */
-.dashboard-header {
+.clientes-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,7 +51,7 @@
   background: var(--clr-border);
 }
 
-.dashboard-title {
+.clientes-title {
   font-size: 1.75rem;
   font-weight: 600;
   color: var(--clr-text);
@@ -74,9 +74,9 @@
 }
 
 /* ============================================================================ 
-   Filtros de búsqueda 
+   Filtros de búsqueda para Clientes 
 ============================================================================ */
-.dashboard-filters {
+.clientes-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -98,8 +98,8 @@
   color: var(--clr-muted);
 }
 
-.dashboard-filters select,
-.dashboard-filters input {
+.clientes-filters select,
+.clientes-filters input {
   border: none;
   background: transparent;
   font-size: 1rem;
@@ -132,15 +132,15 @@
 }
 
 /* ============================================================================ 
-   Grid de proyectos 
+   Grid de Clientes 
 ============================================================================ */
-.projects-grid {
+.clients-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing);
 }
 
-.project-card {
+.client-card {
   background: var(--clr-white);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
@@ -152,7 +152,7 @@
   color: inherit;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.project-card:hover {
+.client-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
 }
@@ -191,7 +191,7 @@
 }
 
 /* Aseguramos que la fila de filtros sea flexbox */
-.dashboard-filters {
+.clientes-filters {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -199,7 +199,7 @@
 }
 
 /* Hacemos que el botón de agregar empuje al resto y quede a la derecha */
-.dashboard-filters .btn-add {
+.clientes-filters .btn-add {
   margin-left: auto;
   /* Si quieres dar un poco más de consistencia con los otros botones: */
   padding: 0.6rem 1.25rem;
@@ -254,8 +254,8 @@
     background: var(--clr-primary);
     color: var(--clr-white);
     position: fixed;
-    bottom: calc(3rem + 3rem);
-    right: 2.5rem;
+    bottom: calc(3.5rem + 3.5rem);
+    right: 1.5rem;
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -274,7 +274,6 @@
     line-height: 1;
     color: var(--clr-white);
   }
-  
   .btn-add:hover {
     background: #1e40af;
   }

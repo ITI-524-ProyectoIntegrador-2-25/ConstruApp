@@ -55,6 +55,13 @@ export default function DetalleDashboard() {
   if (error) return <p className="detalle-error">{error}</p>
   if (!detalle) return <p className="detalle-error">No se encontró el detalle del presupuesto.</p>
 
+  // Helper to format numbers with thousands separator and 2 decimals
+  const formatCurrency = (value) => {
+    if (typeof value !== 'number') value = Number(value)
+    if (isNaN(value)) return ''
+    return value.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
   return (
     <div className="detalle-page">
       <header className="detalle-header">
@@ -102,32 +109,32 @@ export default function DetalleDashboard() {
         {detalle.penalizacion && (
           <div className="detalle-row">
             <span className="label">Monto penalización:</span>
-            <span className="value">L. {detalle.montoPenalizacion}</span>
+            <span className="value">₡ {formatCurrency(detalle.montoPenalizacion)}</span>
           </div>
         )}
         <div className="detalle-row">
           <span className="label">Materia prima (cotizada):</span>
-          <span className="value">L. {detalle.materiaPrimaCotizada}</span>
+          <span className="value">₡ {formatCurrency(detalle.materiaPrimaCotizada)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Mano de obra (cotizada):</span>
-          <span className="value">L. {detalle.manoObraCotizada}</span>
+          <span className="value">₡ {formatCurrency(detalle.manoObraCotizada)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Materia prima (real):</span>
-          <span className="value">L. {detalle.materiaPrimaCostoReal}</span>
+          <span className="value">₡ {formatCurrency(detalle.materiaPrimaCostoReal)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Mano de obra (real):</span>
-          <span className="value">L. {detalle.manoObraCostoReal}</span>
+          <span className="value">₡ {formatCurrency(detalle.manoObraCostoReal)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Subcontrato (real):</span>
-          <span className="value">L. {detalle.subContratoCostoReal}</span>
+          <span className="value">₡ {formatCurrency(detalle.subContratoCostoReal)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Otros gastos:</span>
-          <span className="value">L. {detalle.otrosGastos}</span>
+          <span className="value">₡ {formatCurrency(detalle.otrosGastos)}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Ingreso:</span>

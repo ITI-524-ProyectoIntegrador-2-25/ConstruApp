@@ -1,115 +1,140 @@
-// src/components/pages/planilla/Planillas.jsx
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Calendar } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { Calendar, Filter, ChevronLeft } from 'lucide-react'
+import '../../../styles/Dashboard.css'
 import './Planilla.css'
 
-const FAKE_PLANILLAS = [
-  {
-    id: '1',
-    nombre: 'Planilla Julio 2025',
-    proyecto: 'Proyecto 1',
-    fechaInicio: '2025-07-01',
-    fechaFin:    '2025-07-31',
-    empleados: 5,
-    horasOrdinarias: 160,
-    horasExtras:     20
-  },
-  {
-    id: '2',
-    nombre: 'Planilla Junio 2025',
-    proyecto: 'Proyecto 2',
-    fechaInicio: '2025-06-01',
-    fechaFin:    '2025-06-30',
-    empleados: 3,
-    horasOrdinarias: 150,
-    horasExtras:     10
-  }
-]
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function Planillas() {
   const navigate = useNavigate()
-  const [projectFilter, setProjectFilter] = useState('')
-  const [periodFilter, setPeriodFilter]   = useState('')
 
-  const proyectosUnicos = Array.from(new Set(FAKE_PLANILLAS.map(p => p.proyecto)))
-  const periodosUnicos  = Array.from(new Set(FAKE_PLANILLAS.map(p => p.nombre)))
+  const [planillas, setPlanillas]   = useState([])
+  const [results, setResults]       = useState([])
+  const [filtroNombre, setFiltroNombre] = useState('')
+  const [filtroFecha, setFiltroFecha]   = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState('')
 
-  const results = FAKE_PLANILLAS.filter(p => {
-    if (projectFilter && p.proyecto !== projectFilter) return false
-    if (periodFilter  && p.nombre   !== periodFilter)   return false
-    return true
-  })
+  // 1) Carga inicial
+  useEffect(() => {
+    const usr = localStorage.getItem('currentUser')
+    if (!usr) {
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
+    }
+    const user   = JSON.parse(usr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    fetch(`${API_BASE}/PlanillaApi/GetPlanilla?usuario=${correo}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        setPlanillas(data)
+        setResults(data)
+      })
+      .catch(err => {
+        console.error(err)
+        setError('No se pudieron cargar las planillas.')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  // 2) Filtrado
+  const handleSearch = () => {
+    let arr = planillas
+    if (filtroNombre) {
+      const q = filtroNombre.toLowerCase()
+      arr = arr.filter(p =>
+        (p.nombre || '').toLowerCase().includes(q)
+      )
+    }
+    if (filtroFecha) {
+      arr = arr.filter(p =>
+        new Date(p.fechaInicio).toISOString().slice(0,10) === filtroFecha
+      )
+    }
+    setResults(arr)
+  }
+
+  if (loading) return <p>Cargando…</p>
+  if (error)   return <p className="dashboard-error">{error}</p>
 
   return (
-   <div className="planilla-page">
-    <div className="planilla-controls">
-      <div className="planilla-filters">
-        <div className="filter-group">
-          <label htmlFor="filterProyecto">Proyecto</label>
-          <select
-            id="filterProyecto"
-            value={projectFilter}
-            onChange={e => setProjectFilter(e.target.value)}
+    <div className="dashboard-page">
+      {/* Header: título */}
+      <header className="dashboard-header">
+        <div className="title-group">
+          <button
+            className="back-btn"
+            onClick={() => navigate(-1)}
+            title="Volver"
           >
-            <option value="">Todos los proyectos</option>
-            {proyectosUnicos.map(pr => (
-              <option key={pr} value={pr}>{pr}</option>
-            ))}
-          </select>
+            <ChevronLeft size={20}/>
+          </button>
+          <h1 className="dashboard-title">Planillas</h1>
         </div>
+      </header>
 
+      {/* Filtros + botón “Nueva planilla” */}
+      <div className="dashboard-filters">
         <div className="filter-group">
-          <label htmlFor="filterPeriodo">Periodo</label>
-          <select
-            id="filterPeriodo"
-            value={periodFilter}
-            onChange={e => setPeriodFilter(e.target.value)}
-          >
-            <option value="">Todos los periodos</option>
-            {periodosUnicos.map(pr => (
-              <option key={pr} value={pr}>{pr}</option>
-            ))}
-          </select>
+          <input
+            type="text"
+            placeholder="Buscar nombre"
+            value={filtroNombre}
+            onChange={e => setFiltroNombre(e.target.value)}
+          />
         </div>
+        <div className="filter-group">
+          <Calendar className="filter-icon"/>
+          <input
+            type="date"
+            value={filtroFecha}
+            onChange={e => setFiltroFecha(e.target.value)}
+          />
+        </div>
+        <button className="btn-search" onClick={handleSearch}>
+          Buscar
+        </button>
+        <button className="btn-icon" title="Filtros avanzados">
+          <Filter />
+        </button>
+        <Link to="nueva" className="btn-add">
+          + Nueva planilla
+        </Link>
       </div>
 
-      <div className="planilla-new">
-        <Link to="nueva" className="btn-nueva">+ Nueva planilla</Link>
-      </div>
-    </div>
-
-      {/* Listado de planillas */}
-      <div className="planilla-list">
-        {results.length === 0 ? (
-          <p className="no-results">No hay planillas para mostrar</p>
-        ) : results.map(p => (
-          <Link
-            key={p.id}
-            to={`${p.id}`}
-            className="planilla-card"
-          >
-            <div className="card-header">
-              <h3 className="card-nombre">{p.nombre}</h3>
-              <span className="card-proyecto">{p.proyecto}</span>
-            </div>
-            <div className="card-body">
-              <div className="card-row">
-                <Calendar size={14} className="icon" />
-                <span>{p.fechaInicio} – {p.fechaFin}</span>
+      {/* Grid de cards */}
+      <div className="projects-grid">
+        {results.length > 0 ? (
+          results.map(p => (
+            <NavLink
+              key={p.idPlanilla}
+              to={`${p.idPlanilla}`}
+              className="project-card"
+            >
+              <div className="card-image">
+                <img
+                  src={require('../../../assets/img/dashboard.png')}
+                  alt={p.nombre}
+                />
               </div>
-              <div className="card-row">
-                <strong>Empleados:</strong> {p.empleados}
+              <div className="card-info">
+                <h3>{p.nombre}</h3>
+                <p>
+                  <Calendar size={14}/> {' '}
+                  {new Date(p.fechaInicio).toLocaleDateString()}
+                </p>
               </div>
-              <div className="card-row">
-                <strong>Horas ordinarias:</strong> {p.horasOrdinarias}
-              </div>
-              <div className="card-row">
-                <strong>Horas extras:</strong> {p.horasExtras}
-              </div>
-            </div>
-          </Link>
-        ))}
+            </NavLink>
+          ))
+        ) : (
+          <p className="no-results">No se encontraron planillas</p>
+        )}
       </div>
     </div>
   )

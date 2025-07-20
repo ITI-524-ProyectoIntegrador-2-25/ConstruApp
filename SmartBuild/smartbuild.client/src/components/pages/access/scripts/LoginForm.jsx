@@ -31,9 +31,14 @@ export default function LoginForm() {
       const msg = usuarioObj.msg || ''.toLowerCase()
 
       if (msg.includes('Autorizado') || msg.includes('Ingreso')) {
-        // guardo todo el objeto de usuario para usarlo en otros endpoints
-        localStorage.setItem('currentUser', JSON.stringify(usuarioObj))
-        navigate('/dashboard')
+        const userToStore = {
+          ...usuarioObj,
+          correo: email,         // o la variable donde tengas el valor del input
+          usuario: email         // opcional, si tu código más abajo busca user.usuario
+        }
+        localStorage.setItem('currentUser', JSON.stringify(userToStore))
+
+          navigate('/dashboard')
       } else if (msg.includes('activo')) {
         setError('Su usuario no se encuentra activo')
       } else {
@@ -52,16 +57,16 @@ export default function LoginForm() {
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Correo electrónico</label>
+          <label htmlFor="email">Escribe tu correo electrónico</label>
           <input
-            id="email" type="email" placeholder="Correo"
+            id="email" type="email" placeholder="Correo electrónico"
             className="input" value={email}
             onChange={e => setEmail(e.target.value)} required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Contraseña</label>
+          <label htmlFor="password">Escribe tu contraseña</label>
           <div className="password-wrapper">
             <input
               id="password"

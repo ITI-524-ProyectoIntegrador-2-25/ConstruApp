@@ -1,31 +1,61 @@
 // src/components/pages/dashboard/FormDashboard.jsx
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
+import Select from 'react-select'
 import '../../../styles/Dashboard.css'
+import './FormDashboard.css'
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function FormDashboard() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({
-    clienteID:  '',
-    fechaInicio:'',
-    fechaFin:   '',
-    penalizacion: false,
-    montoPenalizacion: 0,
-    descripcion: '',
-    materiaPrimaCotizada: 0,
-    manoObraCotizada:    0,
-    materiaPrimaCostoReal:0,
-    manoObraCostoReal:   0,
-    subContratoCostoReal:0,
-    otrosGastos:         0,
-    fechaFinReal:        ''
-  })
-  const [error, setError] = useState('')
   const alertRef = useRef(null)
 
+  // opciones de clientes para react-select
+  const [clientOpts, setClientOpts] = useState([])
+
+  // estado del formulario
+  const [form, setForm] = useState({
+    cliente:               null,   // objeto {value,label}
+    fechaInicio:           '',
+    fechaFin:              '',
+    penalizacion:          false,
+    montoPenalizacion:     0,
+    descripcion:           '',
+    materiaPrimaCotizada:  0,
+    manoObraCotizada:      0,
+    materiaPrimaCostoReal: 0,
+    manoObraCostoReal:     0,
+    subContratoCostoReal:  0,
+    otrosGastos:           0,
+    fechaFinReal:          ''
+  })
+  const [error, setError] = useState('')
+
+  // traer lista de clientes y mapear a opciones
+  useEffect(() => {
+    const usr = localStorage.getItem('currentUser')
+    if (!usr) return
+    const user   = JSON.parse(usr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    fetch(`${API_BASE}/ClientApi/GetClients?usuario=${correo}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        const opts = data.map(c => ({
+          value: c.idCliente,
+          label: c.razonSocial
+        }))
+        setClientOpts(opts)
+      })
+      .catch(err => console.error('Error cargando clientes:', err))
+  }, [])
+
+  // handler para inputs estándar
   const handleChange = e => {
     const { name, value, type, checked } = e.target
     setForm(f => ({
@@ -35,34 +65,65 @@ export default function FormDashboard() {
     setError('')
   }
 
+  // handler para react-select
+  const handleSelect = field => selected => {
+    setForm(f => ({ ...f, [field]: selected }))
+    setError('')
+  }
+
   const handleSubmit = async e => {
     e.preventDefault()
-    // validaciones mínimas
-    if (!form.clienteID || !form.fechaInicio || !form.descripcion) {
+    // validaciones
+    if (!form.cliente || !form.fechaInicio || !form.descripcion) {
       setError('Cliente, fecha inicio y descripción son obligatorios')
       return
     }
+
     try {
+      const usr = localStorage.getItem('currentUser')
+      if (!usr) throw new Error('Usuario no autenticado')
+      const user       = JSON.parse(usr)
+      const correoUser = user.correo || user.usuario
+
+      // payload: extraemos el ID del cliente seleccionado
+      const payload = {
+        usuario:                 correoUser,
+        clienteID:               form.cliente.value,
+        fechaInicio:            new Date(form.fechaInicio).toISOString(),
+        fechaFin:               form.fechaFin ? new Date(form.fechaFin).toISOString() : null,
+        penalizacion:           form.penalizacion,
+        montoPenalizacion:      form.montoPenalizacion,
+        descripcion:            form.descripcion,
+        materiaPrimaCotizada:   form.materiaPrimaCotizada,
+        manoObraCotizada:       form.manoObraCotizada,
+        materiaPrimaCostoReal:  form.materiaPrimaCostoReal,
+        manoObraCostoReal:      form.manoObraCostoReal,
+        subContratoCostoReal:   form.subContratoCostoReal,
+        otrosGastos:            form.otrosGastos,
+        fechaFinReal:           form.fechaFinReal 
+          ? new Date(form.fechaFinReal).toISOString()
+          : null
+      }
+
       const res = await fetch(
-        `${API_BASE}/PresupuestoApi/InsertPresupuesto`,
-        {
+        `${API_BASE}/PresupuestoApi/InsertPresupuesto`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept':       'application/json'
           },
-          body: JSON.stringify(form)
+          body: JSON.stringify(payload)
         }
       )
       if (!res.ok) {
         const txt = await res.text()
         throw new Error(txt || `Status ${res.status}`)
       }
-      // opcional: const data = await res.json()
+
       navigate(-1)
     } catch (err) {
-      console.error(err)
-      setError('No se pudo guardar el proyecto. Inténtalo de nuevo.')
+      console.error('Error al guardar el proyecto:', err)
+      setError(err.message || 'No se pudo guardar el proyecto. Intenta de nuevo.')
     }
   }
 
@@ -86,17 +147,21 @@ export default function FormDashboard() {
       )}
 
       <form onSubmit={handleSubmit} className="form-dashboard">
+        {/* Cliente (react-select) */}
         <div className="form-group">
-          <label>Cliente ID</label>
-          <input
-            name="clienteID"
-            type="number"
-            value={form.clienteID}
-            onChange={handleChange}
-            required
+          <label>Cliente</label>
+          <Select
+            name="cliente"
+            options={clientOpts}
+            value={form.cliente}
+            onChange={handleSelect('cliente')}
+            placeholder="Selecciona un cliente…"
+            className="react-select-container"
+            classNamePrefix="react-select"
           />
         </div>
 
+        {/* Fecha Inicio */}
         <div className="form-group">
           <label>Fecha Inicio</label>
           <input
@@ -108,6 +173,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Fecha Fin */}
         <div className="form-group">
           <label>Fecha Fin</label>
           <input
@@ -118,6 +184,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Penalización */}
         <div className="form-group">
           <label>
             <input
@@ -141,6 +208,7 @@ export default function FormDashboard() {
           </div>
         )}
 
+        {/* Descripción */}
         <div className="form-group">
           <label>Descripción</label>
           <textarea
@@ -151,6 +219,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Materia Prima Cotizada */}
         <div className="form-group">
           <label>Materia Prima Cotizada</label>
           <input
@@ -161,6 +230,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Mano de Obra Cotizada */}
         <div className="form-group">
           <label>Mano de Obra Cotizada</label>
           <input
@@ -171,6 +241,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Materia Prima Costo Real */}
         <div className="form-group">
           <label>Materia Prima Costo Real</label>
           <input
@@ -181,6 +252,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Mano de Obra Costo Real */}
         <div className="form-group">
           <label>Mano de Obra Costo Real</label>
           <input
@@ -191,6 +263,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Subcontrato Costo Real */}
         <div className="form-group">
           <label>Subcontrato Costo Real</label>
           <input
@@ -201,6 +274,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Otros Gastos */}
         <div className="form-group">
           <label>Otros Gastos</label>
           <input
@@ -211,6 +285,7 @@ export default function FormDashboard() {
           />
         </div>
 
+        {/* Fecha Fin Real */}
         <div className="form-group">
           <label>Fecha Fin Real</label>
           <input

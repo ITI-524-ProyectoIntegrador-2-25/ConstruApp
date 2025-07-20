@@ -1,115 +1,103 @@
-// src/components/pages/planilla/Planilla.jsx
-import React, { useState } from 'react'
-import { ChevronLeft, Calendar, ChevronRight } from 'lucide-react'
-import './FormPlanilla.css'
-import sampleImg from '../../../assets/img/dashboard.png'  // ajusta la ruta a tu imagen
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
+import '../../../styles/Dashboard.css'       // el mismo CSS de detalle genérico
+import './DetallePlanilla.css'            // ajustes específicos si los hubiera
 
-export default function Planilla() {
-  const [date, setDate] = useState(new Date())
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
-  const prevDay = () => setDate(d => {
-    const nd = new Date(d)
-    nd.setDate(nd.getDate() - 1)
-    return nd
-  })
-  const nextDay = () => setDate(d => {
-    const nd = new Date(d)
-    nd.setDate(nd.getDate() + 1)
-    return nd
-  })
+export default function DetallePlanilla() {
+  const { idPlanilla } = useParams()
+  const navigate       = useNavigate()
 
-  const formatMonthYear = d =>
-    d.toLocaleString('es-ES', { month: 'long', year: 'numeric' })
+  const [detalle, setDetalle] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
+
+  useEffect(() => {
+    const usr = localStorage.getItem('currentUser')
+    if (!usr) {
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
+    }
+    const user   = JSON.parse(usr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    fetch(
+      `${API_BASE}/PlanillaApi/GetPlanillabyInfo`
+      + `?idPlanilla=${idPlanilla}&Usuario=${correo}`
+    )
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        // si viene como array, tomamos el primero
+        const record = Array.isArray(data) && data.length
+                     ? data[0]
+                     : data
+        setDetalle(record)
+      })
+      .catch(err => {
+        console.error(err)
+        setError('No se encontró la planilla.')
+      })
+      .finally(() => setLoading(false))
+  }, [idPlanilla])
+
+  if (loading) return <p className="detalle-loading">Cargando detalles…</p>
+  if (error)   return <p className="detalle-error">{error}</p>
+  if (!detalle) return null
+
+  // formateo seguro de la fecha de registro
+  const fechaRegistro = (() => {
+    if (!detalle.cuandoIngreso) return ''
+    const iso = detalle.cuandoIngreso.replace(' ', 'T')
+    const d = new Date(iso)
+    return isNaN(d) ? detalle.cuandoIngreso : d.toLocaleDateString()
+  })()
 
   return (
-    <div className="planilla-page">
-      {/* HEADER */}
-      <header className="planilla-header">
-        <button className="back-btn" title="Volver al Dashboard">
+    <div className="detalle-page">
+      <header className="detalle-header">
+        <button
+          className="detalle-back"
+          onClick={() => navigate(-1)}
+          title="Volver"
+        >
           <ChevronLeft size={20}/>
         </button>
-        <h1>Planilla</h1>
+        <h2 className="detalle-title">
+          Planilla #{detalle.idPlanilla}
+        </h2>
       </header>
 
-      {/* PERIODO */}
-      <section className="planilla-periodo">
-        <span className="label">Periodo de la planilla</span>
-        <div className="controls">
-          <button onClick={prevDay}><ChevronLeft size={18}/></button>
-          <Calendar size={18}/>
-          <button onClick={nextDay}><ChevronRight size={18}/></button>
+      <div className="detalle-grid">
+        <div className="detalle-row">
+          <span className="label">Nombre:</span>
+          <span className="value">{detalle.nombre}</span>
         </div>
-        <div className="current-period">{formatMonthYear(date)}</div>
-      </section>
-
-      {/* CONTENIDO: formulario + resumen */}
-      <div className="planilla-grid">
-        {/* FORMULARIO */}
-        <form className="planilla-form">
-          <div className="form-group">
-            <label htmlFor="proyecto">Proyecto asociado</label>
-            <select id="proyecto">
-              <option>Seleccionar proyecto</option>
-              <option>Proyecto 1</option>
-              <option>Proyecto 2</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="planillaName">Nombre de la planilla</label>
-            <input id="planillaName" placeholder="Nombre de la planilla"/>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="empleados">Empleados asociados</label>
-            <select id="empleados">
-              <option>Seleccionar empleados</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="horas">Horas ordinarias</label>
-            <input id="horas" placeholder="0"/>
-          </div>
-          <div className="form-group">
-            <label htmlFor="horasExtra">Horas extras</label>
-            <input id="horasExtra" placeholder="0"/>
-          </div>
-          <div className="form-group">
-            <label htmlFor="horasDobles">Horas dobles</label>
-            <input id="horasDobles" placeholder="0"/>
-          </div>
-        </form>
-
-        {/* RESUMEN */}
-        <aside className="planilla-summary">
-          <div className="summary-card">
-            <img src={sampleImg} alt="Proyecto" />
-            <div className="summary-body">
-              <h2>Proyecto 1</h2>
-              <span className="tag">Planilla</span>
-
-              <div className="dates">
-                <div>
-                  <small>Fecha de inicio</small>
-                  <strong>15 Ene 2025</strong>
-                </div>
-                <div>
-                  <small>Fecha de finalización</small>
-                  <strong>15 Feb 2025</strong>
-                </div>
-              </div>
-
-              <div className="total">
-                <small>Total de horas</small>
-                <strong>360</strong>
-              </div>
-
-              {/* Texto actualizado aquí */}
-              <button className="btn-payment">Generar reporte</button>
-            </div>
-          </div>
-        </aside>
+        <div className="detalle-row">
+          <span className="label">Fecha inicio:</span>
+          <span className="value">
+            {new Date(detalle.fechaInicio).toLocaleDateString()}
+          </span>
+        </div>
+        <div className="detalle-row">
+          <span className="label">Fecha fin:</span>
+          <span className="value">
+            {new Date(detalle.fechaFin).toLocaleDateString()}
+          </span>
+        </div>
+        <div className="detalle-row">
+          <span className="label">Estado:</span>
+          <span className="value">{detalle.estado}</span>
+        </div>
+        <div className="detalle-row">
+          <span className="label">Registro:</span>
+          <span className="value">{fechaRegistro}</span>
+        </div>
       </div>
     </div>
   )

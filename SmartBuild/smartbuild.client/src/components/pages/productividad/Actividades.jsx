@@ -1,106 +1,153 @@
 // src/components/pages/productividad/Actividades.jsx
-import React, { useState } from 'react'
-import { Link, useNavigate} from 'react-router-dom'
-import { Calendar, ChevronLeft } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { Calendar, Filter, ChevronLeft } from 'lucide-react'
+import Select from 'react-select'
+import '../../../styles/Dashboard.css'
 import './Actividades.css'
 
-const FAKE_ACTIVIDADES = [
-  { id:'1', proyecto:'Proyecto 1', empleado:'María Gómez', fecha:'2025-07-12', entrada:'09:00', salida:'12:30' },
-  { id:'2', proyecto:'Proyecto 2', empleado:'Juan Pérez',   fecha:'2025-07-13', entrada:'10:15', salida:'18:00' }
-]
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function Actividades() {
   const navigate = useNavigate()
-  const [projectFilter, setProjectFilter] = useState('')
-  const [dateFilter,    setDateFilter]    = useState('')
+  const [actividades, setActividades] = useState([])
+  const [results, setResults] = useState([])
+  const [filtroPresupuesto, setFiltroPresupuesto] = useState(null)
+  const [filtroFecha, setFiltroFecha] = useState('')
+  const [presupuestosOpts, setPresupuestosOpts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const proyectosUnicos = Array.from(new Set(FAKE_ACTIVIDADES.map(a => a.proyecto)))
-  const results = FAKE_ACTIVIDADES.filter(a => {
-    if (projectFilter && a.proyecto !== projectFilter) return false
-    if (dateFilter    && a.fecha    !== dateFilter)    return false
-    return true
-  })
+  useEffect(() => {
+    const usr = localStorage.getItem('currentUser')
+    if (!usr) {
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
+    }
+    const user = JSON.parse(usr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    // Cargar actividades
+    fetch(`${API_BASE}/ActividadApi/GetActividades?usuario=${correo}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        setActividades(data)
+        setResults(data)
+      })
+      .catch(err => {
+        console.error(err)
+        setError('No se pudieron cargar las actividades.')
+      })
+
+    // Cargar presupuestos para filtro
+    fetch(`${API_BASE}/PresupuestoApi/GetPresupuestos?usuario=${correo}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        const opts = data.map(p => ({
+          value: p.idPresupuesto,
+          label: p.descripcion
+        }))
+        setPresupuestosOpts(opts)
+      })
+      .catch(err => console.error('Error cargando presupuestos:', err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSearch = () => {
+    let arr = actividades
+    if (filtroPresupuesto) {
+      arr = arr.filter(a => a.presupuestoID === filtroPresupuesto.value)
+    }
+    if (filtroFecha) {
+      arr = arr.filter(a =>
+        new Date(a.fechaInicioReal).toISOString().slice(0,10) === filtroFecha
+      )
+    }
+    setResults(arr)
+  }
+
+  if (loading) return <p>Cargando…</p>
+  if (error)   return <p className="dashboard-error">{error}</p>
 
   return (
-    <div className="actividades-page">
-      <header className="actividades-header">
-        <button
-          className="back-btn"
-          onClick={() => navigate(-1)}
-          title="Regresar"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h2 className="actividades-title">Actividades</h2>
+    <div className="dashboard-page">
+      <header className="dashboard-header">
+        <div className="title-group">
+          <button
+            className="back-btn"
+            onClick={() => navigate(-1)}
+            title="Volver"
+          >
+            <ChevronLeft size={20}/>
+          </button>
+          <h1 className="dashboard-title">Actividades</h1>
+        </div>
       </header>
 
-      <div className="actividades-filters">
+      <div className="dashboard-filters">
         <div className="filter-group">
-          <label htmlFor="filterProyecto">Proyecto</label>
-          <select
-            id="filterProyecto"
-            value={projectFilter}
-            onChange={e => setProjectFilter(e.target.value)}
-          >
-            <option value="">Todos los proyectos</option>
-            {proyectosUnicos.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </div>
-        <div className="filter-group">
-          <label htmlFor="filterFecha">Fecha</label>
-          <input
-            id="filterFecha"
-            type="date"
-            value={dateFilter}
-            onChange={e => setDateFilter(e.target.value)}
+          <Select
+            options={presupuestosOpts}
+            value={filtroPresupuesto}
+            onChange={setFiltroPresupuesto}
+            isClearable
+            placeholder="Filtrar por proyecto…"
+            className="react-select-container"
+            classNamePrefix="react-select"
           />
         </div>
+        <div className="filter-group">
+          <Calendar className="filter-icon"/>
+          <input
+            type="date"
+            value={filtroFecha}
+            onChange={e => setFiltroFecha(e.target.value)}
+          />
+        </div>
+        <button className="btn-search" onClick={handleSearch}>Buscar</button>
+        <button className="btn-icon" title="Filtros avanzados">
+          <Filter />
+        </button>
+        <NavLink to="nueva" className="btn-add">+ Nueva actividad</NavLink>
       </div>
 
-      <div className="actividades-new">
-        <Link to="nueva" className="btn-nueva">+ Nueva actividad</Link>
-      </div>
-
-      <div className="actividades-list">
-        {results.length === 0 && (
-          <p className="no-results">No hay actividades que mostrar</p>
-        )}
-        {results.map(a => {
-          const [h1, m1] = a.entrada.split(':').map(Number)
-          const [h2, m2] = a.salida.split(':').map(Number)
-          const start = new Date(); start.setHours(h1, m1)
-          const end   = new Date(); end.setHours(h2, m2)
-          const dur   = ((end - start)/1000/3600).toFixed(2)
-
-          return (
-            <Link key={a.id} to={`${a.id}`} className="actividad-card">
-              <div className="card-header">
-                <h3 className="card-proyecto">{a.proyecto}</h3>
-                <span className="card-empleado">{a.empleado}</span>
-              </div>
-              <div className="card-body">
-                <div className="card-row">
-                  <Calendar size={14} className="icon"/>
-                  <span>{a.fecha}</span>
+      <div className="projects-grid">
+        {results.length > 0 ? (
+          results.map(a => {
+            const start = new Date(a.fechaInicioReal)
+            const end   = new Date(a.fechaFinReal)
+            const dur   = ((end - start) / 3600000).toFixed(2)
+            return (
+              <NavLink
+                key={a.idActividad}
+                to={`${a.idActividad}`}
+                className="project-card"
+              >
+                <div className="card-info">
+                  <h3>{a.descripcion}</h3>
+                  <p>
+                    <Calendar size={14}/> {start.toLocaleDateString()}
+                  </p>
                 </div>
-                <ClockEntryExit entrada={a.entrada} salida={a.salida} duracion={dur} />
-              </div>
-            </Link>
-          )
-        })}
+                <div className="card-extra">
+                  <span>Entrada: {start.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                  <span>Salida: {end.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                  <span>Dur: {dur}h</span>
+                </div>
+              </NavLink>
+            )
+          })
+        ) : (
+          <p className="no-results">No se encontraron actividades</p>
+        )}
       </div>
-    </div>
-  )
-}
-
-function ClockEntryExit({ entrada, salida, duracion }) {
-  return (
-    <div className="times">
-      <div className="time-row"><strong>Entrada:</strong> {entrada}</div>
-      <div className="time-row"><strong>Salida:</strong> {salida}</div>
-      <div className="time-row"><strong>Duración:</strong> {duracion} hs</div>
     </div>
   )
 }

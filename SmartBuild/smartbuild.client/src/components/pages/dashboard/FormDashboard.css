@@ -1,0 +1,118 @@
+/* FormDashboard.css */
+/* --------------------------------------------------
+   Contenedor general
+   -------------------------------------------------- */
+.form-dashboard-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+}
+
+/* --------------------------------------------------
+   Header: botón volver + título
+   -------------------------------------------------- */
+.form-dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+}
+.form-dashboard-header .back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  transition: color 0.2s;
+}
+.form-dashboard-header .back-btn:hover {
+  color: #1e40af;
+}
+.form-dashboard-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #374151;
+}
+
+/* --------------------------------------------------
+   Estilos del formulario
+   -------------------------------------------------- */
+.form-dashboard .form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.form-dashboard label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+.form-dashboard input,
+.form-dashboard select,
+.form-dashboard textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-dashboard input:focus,
+.form-dashboard select:focus,
+.form-dashboard textarea:focus {
+  border-color: #2563eb;
+}
+
+/* --------------------------------------------------
+   Botón Guardar
+   -------------------------------------------------- */
+.btn-submit {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit:hover {
+  background: #1e40af;
+}
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------
+   Mensaje de error
+   -------------------------------------------------- */
+.alert.alert-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+/* react-select */
+.react-select__control {
+  border: 1px solid var(--clr-border);
+  border-radius: 0.5rem;
+  padding: 0.1rem;
+}
+.react-select__control--is-focused {
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+  border-color: var(--clr-primary);
+}
+.react-select__menu {
+  z-index: 1000;
+}

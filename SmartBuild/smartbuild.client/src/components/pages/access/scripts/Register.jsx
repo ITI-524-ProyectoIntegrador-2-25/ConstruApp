@@ -1,4 +1,3 @@
-// src/components/pages/Register.jsx
 import React, { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
@@ -24,12 +23,11 @@ export default function Register() {
   const [showPwd2, setShowPwd2]               = useState(false)
   const navigate                              = useNavigate()
 
-  // Evalúa fuerza de contraseña
   const evaluateStrength = pwd => {
     let score = 0
     if (pwd.length >= 8)         score++
-    if (/[A-Z]/.test(pwd))        score++
-    if (/[0-9]/.test(pwd))        score++
+    if (/[A-Z]/.test(pwd))       score++
+    if (/[0-9]/.test(pwd))       score++
     if (/[^A-Za-z0-9]/.test(pwd)) score++
     const labels = ['Muy débil','Débil','Media','Fuerte']
     const colors = ['danger','warning','info','success']
@@ -40,10 +38,24 @@ export default function Register() {
     })
   }
 
+const checkEmail = async (correo) => {
+  try {
+    const res = await fetch(`${API_BASE}/UsuarioApi/GetUsuario?usuario=${encodeURIComponent(correo)}`)
+    if (!res.ok) throw new Error('No se pudo consultar usuarios')
+
+    const data = await res.json()
+    const existe = Array.isArray(data) && data.some(user => user.correo?.toLowerCase() === correo.toLowerCase())
+    return existe
+  } catch (err) {
+    console.error('Error verificando correo:', err)
+    throw new Error('No se pudo validar el correo')
+  }
+}
+
+
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // 1) Validaciones básicas
     if (!firstName)                           return setError('El nombre es obligatorio')
     if (!lastName)                            return setError('El apellido es obligatorio')
     if (!position)                            return setError('El puesto es obligatorio')
@@ -53,18 +65,24 @@ export default function Register() {
     if (!role)                                return setError('Debes seleccionar un rol')
     if (!termsRef.current.checked)            return setError('Debes aceptar los Términos y Condiciones')
 
+    // Validar existencia del correo
+    let existeCorreo = false
+    try {
+      existeCorreo = await checkEmail(email)
+    } catch (err) {
+      return setError(err.message)
+    }
+    if (existeCorreo) return setError('El correo ya está registrado')
+
     setError('')
 
-
-
-    // 3) Payload completo según API
     const now = new Date().toISOString()
     const payload = {
       usuario:        `${firstName}.${lastName}`,
-      quienIngreso:  'web-app',
+      quienIngreso:   'web-app',
       cuandoIngreso:  now,
       quienModifico:  'web-app',
-      cuandoModifico:  now,
+      cuandoModifico: now,
       idUsuario:      0,
       nombre:         firstName,
       apellido:       lastName,
@@ -75,25 +93,22 @@ export default function Register() {
       estado:         true
     }
 
-    // 4) Insertar nuevo usuario
     try {
-      const res = await fetch(
-        `${API_BASE}/UsuarioApi/InsertUsuario`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept':       'text/plain'
-          },
-          body: JSON.stringify(payload)
-        }
-      )
+      const res = await fetch(`${API_BASE}/UsuarioApi/InsertUsuario`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept':       'text/plain'
+        },
+        body: JSON.stringify(payload)
+      })
+
       if (!res.ok) {
         const txt = await res.text()
         throw new Error(txt || `Status ${res.status}`)
       }
-      // En general podrías leer la respuesta con res.json() si devolviera JSON
-      navigate('/')  // redirige a login
+
+      navigate('/')
     } catch (err) {
       console.error('Error al crear usuario:', err)
       setError('Hubo un problema creando la cuenta. Intenta más tarde.')
@@ -106,7 +121,6 @@ export default function Register() {
       <p className="subtitle">Comienza a gestionar tu presupuesto fácilmente</p>
 
       <form onSubmit={handleSubmit}>
-        {/* Nombre */}
         <div className="form-group">
           <label htmlFor="firstName">Escribe tu nombre</label>
           <input
@@ -119,7 +133,6 @@ export default function Register() {
           />
         </div>
 
-        {/* Apellido */}
         <div className="form-group">
           <label htmlFor="lastName">Escribe tu apellido</label>
           <input
@@ -132,7 +145,6 @@ export default function Register() {
           />
         </div>
 
-        {/* Puesto */}
         <div className="form-group">
           <label htmlFor="position">Escribe tu puesto de trabajo</label>
           <input
@@ -145,7 +157,6 @@ export default function Register() {
           />
         </div>
 
-        {/* Correo */}
         <div className="form-group">
           <label htmlFor="email">Escribe tu correo electrónico</label>
           <input
@@ -153,12 +164,14 @@ export default function Register() {
             type="email"
             className="input"
             value={email}
-            onChange={e => { setEmail(e.target.value); error && setError('') }}
+            onChange={e => {
+              setEmail(e.target.value)
+              if (error) setError('')
+            }}
             placeholder="Correo electrónico"
           />
         </div>
 
-        {/* Contraseña */}
         <div className="form-group">
           <label htmlFor="password">Escribe tu contraseña</label>
           <div className="password-wrapper">
@@ -170,7 +183,7 @@ export default function Register() {
               onChange={e => {
                 setPassword(e.target.value)
                 evaluateStrength(e.target.value)
-                error && setError('')
+                if (error) setError('')
               }}
               placeholder="••••••••"
             />
@@ -178,9 +191,8 @@ export default function Register() {
               type="button"
               className="toggle-btn"
               onClick={() => setShowPwd(v => !v)}
-              aria-label={showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
-              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}  
+              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}
             </button>
           </div>
           <div className="mt-2">
@@ -198,7 +210,6 @@ export default function Register() {
           </div>
         </div>
 
-        {/* Confirmar contraseña */}
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirmar contraseña</label>
           <div className="password-wrapper">
@@ -214,14 +225,12 @@ export default function Register() {
               type="button"
               className="toggle-btn"
               onClick={() => setShowPwd2(v => !v)}
-              aria-label={showPwd2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               {showPwd2 ? <EyeOff size={20}/> : <Eye size={20}/>}
             </button>
           </div>
         </div>
 
-        {/* Rol */}
         <div className="form-group">
           <label htmlFor="role">Selecciona un rol</label>
           <select
@@ -237,7 +246,6 @@ export default function Register() {
           </select>
         </div>
 
-        {/* Mostrar error */}
         <CSSTransition
           in={!!error}
           timeout={300}
@@ -255,7 +263,6 @@ export default function Register() {
           </div>
         </CSSTransition>
 
-        {/* Términos */}
         <div className="options-row">
           <label className="checkbox-label">
             <input

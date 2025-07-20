@@ -1,215 +1,170 @@
-// src/components/pages/productividad/ActividadDetalle.jsx
+// src/components/pages/productividad/DetalleActividades.jsx
 import React, { useState, useEffect } from 'react'
-import { ChevronLeft, Clock } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
-import './FormActividad.css'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
+import '../../../styles/Dashboard.css'
+import './DetalleActividades.css'
 
-// Simulamos un "fetch" local. En la vida real harías una llamada a tu API.
-const FAKE_ACTIVIDADES = [
-  {
-    id: '1',
-    proyectoId: '1',
-    empleadoId: '2',
-    fecha: '2025-07-12',
-    descripcion: 'Reunión de planificación',
-    entrada: '09:00',
-    salida: '12:30'
-  },
-  {
-    id: '2',
-    proyectoId: '2',
-    empleadoId: '1',
-    fecha: '2025-07-13',
-    descripcion: 'Desarrollo de módulo X',
-    entrada: '10:15',
-    salida: '18:00'
-  },
-]
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
-const PROYECTOS = [
-  { id: '1', name: 'Proyecto 1' },
-  { id: '2', name: 'Proyecto 2' }
-]
+export default function DetalleActividades() {
+  const { idActividad } = useParams()
+  const navigate = useNavigate()
 
-const EMPLEADOS = [
-  { id: '1', name: 'Juan Pérez' },
-  { id: '2', name: 'María Gómez' }
-]
+  const [detalle, setDetalle]         = useState(null)
+  const [presupuestos, setPresupuestos] = useState([])
+  const [empleados, setEmpleados]     = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState('')
 
-export default function ActividadDetalle() {
-  const { id }       = useParams()
-  const navigate     = useNavigate()
-
-  // Estados del formulario
-  const [proyecto,    setProyecto]    = useState('')
-  const [empleado,    setEmpleado]    = useState('')
-  const [fecha,       setFecha]       = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [entrada,     setEntrada]     = useState('')
-  const [salida,      setSalida]      = useState('')
-  const [duracion,    setDuracion]    = useState(0)
-  const [timeError,   setTimeError]   = useState('')
-  const [formError,   setFormError]   = useState('')
-
-  // Carga datos al montar
   useEffect(() => {
-    const act = FAKE_ACTIVIDADES.find(a => a.id === id)
-    if (!act) {
-      // si no existe, volvemos atrás
-      navigate(-1)
+    if (!idActividad) {
+      setError('ID de actividad no especificado.')
+      setLoading(false)
       return
     }
-    setProyecto(act.proyectoId)
-    setEmpleado(act.empleadoId)
-    setFecha(act.fecha)
-    setDescripcion(act.descripcion)
-    setEntrada(act.entrada)
-    setSalida(act.salida)
-  }, [id, navigate])
-
-  // Recalcula duración y valida hora
-  useEffect(() => {
-    setTimeError('')
-    if (!entrada || !salida) {
-      setDuracion(0)
+    const usr = localStorage.getItem('currentUser')
+    if (!usr) {
+      setError('Usuario no autenticado.')
+      setLoading(false)
       return
     }
-    const [h1, m1] = entrada.split(':').map(Number)
-    const [h2, m2] = salida.split(':').map(Number)
-    const start = new Date(); start.setHours(h1, m1, 0, 0)
-    const end   = new Date(); end.setHours(h2, m2, 0, 0)
+    const user   = JSON.parse(usr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
 
-    if (end <= start) {
-      setDuracion(0)
-      setTimeError('La hora de salida debe ser posterior a la de entrada')
-    } else {
-      const hrs = (end - start) / 1000 / 3600
-      setDuracion(+hrs.toFixed(2))
-    }
-  }, [entrada, salida])
+    setLoading(true)
+    Promise.all([
+      fetch(
+        `${API_BASE}/ActividadApi/GetActividadbyInfo?idActividad=${idActividad}&usuario=${correo}`
+      ).then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      }),
+      fetch(`${API_BASE}/PresupuestoApi/GetPresupuestos?usuario=${correo}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Status ${res.status}`)
+          return res.json()
+        }),
+      fetch(`${API_BASE}/EmpleadoApi/GetEmpleado?usuario=${correo}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Status ${res.status}`)
+          return res.json()
+        })
+    ])
+      .then(([rawAct, presData, empData]) => {
+        const activity = Array.isArray(rawAct) ? rawAct[0] : rawAct
+        if (!activity) {
+          setError('Actividad no encontrada.')
+        } else {
+          setDetalle(activity)
+          setPresupuestos(presData)
+          setEmpleados(empData)
+        }
+      })
+      .catch(err => {
+        console.error(err)
+        setError('No se pudo cargar la información.')
+      })
+      .finally(() => setLoading(false))
+  }, [idActividad])
 
-  const handleSubmit = e => {
-    e.preventDefault()
-    if (!proyecto)    return setFormError('Selecciona un proyecto')
-    if (!empleado)    return setFormError('Selecciona un empleado')
-    if (!fecha)       return setFormError('Indica la fecha')
-    if (!descripcion) return setFormError('Escribe una descripción')
-    if (timeError)    return
-    setFormError('')
+  if (loading) return <p>Cargando detalles…</p>
+  if (error)   return <p className="detalle-error">{error}</p>
+  if (!detalle) return null
 
-    // Aquí llamarías a la API de actualización, p.ej.:
-    // fetch(`${API_BASE}/ActividadApi/Update/${id}`, { ... })
-    //   .then(...)
-    //   .catch(...)
-    console.log('Guardando cambios de actividad', {
-      id, proyecto, empleado, fecha, descripcion, entrada, salida, duracion
-    })
+  // Parseamos fechas completas (fecha + hora)
+  const startProj = new Date(detalle.fechaInicioProyectada)
+  const endProj   = new Date(detalle.fechaFinProyectada)
+  const startReal = new Date(detalle.fechaInicioReal)
+  const endReal   = new Date(detalle.fechaFinReal)
 
-    navigate(-1)
-  }
+  // Cálculo de duración en horas, con decimales
+  const durHours = ((endReal.getTime() - startReal.getTime()) / (1000 * 60 * 60)).toFixed(2)
+
+  // Búsqueda de objetos relacionados
+  const presObj = presupuestos.find(p => p.idPresupuesto === detalle.presupuestoID)
+  const empObj  = empleados.find(e => e.idEmpleado === detalle.empleadoID)
+
+  // Formateadores
+  const fmtDate = d => d.toLocaleDateString()
+  const fmtTime = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="actividad-form-page">
-      <header className="actividad-form-header">
-        <button onClick={() => navigate(-1)} className="back-btn" title="Volver">
+    <div className="detalle-page">
+      <header className="detalle-header">
+        <button
+          className="detalle-back"
+          onClick={() => navigate(-1)}
+          title="Volver"
+        >
           <ChevronLeft size={20}/>
         </button>
-        <h1>Detalle de actividad</h1>
+        <h2 className="detalle-title">
+          Actividad #{detalle.idActividad}
+        </h2>
       </header>
 
-      <form onSubmit={handleSubmit} className="actividad-form">
-        {formError && (
-          <div className="actividad-error">{formError}</div>
-        )}
-
-        <div className="form-group">
-          <label>Proyecto</label>
-          <select
-            value={proyecto}
-            onChange={e => { setProyecto(e.target.value); formError && setFormError('') }}
-            required
-          >
-            <option value="">Seleccionar</option>
-            {PROYECTOS.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+      <div className="detalle-grid">
+        {/* Descripción */}
+        <div className="detalle-row">
+          <span className="label">Descripción:</span>
+          <span className="value">{detalle.descripcion}</span>
         </div>
 
-        <div className="form-group">
-          <label>Empleado</label>
-          <select
-            value={empleado}
-            onChange={e => { setEmpleado(e.target.value); formError && setFormError('') }}
-            required
-          >
-            <option value="">Seleccionar</option>
-            {EMPLEADOS.map(u => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
+        {/* Presupuesto */}
+        <div className="detalle-row">
+          <span className="label">Presupuesto:</span>
+          <span className="value">
+            {presObj?.descripcion ?? detalle.presupuestoID}
+          </span>
         </div>
 
-        <div className="form-group">
-          <label>Fecha</label>
-          <input
-            type="date"
-            value={fecha}
-            onChange={e => { setFecha(e.target.value); formError && setFormError('') }}
-            required
-          />
+        {/* Empleado */}
+        <div className="detalle-row">
+          <span className="label">Empleado:</span>
+          <span className="value">
+            {empObj
+              ? empObj.nombreEmpleado 
+                || `${empObj.nombre || ''} ${empObj.apellido || ''}`.trim()
+              : detalle.empleadoID
+            }
+          </span>
         </div>
 
-        <div className="form-group">
-          <label>Descripción</label>
-          <textarea
-            rows={3}
-            value={descripcion}
-            onChange={e => { setDescripcion(e.target.value); formError && setFormError('') }}
-            required
-          />
+        {/* Fecha proyectada */}
+        <div className="detalle-row">
+          <span className="label">Fecha proyectada:</span>
+          <span className="value">
+            {fmtDate(startProj)} {fmtTime(startProj)}
+            {' – '}
+            {fmtDate(endProj)} {fmtTime(endProj)}
+          </span>
         </div>
 
-        <div className="form-group time-group">
-          <div>
-            <label>Hora de entrada</label>
-            <div className="time-input">
-              <Clock size={16} className="icon-clock"/>
-              <input
-                type="time"
-                value={entrada}
-                onChange={e => setEntrada(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label>Hora de salida</label>
-            <div className="time-input">
-              <Clock size={16} className="icon-clock"/>
-              <input
-                type="time"
-                value={salida}
-                onChange={e => setSalida(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+        {/* Fecha real */}
+        <div className="detalle-row">
+          <span className="label">Fecha real:</span>
+          <span className="value">
+            {fmtDate(startReal)} {fmtTime(startReal)}
+            {' – '}
+            {fmtDate(endReal)} {fmtTime(endReal)}
+          </span>
         </div>
 
-        {timeError && (
-          <div className="actividad-error">{timeError}</div>
-        )}
-
-        <div className="form-group">
-          <label>Duración (hs)</label>
-          <input type="text" value={duracion} readOnly />
+        {/* Duración */}
+        <div className="detalle-row">
+          <span className="label">Duración (horas):</span>
+          <span className="value">{durHours} h</span>
         </div>
 
-        <button type="submit" className="btn-submit" disabled={!!timeError}>
-          Guardar cambios
-        </button>
-      </form>
+        {/* Estado */}
+        <div className="detalle-row">
+          <span className="label">Estado:</span>
+          <span className="value">
+            {detalle.estado || 'Sin especificar'}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
