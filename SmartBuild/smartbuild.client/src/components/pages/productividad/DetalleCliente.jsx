@@ -7,8 +7,9 @@ import './DetalleCliente.css'
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function DetalleCliente() {
-  const { idCliente }      = useParams()
-  const navigate           = useNavigate()
+  const { idCliente } = useParams()
+  const navigate      = useNavigate()
+
   const [detalle, setDetalle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
@@ -30,7 +31,9 @@ export default function DetalleCliente() {
         return res.json()
       })
       .then(data => {
-        setDetalle(data)
+        // si viene como array, tomo el primer elemento
+        const record = Array.isArray(data) && data.length ? data[0] : data
+        setDetalle(record)
       })
       .catch(err => {
         console.error(err)
@@ -41,6 +44,19 @@ export default function DetalleCliente() {
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>
   if (error)   return <p className="detalle-error">{error}</p>
+  if (!detalle) return <p className="detalle-error">No hay datos de cliente.</p>
+
+  // formateo seguro de la fecha
+  const formatoFecha = (() => {
+    const raw = detalle.cuandoIngreso
+    if (!raw) return ''
+    // reemplazo el espacio por T para que Date.parse lo reconozca
+    const iso = raw.replace(' ', 'T')
+    const d   = new Date(iso)
+    if (!isNaN(d)) return d.toLocaleDateString()
+    // fallback: muestro el string original
+    return raw
+  })()
 
   return (
     <div className="detalle-page">
@@ -76,9 +92,7 @@ export default function DetalleCliente() {
         </div>
         <div className="detalle-row">
           <span className="label">Registro:</span>
-          <span className="value">
-            {new Date(detalle.cuandoIngreso).toLocaleDateString()}
-          </span>
+          <span className="value">{formatoFecha}</span>
         </div>
       </div>
     </div>

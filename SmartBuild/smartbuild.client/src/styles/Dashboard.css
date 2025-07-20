@@ -190,6 +190,23 @@
   padding: var(--spacing);
 }
 
+/* Aseguramos que la fila de filtros sea flexbox */
+.dashboard-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: var(--spacing);
+}
+
+/* Hacemos que el botón de agregar empuje al resto y quede a la derecha */
+.dashboard-filters .btn-add {
+  margin-left: auto;
+  /* Si quieres dar un poco más de consistencia con los otros botones: */
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+}
+
+
 /* ============================================================================ 
    Responsive móvil: ≤768px 
 ============================================================================ */
@@ -251,8 +268,8 @@
   .btn-add::after {
     content: '+';
     text-indent: -5.5px;
-    transform: translate(-5%, -5%);
-    font-size: 2.8rem;
+    transform: translate(-8%, -8%);
+    font-size: 3rem;
     font-weight: 600;
     line-height: 1;
     color: var(--clr-white);

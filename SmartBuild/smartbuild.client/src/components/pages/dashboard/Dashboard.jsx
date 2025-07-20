@@ -73,9 +73,7 @@ export default function Dashboard() {
           </button>
           <h1 className="dashboard-title">Proyectos</h1>
         </div>
-        <Link to="proyectos/nuevo" className="btn-add">
-          + Agregar proyecto
-        </Link>
+
       </header>
 
       <div className="dashboard-filters">
@@ -101,6 +99,9 @@ export default function Dashboard() {
         <button className="btn-icon" title="Filtros avanzados">
           <Filter />
         </button>
+          <Link to="proyectos/nuevo" className="btn-add">
+          + Agregar proyecto
+        </Link>
       </div>
 
       <div className="projects-grid">

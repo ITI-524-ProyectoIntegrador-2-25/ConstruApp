@@ -73,9 +73,7 @@ export default function Clientes() {
           </button>
           <h1 className="clientes-title">Clientes</h1>
         </div>
-        <Link to="nuevo" className="btn-add">
-          + Agregar cliente
-        </Link>
+
       </header>
 
       <div className="clientes-filters">
@@ -101,6 +99,9 @@ export default function Clientes() {
         <button className="btn-icon" title="Filtros avanzados">
           <Filter />
         </button>
+        <Link to="nuevo" className="btn-add">
+          + Agregar cliente
+        </Link>
       </div>
 
       <div className="clients-grid">
@@ -108,7 +109,7 @@ export default function Clientes() {
           results.map(c => (
             <NavLink
               key={c.idCliente}
-              to={`clientes/${c.idCliente}`}
+              to={`${c.idCliente}`}
               className="client-card"
             >
               <div className="card-image">

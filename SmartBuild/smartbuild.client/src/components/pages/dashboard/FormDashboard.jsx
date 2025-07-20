@@ -1,5 +1,5 @@
 // src/components/pages/dashboard/FormDashboard.jsx
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
@@ -9,6 +9,10 @@ const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function FormDashboard() {
   const navigate = useNavigate()
+
+  // Estado para la lista de clientes
+  const [clients, setClients] = useState([])
+
   const [form, setForm] = useState({
     clienteID:  '',
     fechaInicio:'',
@@ -27,6 +31,22 @@ export default function FormDashboard() {
   const [error, setError] = useState('')
   const alertRef = useRef(null)
 
+  // Cargar lista de clientes al inicio
+  useEffect(() => {
+    const usuarioStr = localStorage.getItem('currentUser')
+    if (!usuarioStr) return
+    const user   = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    fetch(`${API_BASE}/ClientApi/GetClients?usuario=${correo}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        return res.json()
+      })
+      .then(data => setClients(data))
+      .catch(err => console.error('Error cargando clientes:', err))
+  }, [])
+
   const handleChange = e => {
     const { name, value, type, checked } = e.target
     setForm(f => ({
@@ -38,7 +58,6 @@ export default function FormDashboard() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    // validaciones mínimas
     if (!form.clienteID || !form.fechaInicio || !form.descripcion) {
       setError('Cliente, fecha inicio y descripción son obligatorios')
       return
@@ -59,7 +78,6 @@ export default function FormDashboard() {
         const txt = await res.text()
         throw new Error(txt || `Status ${res.status}`)
       }
-      // opcional: const data = await res.json()
       navigate(-1)
     } catch (err) {
       console.error(err)
@@ -86,16 +104,22 @@ export default function FormDashboard() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="form-dashboard">
+       <form onSubmit={handleSubmit} className="form-dashboard">
         <div className="form-group">
-          <label>Cliente ID</label>
-          <input
+          <label>Cliente</label>
+          <select
             name="clienteID"
-            type="number"
             value={form.clienteID}
             onChange={handleChange}
             required
-          />
+          >
+            <option value="">Selecciona un cliente</option>
+            {clients.map(c => (
+              <option key={c.idCliente} value={c.idCliente}>
+                {c.razonSocial}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">

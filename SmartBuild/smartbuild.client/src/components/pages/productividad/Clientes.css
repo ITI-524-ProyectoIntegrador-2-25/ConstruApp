@@ -190,6 +190,23 @@
   padding: var(--spacing);
 }
 
+/* Aseguramos que la fila de filtros sea flexbox */
+.clientes-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: var(--spacing);
+}
+
+/* Hacemos que el botón de agregar empuje al resto y quede a la derecha */
+.clientes-filters .btn-add {
+  margin-left: auto;
+  /* Si quieres dar un poco más de consistencia con los otros botones: */
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+}
+
+
 /* ============================================================================ 
    Responsive móvil: ≤768px 
 ============================================================================ */

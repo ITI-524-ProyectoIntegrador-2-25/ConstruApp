@@ -49,10 +49,10 @@ export default function App() {
           <Route path="productividad/actividades"       element={<Actividades />} />
           <Route path="productividad/actividades/nueva" element={<FormActividades />} />
           <Route path="productividad/actividades/:id"   element={<DetalleActividades />} />
-          <Route path="productividad/clientes"          element={<Clientes    />} />
+          <Route path="productividad/clientes"               element={<Clientes    />} />
+          <Route path="productividad/clientes/nuevo"         element={<FormCliente />} />
+          <Route path="productividad/clientes/:idCliente"    element={<DetalleCliente />} />
           <Route path="productividad/empleados"         element={<Empleados   />} />
-          <Route path="productividad/clientes/nuevo"    element={<FormCliente />} />
-          <Route path="productividad/clientes/:idCliente" element={<DetalleCliente />} />
           <Route path="usuario"                         element={<UserProfile />} />
           
         </Route>

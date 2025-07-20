@@ -31,9 +31,14 @@ export default function LoginForm() {
       const msg = usuarioObj.msg || ''.toLowerCase()
 
       if (msg.includes('Autorizado') || msg.includes('Ingreso')) {
-        // guardo todo el objeto de usuario para usarlo en otros endpoints
-        localStorage.setItem('currentUser', JSON.stringify(usuarioObj))
-        navigate('/dashboard')
+        const userToStore = {
+          ...usuarioObj,
+          correo: email,         // o la variable donde tengas el valor del input
+          usuario: email         // opcional, si tu código más abajo busca user.usuario
+        }
+        localStorage.setItem('currentUser', JSON.stringify(userToStore))
+
+          navigate('/dashboard')
       } else if (msg.includes('activo')) {
         setError('Su usuario no se encuentra activo')
       } else {
