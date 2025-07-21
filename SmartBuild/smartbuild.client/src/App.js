@@ -25,6 +25,8 @@ import Clientes    from './components/pages/productividad/Clientes'
 import DetalleCliente from './components/pages/productividad/DetalleCliente'
 import FormCliente from './components/pages/productividad/FormCliente'
 import Empleados   from './components/pages/productividad/Empleados'
+import FormEmpleado   from './components/pages/productividad/FormEmpleado'
+import DetalleEmpleado from './components/pages/productividad/DetalleEmpleado'
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
@@ -39,22 +41,24 @@ export default function App() {
         </Route>
 
         {/** Rutas protegidas bajo “/dashboard” **/}
-          <Route path="/dashboard/*"                        element={<DashboardLayout/>}>
-          <Route path="proyectos/nuevo"                     element={<FormDashboard />} />
-          <Route path="proyectos/:idPresupuesto"            element={<DetalleDashboard />} />
-          <Route index                                      element={<Dashboard   />} />
-          <Route path="planilla"                            element={<Planilla    />} />
-          <Route path="planilla/nueva"                      element={<FormPlanilla />} />
-          <Route path="planilla/:idPlanilla"                        element={<DetallePlanilla />} />
-          <Route path="productividad/actividades"                   element={<Actividades />} />
-          <Route path="productividad/actividades/nueva"             element={<FormActividades />} />
-          <Route path="productividad/actividades/:idActividad"      element={<DetalleActividades />} />
-          <Route path="productividad/clientes"              element={<Clientes    />} />
-          <Route path="productividad/clientes/nuevo"        element={<FormCliente />} />
-          <Route path="productividad/clientes/:idCliente"   element={<DetalleCliente />} />
-          <Route path="productividad/empleados"             element={<Empleados   />} />
-          <Route path="usuario"                             element={<UserProfile />} />
-
+          <Route path="/dashboard/*" element={<DashboardLayout/>}>
+          <Route path="proyectos/nuevo"                 element={<FormDashboard />} />
+          <Route path="proyectos/:idPresupuesto" element={<DetalleDashboard />} />
+          <Route index                                  element={<Dashboard   />} />
+          <Route path="planilla"                        element={<Planilla    />} />
+          <Route path="planilla/nueva"                  element={<FormPlanilla />} />
+          <Route path="planilla/:id"                    element={<DetallePlanilla />} />
+          <Route path="productividad/actividades"       element={<Actividades />} />
+          <Route path="productividad/actividades/nueva" element={<FormActividades />} />
+          <Route path="productividad/actividades/:id"   element={<DetalleActividades />} />
+          <Route path="productividad/clientes"               element={<Clientes    />} />
+          <Route path="productividad/clientes/nuevo"         element={<FormCliente />} />
+          <Route path="productividad/clientes/:idCliente"    element={<DetalleCliente />} />
+          <Route path="productividad/empleados"         element={<Empleados   />} />
+          <Route path="productividad/empleados/:idEmpleado"            element={<DetalleEmpleado />} />
+          <Route path="productividad/empleados/nuevo" element={<FormEmpleado />} />
+          <Route path="usuario"                         element={<UserProfile />} />
+          
         </Route>
 
 
