@@ -1,5 +1,5 @@
 // src/components/pages/dashboard/Dashboard.jsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { Calendar, Filter, ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
@@ -9,11 +9,14 @@ const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 export default function Dashboard() {
   const navigate = useNavigate()
   const [presupuestos, setPresupuestos] = useState([])
-  const [results, setResults]           = useState([])
-  const [filtroDesc, setFiltroDesc]     = useState('')
-  const [filtroFecha, setFiltroFecha]   = useState('')
-  const [loading, setLoading]           = useState(true)
-  const [error, setError]               = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // Estado unificado para filtros
+  const [filtros, setFiltros] = useState({
+    descripcion: '',
+    fecha: ''
+  })
 
   useEffect(() => {
     const usuarioStr = localStorage.getItem('currentUser')
@@ -32,7 +35,6 @@ export default function Dashboard() {
       })
       .then(data => {
         setPresupuestos(data)
-        setResults(data)
       })
       .catch(err => {
         console.error(err)
@@ -41,24 +43,45 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleSearch = () => {
+  // Handler unificado para todos los filtros
+  const handleFilterChange = (field) => (e) => {
+    setFiltros(current => ({
+      ...current,
+      [field]: e.target.value
+    }))
+  }
+
+  // Funcion para filtado en tiempo real con usememo
+  const results = useMemo(() => {
     let arr = presupuestos
-    if (filtroDesc) {
-      const q = filtroDesc.toLowerCase()
+//filtra por descripcion
+    if (filtros.descripcion) {
+      const q = filtros.descripcion.toLowerCase()
       arr = arr.filter(p =>
         (p.descripcion || '').toLowerCase().includes(q)
       )
     }
-    if (filtroFecha) {
+
+    // Filtro por fecha
+    if (filtros.fecha) {
       arr = arr.filter(p =>
-        new Date(p.fechaInicio).toISOString().slice(0,10) === filtroFecha
+        new Date(p.fechaInicio).toISOString().slice(0, 10) === filtros.fecha
       )
     }
-    setResults(arr)
+
+    return arr
+  }, [presupuestos, filtros.descripcion, filtros.fecha])
+
+  // Función para limpiar filtros
+  const clearFilters = () => {
+    setFiltros({
+      descripcion: '',
+      fecha: ''
+    })
   }
 
   if (loading) return <p>Cargando…</p>
-  if (error)   return <p className="dashboard-error">{error}</p>
+  if (error) return <p className="dashboard-error">{error}</p>
 
   return (
     <div className="dashboard-page">
@@ -73,7 +96,6 @@ export default function Dashboard() {
           </button>
           <h1 className="dashboard-title">Proyectos</h1>
         </div>
-
       </header>
 
       <div className="dashboard-filters">
@@ -81,25 +103,30 @@ export default function Dashboard() {
           <input
             type="text"
             placeholder="Buscar descripción"
-            value={filtroDesc}
-            onChange={e => setFiltroDesc(e.target.value)}
+            value={filtros.descripcion}
+            onChange={handleFilterChange('descripcion')}
           />
         </div>
         <div className="filter-group">
           <Calendar className="filter-icon" />
           <input
             type="date"
-            value={filtroFecha}
-            onChange={e => setFiltroFecha(e.target.value)}
+            value={filtros.fecha}
+            onChange={handleFilterChange('fecha')}
           />
         </div>
-        <button className="btn-search" onClick={handleSearch}>
-          Buscar
-        </button>
+        
+        {/* Botón para limpiar filtros  */}
+        {(filtros.descripcion || filtros.fecha) && (
+          <button className="btn btn-outline-primary btn-sm" onClick={clearFilters} title="Limpiar filtros">
+            Limpiar
+          </button>
+        )}
+        
         <button className="btn-icon" title="Filtros avanzados">
           <Filter />
         </button>
-          <Link to="proyectos/nuevo" className="btn-add">
+        <Link to="proyectos/nuevo" className="btn-add">
           + Agregar proyecto
         </Link>
       </div>
@@ -128,9 +155,21 @@ export default function Dashboard() {
             </NavLink>
           ))
         ) : (
-          <p className="no-results">No se encontraron proyectos</p>
+          <p className="no-results">
+            {filtros.descripcion || filtros.fecha
+              ? 'No se encontraron proyectos con los filtros aplicados'
+              : 'No se encontraron proyectos'
+            }
+          </p>
         )}
       </div>
+
+      {/* Contador de resultados */}
+      {presupuestos.length > 0 && (
+        <div className="results-footer">
+          Mostrando {results.length} de {presupuestos.length} proyecto{presupuestos.length !== 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   )
 }
