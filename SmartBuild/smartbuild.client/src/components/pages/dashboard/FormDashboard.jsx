@@ -15,7 +15,7 @@ export default function FormDashboard() {
   // opciones de clientes para react-select
   const [clientOpts, setClientOpts] = useState([])
 
-  // estado del formulario
+  // estado del formulario 
   const [form, setForm] = useState({
     cliente:               null,   // objeto {value,label}
     fechaInicio:           '',
@@ -32,6 +32,23 @@ export default function FormDashboard() {
     fechaFinReal:          ''
   })
   const [error, setError] = useState('')
+
+  // Configuración de campos numéricos
+  const camposNumericos = [
+    { name: 'materiaPrimaCotizada', label: 'Materia Prima Cotizada' },
+    { name: 'manoObraCotizada', label: 'Mano de Obra Cotizada' },
+    { name: 'materiaPrimaCostoReal', label: 'Materia Prima Costo Real' },
+    { name: 'manoObraCostoReal', label: 'Mano de Obra Costo Real' },
+    { name: 'subContratoCostoReal', label: 'Subcontrato Costo Real' },
+    { name: 'otrosGastos', label: 'Otros Gastos' }
+  ]
+
+  // Configuración de campos de fecha
+  const camposFecha = [
+    { name: 'fechaInicio', label: 'Fecha Inicio', required: true },
+    { name: 'fechaFin', label: 'Fecha Fin', required: false },
+    { name: 'fechaFinReal', label: 'Fecha Fin Real', required: false }
+  ]
 
   // traer lista de clientes y mapear a opciones
   useEffect(() => {
@@ -55,7 +72,7 @@ export default function FormDashboard() {
       .catch(err => console.error('Error cargando clientes:', err))
   }, [])
 
-  // handler para inputs estándar
+  // handler para inputs estándar 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
     setForm(f => ({
@@ -73,7 +90,7 @@ export default function FormDashboard() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    // validaciones
+    // validaciones 
     if (!form.cliente || !form.fechaInicio || !form.descripcion) {
       setError('Cliente, fecha inicio y descripción son obligatorios')
       return
@@ -147,7 +164,6 @@ export default function FormDashboard() {
       )}
 
       <form onSubmit={handleSubmit} className="form-dashboard">
-        {/* Cliente (react-select) */}
         <div className="form-group">
           <label>Cliente</label>
           <Select
@@ -161,30 +177,20 @@ export default function FormDashboard() {
           />
         </div>
 
-        {/* Fecha Inicio */}
-        <div className="form-group">
-          <label>Fecha Inicio</label>
-          <input
-            name="fechaInicio"
-            type="date"
-            value={form.fechaInicio}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        {/*Campos fecha optimizados */}
+        {camposFecha.map(campo => (
+          <div key={campo.name} className="form-group">
+            <label>{campo.label}</label>
+            <input
+              name={campo.name}
+              type="date"
+              value={form[campo.name]}
+              onChange={handleChange}
+              required={campo.required}
+            />
+          </div>
+        ))}
 
-        {/* Fecha Fin */}
-        <div className="form-group">
-          <label>Fecha Fin</label>
-          <input
-            name="fechaFin"
-            type="date"
-            value={form.fechaFin}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Penalización */}
         <div className="form-group">
           <label>
             <input
@@ -208,7 +214,6 @@ export default function FormDashboard() {
           </div>
         )}
 
-        {/* Descripción */}
         <div className="form-group">
           <label>Descripción</label>
           <textarea
@@ -219,82 +224,17 @@ export default function FormDashboard() {
           />
         </div>
 
-        {/* Materia Prima Cotizada */}
-        <div className="form-group">
-          <label>Materia Prima Cotizada</label>
-          <input
-            name="materiaPrimaCotizada"
-            type="number"
-            value={form.materiaPrimaCotizada}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Mano de Obra Cotizada */}
-        <div className="form-group">
-          <label>Mano de Obra Cotizada</label>
-          <input
-            name="manoObraCotizada"
-            type="number"
-            value={form.manoObraCotizada}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Materia Prima Costo Real */}
-        <div className="form-group">
-          <label>Materia Prima Costo Real</label>
-          <input
-            name="materiaPrimaCostoReal"
-            type="number"
-            value={form.materiaPrimaCostoReal}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Mano de Obra Costo Real */}
-        <div className="form-group">
-          <label>Mano de Obra Costo Real</label>
-          <input
-            name="manoObraCostoReal"
-            type="number"
-            value={form.manoObraCostoReal}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Subcontrato Costo Real */}
-        <div className="form-group">
-          <label>Subcontrato Costo Real</label>
-          <input
-            name="subContratoCostoReal"
-            type="number"
-            value={form.subContratoCostoReal}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Otros Gastos */}
-        <div className="form-group">
-          <label>Otros Gastos</label>
-          <input
-            name="otrosGastos"
-            type="number"
-            value={form.otrosGastos}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Fecha Fin Real */}
-        <div className="form-group">
-          <label>Fecha Fin Real</label>
-          <input
-            name="fechaFinReal"
-            type="date"
-            value={form.fechaFinReal}
-            onChange={handleChange}
-          />
-        </div>
+        {camposNumericos.map(campo => (
+          <div key={campo.name} className="form-group">
+            <label>{campo.label}</label>
+            <input
+              name={campo.name}
+              type="number"
+              value={form[campo.name]}
+              onChange={handleChange}
+            />
+          </div>
+        ))}
 
         <button type="submit" className="btn-submit">
           Guardar proyecto

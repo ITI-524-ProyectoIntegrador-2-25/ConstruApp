@@ -62,6 +62,17 @@ export default function DetalleDashboard() {
     return value.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
+  // Array de campos monetarios
+  const camposMonetarios = [
+    { key: 'montoPenalizacion', label: 'Monto penalización:', condicional: detalle.penalizacion },
+    { key: 'materiaPrimaCotizada', label: 'Materia prima (cotizada):' },
+    { key: 'manoObraCotizada', label: 'Mano de obra (cotizada):' },
+    { key: 'materiaPrimaCostoReal', label: 'Materia prima (real):' },
+    { key: 'manoObraCostoReal', label: 'Mano de obra (real):' },
+    { key: 'subContratoCostoReal', label: 'Subcontrato (real):' },
+    { key: 'otrosGastos', label: 'Otros gastos:' }
+  ]
+
   return (
     <div className="detalle-page">
       <header className="detalle-header">
@@ -106,36 +117,18 @@ export default function DetalleDashboard() {
           <span className="label">Penalización:</span>
           <span className="value">{detalle.penalizacion ? 'Sí' : 'No'}</span>
         </div>
-        {detalle.penalizacion && (
-          <div className="detalle-row">
-            <span className="label">Monto penalización:</span>
-            <span className="value">₡ {formatCurrency(detalle.montoPenalizacion)}</span>
-          </div>
-        )}
-        <div className="detalle-row">
-          <span className="label">Materia prima (cotizada):</span>
-          <span className="value">₡ {formatCurrency(detalle.materiaPrimaCotizada)}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Mano de obra (cotizada):</span>
-          <span className="value">₡ {formatCurrency(detalle.manoObraCotizada)}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Materia prima (real):</span>
-          <span className="value">₡ {formatCurrency(detalle.materiaPrimaCostoReal)}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Mano de obra (real):</span>
-          <span className="value">₡ {formatCurrency(detalle.manoObraCostoReal)}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Subcontrato (real):</span>
-          <span className="value">₡ {formatCurrency(detalle.subContratoCostoReal)}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Otros gastos:</span>
-          <span className="value">₡ {formatCurrency(detalle.otrosGastos)}</span>
-        </div>
+        
+        {/* mejora de campos, he reemplazado las 28 líneas originales  */}
+        {camposMonetarios
+          .filter(campo => campo.condicional !== false)
+          .map(campo => (
+            <div key={campo.key} className="detalle-row">
+              <span className="label">{campo.label}</span>
+              <span className="value">₡ {formatCurrency(detalle[campo.key])}</span>
+            </div>
+          ))
+        }
+        
         <div className="detalle-row">
           <span className="label">Ingreso:</span>
           <span className="value">{detalle.cuandoIngreso}</span>
