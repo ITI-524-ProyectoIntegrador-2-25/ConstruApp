@@ -1,15 +1,18 @@
-// src/components/pages/planilla/Planillas.jsx
 import React, { useState, useEffect } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { ChevronLeft, Filter, Calendar } from 'lucide-react'
+import '../../../styles/Dashboard.css'
 import './Empleados.css'
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
 export default function Empleados() {
+  const navigate = useNavigate()
   const [empleados, setEmpleados] = useState([])
   const [results, setResults] = useState([])
-  const [projectFilter, setProjectFilter] = useState('')
-  const [periodFilter, setPeriodFilter] = useState('')
+  const [filtroNombre, setFiltroNombre] = useState('')
+  const [filtroPuesto, setFiltroPuesto] = useState('')
+  const [filtroFecha, setFiltroFecha] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -39,90 +42,102 @@ export default function Empleados() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    let filtered = empleados
-    if (projectFilter) {
-      filtered = filtered.filter(e => e.puesto === projectFilter)
+  const handleSearch = () => {
+    let arr = empleados
+    if (filtroNombre) {
+      const q = filtroNombre.toLowerCase()
+      arr = arr.filter(e => (`${e.nombre} ${e.apellido}` || '').toLowerCase().includes(q))
     }
-    if (periodFilter) {
-      filtered = filtered.filter(e => `${e.nombre} ${e.apellido}` === periodFilter)
+    if (filtroPuesto) {
+      arr = arr.filter(e => e.puesto.toLowerCase().includes(filtroPuesto.toLowerCase()))
     }
-    setResults(filtered)
-  }, [projectFilter, periodFilter, empleados])
+    if (filtroFecha) {
+      // Supone que existe e.fechaIngreso en formato ISO
+      arr = arr.filter(e =>
+        new Date(e.fechaIngreso).toISOString().slice(0,10) === filtroFecha
+      )
+    }
+    setResults(arr)
+  }
 
-  const proyectosUnicos = Array.from(new Set(empleados.map(p => p.puesto)))
-  const periodosUnicos = Array.from(new Set(empleados.map(p => `${p.nombre} ${p.apellido}`)))
-
-  if (loading) return <p>Cargando empleados…</p>
-  if (error) return <p className="planilla-error">{error}</p>
+  if (loading) return <p>Cargando…</p>
+  if (error) return <p className="empleados-error">{error}</p>
 
   return (
-    <div className="planilla-page">
-      <div className="planilla-controls">
-        <div className="planilla-filters">
-          <div className="filter-group">
-            <label htmlFor="filterProyecto">Rol</label>
-            <select
-              id="filterProyecto"
-              value={projectFilter}
-              onChange={e => setProjectFilter(e.target.value)}
-            >
-              <option value="">Todos los roles</option>
-              {proyectosUnicos.map(pr => (
-                <option key={pr} value={pr}>{pr}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="filterPeriodo">Nombre</label>
-            <select
-              id="filterPeriodo"
-              value={periodFilter}
-              onChange={e => setPeriodFilter(e.target.value)}
-            >
-              <option value="">Todos los nombres</option>
-              {periodosUnicos.map(pr => (
-                <option key={pr} value={pr}>{pr}</option>
-              ))}
-            </select>
-          </div>
+    <div className="empleados-page">
+      <header className="empleados-header">
+        <div className="title-group">
+          <button className="back-btn" onClick={() => navigate(-1)} title="Volver">
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="empleados-title">Empleados</h1>
         </div>
+      </header>
 
-        <div className="planilla-new">
-          <Link to="/dashboard/productividad/empleados/nuevo" className="btn-nueva">
-            + Nuevo empleado
-          </Link>
+      <div className="empleados-filters">
+        <div className="filter-group">
+          <input
+            type="text"
+            placeholder="Buscar nombre"
+            value={filtroNombre}
+            onChange={e => setFiltroNombre(e.target.value)}
+          />
         </div>
+        <div className="filter-group">
+          <Filter className="filter-icon" />
+          <input
+            type="text"
+            placeholder="Buscar puesto"
+            value={filtroPuesto}
+            onChange={e => setFiltroPuesto(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <Calendar className="filter-icon" />
+          <input
+            type="date"
+            value={filtroFecha}
+            onChange={e => setFiltroFecha(e.target.value)}
+          />
+        </div>
+        <button className="btn-search" onClick={handleSearch}>
+          Buscar
+        </button>
+        <Link to="nuevo" className="btn-add">
+          + Agregar empleado
+        </Link>
       </div>
 
-      <div className="planilla-list">
-        {results.length === 0 ? (
-          <p className="no-results">No hay empleados para mostrar</p>
-        ) : results.map(emp => (
-          <NavLink
-            key={emp.idEmpleado}
-            to={`${emp.idEmpleado}`}
-            className="planilla-card"
-          >
-            <div className="card-header">
-              <h3 className="card-nombre">{emp.nombre} {emp.apellido}</h3>
-              <span className="card-proyecto">{emp.puesto}</span>
-            </div>
-            <div className="card-body">
-              <div className="card-row">
-                <strong>Correo:</strong> {emp.correo}
+      <div className="empleados-list">
+        {results.length > 0 ? (
+          results.map(emp => (
+            <NavLink
+              key={emp.idEmpleado}
+              to={`${emp.idEmpleado}`}
+              className="empleado-card"
+            >
+              <div className="card-image">
+                <img
+                  src={require('../../../assets/img/dashboard.png')}
+                  alt={`${emp.nombre} ${emp.apellido}`}
+                />
               </div>
-              <div className="card-row">
-                <strong>Identificación:</strong> {emp.identificacion}
+              <div className="card-info">
+                <h3>{emp.nombre} {emp.apellido}</h3>
+                <p>{emp.puesto}</p>
               </div>
-              <div className="card-row">
-                <strong>Salario por hora:</strong> ₡{parseFloat(emp.salarioHora || 0).toLocaleString('es-CR', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-          </NavLink>
-        ))}
+            </NavLink>
+          ))
+        ) : (
+          <p className="no-results">No se encontraron empleados</p>
+        )}
       </div>
+
+      {empleados.length > 0 && (
+        <div className="results-footer">
+          Mostrando {results.length} de {empleados.length} empleado{empleados.length !== 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   )
 }
