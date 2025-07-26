@@ -47,10 +47,10 @@ export default function App() {
           <Route index                                  element={<Dashboard   />} />
           <Route path="planilla"                        element={<Planilla    />} />
           <Route path="planilla/nueva"                  element={<FormPlanilla />} />
-          <Route path="planilla/:id"                    element={<DetallePlanilla />} />
+          <Route path="planilla/:idPlanilla"                    element={<DetallePlanilla />} />
           <Route path="productividad/actividades"       element={<Actividades />} />
           <Route path="productividad/actividades/nueva" element={<FormActividades />} />
-          <Route path="productividad/actividades/:id"   element={<DetalleActividades />} />
+          <Route path="productividad/actividades/:idActividad"   element={<DetalleActividades />} />
           <Route path="productividad/clientes"               element={<Clientes    />} />
           <Route path="productividad/clientes/nuevo"         element={<FormCliente />} />
           <Route path="productividad/clientes/:idCliente"    element={<DetalleCliente />} />
@@ -58,7 +58,6 @@ export default function App() {
           <Route path="productividad/empleados/:idEmpleado"            element={<DetalleEmpleado />} />
           <Route path="productividad/empleados/nuevo" element={<FormEmpleado />} />
           <Route path="usuario"                         element={<UserProfile />} />
-          
         </Route>
 
 
