@@ -1,61 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
-import '../../../styles/Dashboard.css'       // el mismo CSS de detalle genérico
-import './DetallePlanilla.css'            // ajustes específicos si los hubiera
+import '../../../styles/Dashboard.css' 
+import './DetallePlanilla.css'            
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Hook
+import { usePlanillaDetalle } from '../../../hooks/planillas'
 
 export default function DetallePlanilla() {
   const { idPlanilla } = useParams()
-  const navigate       = useNavigate()
+  const navigate = useNavigate()
 
-  const [detalle, setDetalle] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState('')
-
-  useEffect(() => {
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-    const user   = JSON.parse(usr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-
-    fetch(
-      `${API_BASE}/PlanillaApi/GetPlanillabyInfo`
-      + `?idPlanilla=${idPlanilla}&Usuario=${correo}`
-    )
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        // si viene como array, tomamos el primero
-        const record = Array.isArray(data) && data.length
-                     ? data[0]
-                     : data
-        setDetalle(record)
-      })
-      .catch(err => {
-        console.error(err)
-        setError('No se encontró la planilla.')
-      })
-      .finally(() => setLoading(false))
-  }, [idPlanilla])
+  const { planillaDetalle, loading, error } = usePlanillaDetalle(idPlanilla)
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>
-  if (error)   return <p className="detalle-error">{error}</p>
-  if (!detalle) return null
+  if (error) return <p className="detalle-error">{error}</p>
+  if (!planillaDetalle) return null
 
   // formateo seguro de la fecha de registro
   const fechaRegistro = (() => {
-    if (!detalle.cuandoIngreso) return ''
-    const iso = detalle.cuandoIngreso.replace(' ', 'T')
+    if (!planillaDetalle.cuandoIngreso) return ''
+    const iso = planillaDetalle.cuandoIngreso.replace(' ', 'T')
     const d = new Date(iso)
-    return isNaN(d) ? detalle.cuandoIngreso : d.toLocaleDateString()
+    return isNaN(d) ? planillaDetalle.cuandoIngreso : d.toLocaleDateString()
   })()
 
   return (
@@ -69,30 +36,30 @@ export default function DetallePlanilla() {
           <ChevronLeft size={20}/>
         </button>
         <h2 className="detalle-title">
-          Planilla #{detalle.idPlanilla}
+          Planilla #{planillaDetalle.idPlanilla}
         </h2>
       </header>
 
       <div className="detalle-grid">
         <div className="detalle-row">
           <span className="label">Nombre:</span>
-          <span className="value">{detalle.nombre}</span>
+          <span className="value">{planillaDetalle.nombre}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Fecha inicio:</span>
           <span className="value">
-            {new Date(detalle.fechaInicio).toLocaleDateString()}
+            {new Date(planillaDetalle.fechaInicio).toLocaleDateString()}
           </span>
         </div>
         <div className="detalle-row">
           <span className="label">Fecha fin:</span>
           <span className="value">
-            {new Date(detalle.fechaFin).toLocaleDateString()}
+            {new Date(planillaDetalle.fechaFin).toLocaleDateString()}
           </span>
         </div>
         <div className="detalle-row">
           <span className="label">Estado:</span>
-          <span className="value">{detalle.estado}</span>
+          <span className="value">{planillaDetalle.estado}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Registro:</span>
