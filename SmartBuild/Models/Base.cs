@@ -11,8 +11,8 @@ namespace Models
         public string? Usuario { get; set; }
 
         public string? QuienIngreso { get; set; } 
-        public string? CuandoIngreso { get; set; }
+        public DateTime? CuandoIngreso { get; set; }
         public string? QuienModifico { get; set; }
-        public string? CuandoModifico { get; set; }
+        public DateTime? CuandoModifico { get; set; }
     }
 }

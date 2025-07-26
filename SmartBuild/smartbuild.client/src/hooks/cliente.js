@@ -1,12 +1,12 @@
 import { useEffect , useState } from 'react';
 
 // API
-import { getPresupuestos, getPresupuestoDetalle } from '../api/dashboard';
+import { getClientes, getClienteDetalle } from '../api/cliente';
 
-export const usePresupuestos = () => {
-  const [presupuestos, setPresupuestos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export const useClientes = () => {
+  const [clientes, setClientes] = useState([]);
+  const [loadingClients, setLoading] = useState(true);
+  const [errorClients, setError] = useState('');
 
   useEffect(() => {
     const usuarioStr = localStorage.getItem('currentUser');
@@ -19,26 +19,27 @@ export const usePresupuestos = () => {
     const user = JSON.parse(usuarioStr);
     const correo = encodeURIComponent(user.correo || user.usuario);
 
-    const fetchPresupuestos = async () => {
+    const fetchClientes = async () => {
       try {
-        const data = await getPresupuestos(correo);
-        setPresupuestos(Array.isArray(data) ? data : []);
+        const data = await getClientes(correo);
+        console.dir(data)
+        setClientes(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
-        setError('No se pudieron cargar los proyectos.');
+        setError('No se pudieron cargar los clientes.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPresupuestos();
+    fetchClientes();
   }, []);
 
-  return { presupuestos, loading, error };
+  return { clientes, loadingClients, errorClients };
 };
 
-export const usePresupuestoDetalle = (idPresupuesto) => {
-  const [presupuestoDetalle, setDetalle] = useState(null)
+export const useClienteDetalle = (idCliente) => {
+  const [clienteDetalle, setDetalle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -53,27 +54,29 @@ export const usePresupuestoDetalle = (idPresupuesto) => {
     const user = JSON.parse(usuarioStr);
     const correo = encodeURIComponent(user.correo || user.usuario);
 
-    const fetchPresupuestoDetalle = async () => {
+    const fetchClienteDetalle = async () => {
       try {
-        const data = await getPresupuestoDetalle(correo, idPresupuesto);
+        const data = await getClienteDetalle(correo, idCliente);
+        console.log('data')
+        console.dir(data)
         if (Array.isArray(data)) {
-            if (data.length === 0) throw new Error('Presupuesto no encontrado')
+            if (data.length === 0) throw new Error('Cliente no encontrado')
             setDetalle(data[0])
-        } else if (typeof data === 'object' && data.idPresupuesto) {
+        } else if (typeof data === 'object' && data.idCliente) {
             setDetalle(data)
         } else {
             throw new Error('Formato inesperado del API')
         }
       } catch (err) {
         console.error(err);
-        setError('No se pudieron cargar los proyectos.');
+        setError('No se pudieron cargar los clientes.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPresupuestoDetalle();
-  }, [idPresupuesto]);
+    fetchClienteDetalle();
+  }, [idCliente]);
 
-  return { presupuestoDetalle, loading, error };
+  return { clienteDetalle, loading, error };
 };
