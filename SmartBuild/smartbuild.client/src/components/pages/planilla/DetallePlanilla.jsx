@@ -5,24 +5,20 @@ import '../../../styles/Dashboard.css'
 import Select from 'react-select'
 
 // Hook
-import { usePlanillaDetalle } from '../../../hooks/planillas'
+import { usePlanillaDetalle } from '../../../hooks/Planilla'
 
 // Enum de estados predeterminados
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada']
 
-// Helper para formatear “YYYY‑MM‑DD” o “YYYY‑MM‑DDTHH:MM:SS” sin shift
 function formatDate(ds) {
   if (!ds) return ''
-  // extrae la parte de fecha (antes de la T, o si fuera MM/DD/YYYY mantiene slash)
   const datePart = ds.split('T')[0]
   let year, month, day
   if (datePart.includes('/')) {
-    // por si alguna vez tu backend devuelve con slashes
     [month, day, year] = datePart.split('/')
   } else {
     [year, month, day] = datePart.split('-')
   }
-  // new Date(año, mesIndex, día) crea la fecha en tu zona local
   return new Date(+year, +month - 1, +day).toLocaleDateString()
 }
 
@@ -30,24 +26,18 @@ export default function DetallePlanilla() {
   const { idPlanilla } = useParams()
   const navigate = useNavigate()
 
-  const [detalle, setDetalle]     = useState(null)
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState('')
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState({
+  const isEditing = false
+  const form={
     nombre:      '',
     fechaInicio: '',
     fechaFin:    '',
     estado:      ESTADOS[0]
-  })
+
+}
+  
 
   const { planillaDetalle, loading, error } = usePlanillaDetalle(idPlanilla)
-  setForm({
-    nombre:      rec.nombre,
-    fechaInicio: fi,
-    fechaFin:    ff,
-    estado:      st
-  })
+
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>
   if (error) return <p className="detalle-error">{error}</p>
@@ -63,7 +53,7 @@ export default function DetallePlanilla() {
 
   const handleChange = e => {
     const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
+    form(f => ({ ...f, [name]: value }))
   }
 
   // 2) Enviar actualización
@@ -76,60 +66,16 @@ export default function DetallePlanilla() {
 
     const payload = {
       usuario:        user.correo || user.usuario,
-      quienIngreso:  detalle.quienIngreso || '',
-      cuandoIngreso: detalle.cuandoIngreso || '',
+      quienIngreso:  planillaDetalle.quienIngreso || '',
+      cuandoIngreso: planillaDetalle.cuandoIngreso || '',
       quienModifico: user.correo || user.usuario,
       cuandoModifico: ahora,
-      idPlanilla:     detalle.idPlanilla,
+      idPlanilla:     planillaDetalle.idPlanilla,
       nombre:         form.nombre,
-      // enviamos “YYYY‑MM‑DD” tal cual en vez de ISO
       fechaInicio:    form.fechaInicio,
       fechaFin:       form.fechaFin,
       estado:         form.estado
     }
-
-    console.log('[PUT] UpdatePlanilla payload:', JSON.stringify(payload, null, 2))
-
-    try {
-      const res = await fetch(`${API_BASE}/PlanillaApi/UpdatePlanilla`, {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload)
-      })
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(txt || `Status ${res.status}`)
-      }
-
-      // tras el PUT exitoso, vuelvo a recargar desde el servidor
-if (!res.ok) {
-  const txt = await res.text()
-  throw new Error(txt || `Status ${res.status}`)
-}
-
-// ---- NUEVO: fetch de recarga ----
-const recRes = await fetch(
-  `${API_BASE}/EmpleadoApi/GetEmpleadoInfo` +
-  `?idEmpleado=${detalle.idEmpleado}` +
-  `&usuario=${encodeURIComponent(user.correo || user.usuario)}`
-)
-if (!recRes.ok) throw new Error(`Error recargando detalles: ${recRes.status}`)
-const recData = await recRes.json()
-const updated = Array.isArray(recData) && recData.length ? recData[0] : recData
-setDetalle(updated)
-// ---------------------------------
-
-setIsEditing(false)
-
-    } catch (err) {
-      console.error(err)
-      setError(err.message)
-    }
-  }
-
-  if (loading) return <p className="detalle-loading">Cargando…</p>
-  if (error)   return <p className="detalle-error">{error}</p>
-  if (!detalle) return null
 
   return (
     <div className="form-dashboard-page" style={{ maxWidth: '900px' }}>
@@ -144,12 +90,12 @@ setIsEditing(false)
           <button
             className="btn-submit"
             style={{ marginLeft: 'auto' }}
-            onClick={() => setIsEditing(true)}
+            onClick={() => isEditing(true)}
           >
             Editar
           </button>
         )}
-      </header>
+      </div>
 
       <div className="detalle-grid">
         <div className="detalle-row">
@@ -224,7 +170,7 @@ setIsEditing(false)
     name="estado"
     options={ESTADOS.map(e => ({ value: e, label: e }))}
     value={form.estado ? { value: form.estado, label: form.estado } : null}
-    onChange={opt => setForm(f => ({ ...f, estado: opt.value }))}
+    onChange={opt => form(f => ({ ...f, estado: opt.value }))}
     placeholder="Seleccionar estado…"
     className="react-select-container"
     classNamePrefix="react-select"
@@ -238,13 +184,13 @@ setIsEditing(false)
               className="btn-submit"
               style={{ background:'#ccc' }}
               onClick={() => {
-                setForm({
-                  nombre:      detalle.nombre,
-                  fechaInicio: detalle.fechaInicio.slice(0,10),
-                  fechaFin:    detalle.fechaFin.slice(0,10),
-                  estado:      detalle.estado
+                form({
+                  nombre:      planillaDetalle.nombre,
+                  fechaInicio: planillaDetalle.fechaInicio.slice(0,10),
+                  fechaFin:    planillaDetalle.fechaFin.slice(0,10),
+                  estado:      planillaDetalle.estado
                 })
-                setIsEditing(false)
+                isEditing(false)
               }}
             >
               Cancelar
@@ -262,26 +208,27 @@ setIsEditing(false)
         >
           <div className="form-group">
             <label>Nombre</label>
-            <p className="value">{detalle.nombre}</p>
+            <p className="value">{planillaDetalle.nombre}</p>
           </div>
           <div className="form-group">
             <label>Fecha Inicio</label>
-            <p className="value">{formatDate(detalle.fechaInicio)}</p>
+            <p className="value">{formatDate(planillaDetalle.fechaInicio)}</p>
           </div>
           <div className="form-group">
             <label>Fecha Fin</label>
-            <p className="value">{formatDate(detalle.fechaFin)}</p>
+            <p className="value">{formatDate(planillaDetalle.fechaFin)}</p>
           </div>
           <div className="form-group">
             <label>Estado</label>
-            <p className="value">{detalle.estado}</p>
+            <p className="value">{planillaDetalle.estado}</p>
           </div>
           <div className="form-group">
             <label>Registro</label>
-            <p className="value">{formatDate(detalle.cuandoIngreso)}</p>
+            <p className="value">{formatDate(planillaDetalle.cuandoIngreso)}</p>
           </div>
         </div>
       )}
     </div>
   )
+}
 }
