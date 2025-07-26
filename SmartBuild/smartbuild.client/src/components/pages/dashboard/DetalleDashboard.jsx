@@ -1,59 +1,22 @@
 // src/components/pages/dashboard/DetalleDashboard.jsx
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
 import './DetalleDashboard.css'
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Hook
+import { usePresupuestoDetalle } from '../../../hooks/dashboard';
 
 export default function DetalleDashboard() {
   const { idPresupuesto } = useParams()
   const navigate = useNavigate()
-  const [detalle, setDetalle] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    const userStr = localStorage.getItem('currentUser')
-    if (!userStr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-
-    const user = JSON.parse(userStr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-    const url = `${API_BASE}/PresupuestoApi/GetPresupuestoByID?idPresupuesto=${idPresupuesto}&usuario=${correo}`
-
-    console.log("URL solicitada:", url)
-
-    fetch(url)
-      .then(res => {
-        if (!res.ok) throw new Error(`Estado HTTP ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        console.log("Respuesta del API:", data)
-        if (Array.isArray(data)) {
-          if (data.length === 0) throw new Error('Presupuesto no encontrado')
-          setDetalle(data[0])
-        } else if (typeof data === 'object' && data.idPresupuesto) {
-          setDetalle(data)
-        } else {
-          throw new Error('Formato inesperado del API')
-        }
-      })
-      .catch(err => {
-        console.error("Error al obtener el detalle:", err)
-        setError(err.message)
-      })
-      .finally(() => setLoading(false))
-  }, [idPresupuesto])
+  const { presupuestoDetalle, loading, error } = usePresupuestoDetalle(idPresupuesto)
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>
   if (error) return <p className="detalle-error">{error}</p>
-  if (!detalle) return <p className="detalle-error">No se encontró el detalle del presupuesto.</p>
+  if (!presupuestoDetalle) return <p className="detalle-error">No se encontró el detalle del presupuesto.</p>
 
   // Helper to format numbers with thousands separator and 2 decimals
   const formatCurrency = (value) => {
@@ -64,7 +27,7 @@ export default function DetalleDashboard() {
 
   // Array de campos monetarios
   const camposMonetarios = [
-    { key: 'montoPenalizacion', label: 'Monto penalización:', condicional: detalle.penalizacion },
+    { key: 'montoPenalizacion', label: 'Monto penalización:', condicional: presupuestoDetalle.penalizacion },
     { key: 'materiaPrimaCotizada', label: 'Materia prima (cotizada):' },
     { key: 'manoObraCotizada', label: 'Mano de obra (cotizada):' },
     { key: 'materiaPrimaCostoReal', label: 'Materia prima (real):' },
@@ -84,38 +47,38 @@ export default function DetalleDashboard() {
           <ChevronLeft size={20} />
         </button>
         <h2 className="detalle-title">
-          Presupuesto #{detalle.idPresupuesto}
+          Presupuesto #{presupuestoDetalle.idPresupuesto}
         </h2>
       </header>
 
       <div className="detalle-grid">
         <div className="detalle-row">
           <span className="label">Cliente:</span>
-          <span className="value">{detalle.nombreCliente}</span>
+          <span className="value">{presupuestoDetalle.nombreCliente}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Tipo de cliente:</span>
-          <span className="value">{detalle.tipoCliente}</span>
+          <span className="value">{presupuestoDetalle.tipoCliente}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Descripción:</span>
-          <span className="value">{detalle.descripcion}</span>
+          <span className="value">{presupuestoDetalle.descripcion}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Fecha de inicio:</span>
-          <span className="value">{new Date(detalle.fechaInicio).toLocaleDateString()}</span>
+          <span className="value">{new Date(presupuestoDetalle.fechaInicio).toLocaleDateString()}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Fecha fin estimada:</span>
-          <span className="value">{new Date(detalle.fechaFin).toLocaleDateString()}</span>
+          <span className="value">{new Date(presupuestoDetalle.fechaFin).toLocaleDateString()}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Fecha fin real:</span>
-          <span className="value">{new Date(detalle.fechaFinReal).toLocaleDateString()}</span>
+          <span className="value">{new Date(presupuestoDetalle.fechaFinReal).toLocaleDateString()}</span>
         </div>
         <div className="detalle-row">
           <span className="label">Penalización:</span>
-          <span className="value">{detalle.penalizacion ? 'Sí' : 'No'}</span>
+          <span className="value">{presupuestoDetalle.penalizacion ? 'Sí' : 'No'}</span>
         </div>
         
         {/* mejora de campos, he reemplazado las 28 líneas originales  */}
@@ -124,14 +87,14 @@ export default function DetalleDashboard() {
           .map(campo => (
             <div key={campo.key} className="detalle-row">
               <span className="label">{campo.label}</span>
-              <span className="value">₡ {formatCurrency(detalle[campo.key])}</span>
+              <span className="value">₡ {formatCurrency(presupuestoDetalle[campo.key])}</span>
             </div>
           ))
         }
         
         <div className="detalle-row">
           <span className="label">Ingreso:</span>
-          <span className="value">{detalle.cuandoIngreso}</span>
+          <span className="value">{presupuestoDetalle.cuandoIngreso}</span>
         </div>
       </div>
     </div>
