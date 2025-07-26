@@ -1,19 +1,18 @@
 // src/components/pages/dashboard/FormDashboard.jsx
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import Select from 'react-select'
 import '../../../styles/Dashboard.css'
 import './FormDashboard.css'
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+//Hook
+import { useInsertarActualizarPresupuesto } from '../../../hooks/dashboard'
+import { useClientes } from '../../../hooks/cliente'
 
 export default function FormDashboard() {
   const navigate = useNavigate()
   const alertRef = useRef(null)
-
-  // opciones de clientes para react-select
-  const [clientOpts, setClientOpts] = useState([])
 
   // estado del formulario 
   const [form, setForm] = useState({
@@ -51,26 +50,15 @@ export default function FormDashboard() {
   ]
 
   // traer lista de clientes y mapear a opciones
-  useEffect(() => {
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) return
-    const user   = JSON.parse(usr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
+  const { clientes, loadingClients, errorClients } = useClientes()
+  const { insertarActualizarPresupuesto, loading, error: errorGuardar } = useInsertarActualizarPresupuesto();
 
-    fetch(`${API_BASE}/ClientApi/GetClients?usuario=${correo}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        const opts = data.map(c => ({
-          value: c.idCliente,
-          label: c.razonSocial
-        }))
-        setClientOpts(opts)
-      })
-      .catch(err => console.error('Error cargando clientes:', err))
-  }, [])
+  if (loadingClients) return <p className="detalle-loading">Cargando detalles…</p>
+  if (errorClients) return <p className="detalle-error">{error}</p>
+  if (!clientes) return <p className="detalle-error">No se encontraron clientes.</p>
+
+  const optionsClientes = 
+    clientes.map(c => ({ value: c.idCliente, label: c.razonSocial }));
 
   // handler para inputs estándar 
   const handleChange = e => {
@@ -104,8 +92,8 @@ export default function FormDashboard() {
 
       // payload: extraemos el ID del cliente seleccionado
       const payload = {
-        usuario:                 correoUser,
-        clienteID:               form.cliente.value,
+        usuario:                correoUser,
+        clienteID:              form.cliente.value,
         fechaInicio:            new Date(form.fechaInicio).toISOString(),
         fechaFin:               form.fechaFin ? new Date(form.fechaFin).toISOString() : null,
         penalizacion:           form.penalizacion,
@@ -122,25 +110,16 @@ export default function FormDashboard() {
           : null
       }
 
-      const res = await fetch(
-        `${API_BASE}/PresupuestoApi/InsertPresupuesto`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept':       'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      )
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(txt || `Status ${res.status}`)
+      const success = await insertarActualizarPresupuesto(payload);
+      if(loading) return <p className="detalle-loading">Guardando presupuesto…</p>
+      if (!success) {
+        throw new Error(errorGuardar || 'No se pudo insertar el proyecto');
       }
 
       navigate(-1)
     } catch (err) {
-      console.error('Error al guardar el proyecto:', err)
-      setError(err.message || 'No se pudo guardar el proyecto. Intenta de nuevo.')
+      console.error('Error al insertar el proyecto:', err)
+      setError(err.message || 'No se pudo insertar el proyecto. Intenta de nuevo.')
     }
   }
 
@@ -168,7 +147,7 @@ export default function FormDashboard() {
           <label>Cliente</label>
           <Select
             name="cliente"
-            options={clientOpts}
+            options={optionsClientes}
             value={form.cliente}
             onChange={handleSelect('cliente')}
             placeholder="Selecciona un cliente…"

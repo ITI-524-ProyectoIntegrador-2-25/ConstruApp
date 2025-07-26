@@ -11,3 +11,23 @@ export async function getPresupuestoDetalle(correo, id) {
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
 }
+
+export async function insertPresupuesto(presupuesto) {
+  const res = await fetch(`${API_BASE}/PresupuestoApi/InsertPresupuesto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(presupuesto),
+  });
+  if (!res.ok) throw new Error(`Error al insertar: ${res.status}`);
+  return await res.json();
+}
+
+export async function updatePresupuesto(presupuesto) {
+  const res = await fetch(`${API_BASE}/PresupuestoApi/UpdatePresupuesto`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(presupuesto),
+  });
+  if (!res.ok) throw new Error(`Error al actualizar: ${res.status}`);
+  return await res.json();
+}

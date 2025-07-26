@@ -22,7 +22,6 @@ export const useClientes = () => {
     const fetchClientes = async () => {
       try {
         const data = await getClientes(correo);
-        console.dir(data)
         setClientes(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
