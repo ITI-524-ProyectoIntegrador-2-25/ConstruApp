@@ -1,47 +1,21 @@
-// src/components/pages/dashboard/Dashboard.jsx
-import React, { useState, useEffect, useMemo } from 'react'
+// Dashboard.jsx
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { Calendar, Filter, ChevronLeft } from 'lucide-react'
-import '../../../styles/Dashboard.css'
+import { useState, useMemo } from 'react';
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Hook
+import { usePresupuestos } from '../../../hooks/dashboard';
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [presupuestos, setPresupuestos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+
+  const { presupuestos, loading, error } = usePresupuestos();
 
   // Estado unificado para filtros
   const [filtros, setFiltros] = useState({
     descripcion: '',
     fecha: ''
   })
-
-  useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser')
-    if (!usuarioStr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-    const user = JSON.parse(usuarioStr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-
-    fetch(`${API_BASE}/PresupuestoApi/GetPresupuestos?usuario=${correo}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        setPresupuestos(data)
-      })
-      .catch(err => {
-        console.error(err)
-        setError('No se pudieron cargar los proyectos.')
-      })
-      .finally(() => setLoading(false))
-  }, [])
 
   // Handler unificado para todos los filtros
   const handleFilterChange = (field) => (e) => {
@@ -54,7 +28,7 @@ export default function Dashboard() {
   // Funcion para filtado en tiempo real con usememo
   const results = useMemo(() => {
     let arr = presupuestos
-//filtra por descripcion
+    //filtra por descripcion
     if (filtros.descripcion) {
       const q = filtros.descripcion.toLowerCase()
       arr = arr.filter(p =>
@@ -165,7 +139,7 @@ export default function Dashboard() {
       </div>
 
       {/* Contador de resultados */}
-      {presupuestos.length > 0 && (
+      {Array.isArray(presupuestos) && presupuestos.length > 0 && (
         <div className="results-footer">
           Mostrando {results.length} de {presupuestos.length} proyecto{presupuestos.length !== 1 ? 's' : ''}
         </div>
