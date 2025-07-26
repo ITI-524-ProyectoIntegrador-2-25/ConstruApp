@@ -4,48 +4,25 @@ import { Calendar, Filter, ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
 import './Planilla.css'
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Hook
+import { usePlanillas } from '../../../hooks/planillas'
 
 export default function Planillas() {
   const navigate = useNavigate()
 
-  const [planillas, setPlanillas]   = useState([])
-  const [results, setResults]       = useState([])
+  const { Planillas, loading, error } = usePlanillas()
+
+  const [results, setResults] = useState([])
   const [filtroNombre, setFiltroNombre] = useState('')
-  const [filtroFecha, setFiltroFecha]   = useState('')
-  const [loading, setLoading]       = useState(true)
-  const [error, setError]           = useState('')
+  const [filtroFecha, setFiltroFecha] = useState('')
 
-  // 1) Carga inicial
   useEffect(() => {
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-    const user   = JSON.parse(usr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
+    setResults(Planillas)
+  }, [Planillas])
 
-    fetch(`${API_BASE}/PlanillaApi/GetPlanilla?usuario=${correo}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        setPlanillas(data)
-        setResults(data)
-      })
-      .catch(err => {
-        console.error(err)
-        setError('No se pudieron cargar las planillas.')
-      })
-      .finally(() => setLoading(false))
-  }, [])
 
-  // 2) Filtrado
   const handleSearch = () => {
-    let arr = planillas
+    let arr = Planillas
     if (filtroNombre) {
       const q = filtroNombre.toLowerCase()
       arr = arr.filter(p =>
@@ -61,11 +38,10 @@ export default function Planillas() {
   }
 
   if (loading) return <p>Cargando…</p>
-  if (error)   return <p className="dashboard-error">{error}</p>
+  if (error) return <p className="dashboard-error">{error}</p>
 
   return (
     <div className="dashboard-page">
-      {/* Header: título */}
       <header className="dashboard-header">
         <div className="title-group">
           <button
@@ -79,7 +55,6 @@ export default function Planillas() {
         </div>
       </header>
 
-      {/* Filtros + botón “Nueva planilla” */}
       <div className="dashboard-filters">
         <div className="filter-group">
           <input
@@ -108,7 +83,6 @@ export default function Planillas() {
         </Link>
       </div>
 
-      {/* Grid de cards */}
       <div className="projects-grid">
         {results.length > 0 ? (
           results.map(p => (
