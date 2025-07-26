@@ -1,7 +1,7 @@
 import { useEffect , useState } from 'react';
 
 // API
-import { getPresupuestos, getPresupuestoDetalle } from '../api/dashboard';
+import { getPresupuestos, getPresupuestoDetalle, insertPresupuesto, updatePresupuesto } from '../api/dashboard';
 
 export const usePresupuestos = () => {
   const [presupuestos, setPresupuestos] = useState([]);
@@ -77,3 +77,32 @@ export const usePresupuestoDetalle = (idPresupuesto) => {
 
   return { presupuestoDetalle, loading, error };
 };
+
+export const useInsertarActualizarPresupuesto = () => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const insertarActualizarPresupuesto = async (presupuesto) => {
+    setLoading(true)
+    setError('')
+    setSuccess(false)
+
+    try {
+      presupuesto.idPresupuesto
+        ? await updatePresupuesto(presupuesto)
+        : await insertPresupuesto(presupuesto)
+
+      setSuccess(true)
+      return true; 
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Error al guardar el presupuesto')
+      return false;
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { insertarActualizarPresupuesto, loading, error, success }
+}

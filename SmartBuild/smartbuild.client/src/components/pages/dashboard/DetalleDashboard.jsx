@@ -8,7 +8,7 @@ import '../../../styles/Dashboard.css'
 import './FormDashboard.css'
 
 // Hook
-import { usePresupuestoDetalle } from '../../../hooks/dashboard';
+import { usePresupuestoDetalle, useInsertarActualizarPresupuesto } from '../../../hooks/dashboard';
 import { useClientes } from '../../../hooks/cliente'
 // import { label } from 'framer-motion/client'
 
@@ -35,6 +35,7 @@ export default function DetalleDashboard() {
 
   const { presupuestoDetalle, loading, error } = usePresupuestoDetalle(idPresupuesto)
   const { clientes, loadingClients, errorClients } = useClientes()
+  const { insertarActualizarPresupuesto, loadingUpdate, error: errorGuardar } = useInsertarActualizarPresupuesto();
 
   useEffect(() => {
     if (presupuestoDetalle) {
@@ -99,11 +100,14 @@ export default function DetalleDashboard() {
       subContratoCostoReal: Number(form.subContratoCostoReal),
       otrosGastos: Number(form.otrosGastos)
     }
-    const res = await fetch(`https://smartbuild-001-site1.ktempurl.com/PresupuestoApi/UpdatePresupuesto`,{
-      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-    })
-    if(!res.ok) throw new Error(await res.text())
-    setIsEditing(true)
+    
+    const success = await insertarActualizarPresupuesto(payload);
+    if(loadingUpdate) return <p className="detalle-loading">Guardando presupuesto…</p>
+    if (!success) {
+      throw new Error(errorGuardar || 'No se pudo insertar el proyecto');
+    }
+
+    setIsEditing(false)
   }
 
 
@@ -124,7 +128,7 @@ export default function DetalleDashboard() {
         <button className="back-btn" onClick={()=>navigate(-1)}>
           <ChevronLeft size={20}/>
         </button>
-        <h1>Presupuesto #{presupuestoDetalle.idPresupuesto}</h1>
+        <h1>Presupuesto #{presupuestoDetalle.idPresupuesto} - {presupuestoDetalle.descripcion}</h1>
         {!isEditing && (
           <button className="btn-submit" style={{ marginLeft: 'auto' }} onClick={()=> setIsEditing(true)}>
             Editar
