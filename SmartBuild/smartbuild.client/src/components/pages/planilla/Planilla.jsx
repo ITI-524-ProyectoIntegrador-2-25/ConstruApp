@@ -5,7 +5,7 @@ import '../../../styles/Dashboard.css'
 import './Planilla.css'
 
 // Hook
-import { usePlanillas } from '../../../hooks/planillas'
+import { usePlanillas } from '../../../hooks/Planilla'
 
 export default function Planillas() {
   const navigate = useNavigate()
