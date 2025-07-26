@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from 'react'
+// src/components/pages/dashboard/DetalleDashboard.jsx
+import React from 'react'
+
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import Select from 'react-select'
 import '../../../styles/Dashboard.css'
 import './FormDashboard.css'
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Hook
+import { usePresupuestoDetalle } from '../../../hooks/dashboard';
 
 export default function DetalleDashboard() {
   const { idPresupuesto } = useParams()
   const navigate = useNavigate()
+
   const [detalle, setDetalle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -17,52 +21,38 @@ export default function DetalleDashboard() {
   const [form, setForm] = useState({})
   const [clientOpts, setClientOpts] = useState([])
 
-  // Carga inicial de detalle y clientes
-  useEffect(() => {
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-    const user = JSON.parse(usr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-    // Detalle
-    fetch(`${API_BASE}/PresupuestoApi/GetPresupuestoByID?idPresupuesto=${idPresupuesto}&usuario=${correo}`)
-      .then(res => { if (!res.ok) throw new Error(res.status); return res.json() })
-      .then(data => {
-        const det = Array.isArray(data) ? data[0] : data
-        setDetalle(det)
-        setForm({
-          cliente: { value: det.clienteID, label: det.nombreCliente },
-          fechaInicio: det.fechaInicio.slice(0,10),
-          fechaFin: det.fechaFin.slice(0,10),
-          fechaFinReal: det.fechaFinReal ? det.fechaFinReal.slice(0,10) : '',
-          penalizacion: det.penalizacion,
-          montoPenalizacion: det.montoPenalizacion,
-          descripcion: det.descripcion,
-          materiaPrimaCotizada: det.materiaPrimaCotizada,
-          manoObraCotizada: det.manoObraCotizada,
-          materiaPrimaCostoReal: det.materiaPrimaCostoReal,
-          manoObraCostoReal: det.manoObraCostoReal,
-          subContratoCostoReal: det.subContratoCostoReal,
-          otrosGastos: det.otrosGastos
-        })
-      })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-    // Clientes
-    fetch(`${API_BASE}/ClientApi/GetClients?usuario=${correo}`)
-      .then(res => res.json())
-      .then(data => setClientOpts(data.map(c=>({value:c.idCliente,label:c.razonSocial}))))
-      .catch(console.error)
-  }, [idPresupuesto])
-
+  const { presupuestoDetalle, loading, error } = usePresupuestoDetalle(idPresupuesto)
+  setForm({
+    cliente: { value: det.clienteID, label: det.nombreCliente },
+    fechaInicio: det.fechaInicio.slice(0,10),
+    fechaFin: det.fechaFin.slice(0,10),
+    fechaFinReal: det.fechaFinReal ? det.fechaFinReal.slice(0,10) : '',
+    penalizacion: det.penalizacion,
+    montoPenalizacion: det.montoPenalizacion,
+    descripcion: det.descripcion,
+    materiaPrimaCotizada: det.materiaPrimaCotizada,
+    manoObraCotizada: det.manoObraCotizada,
+    materiaPrimaCostoReal: det.materiaPrimaCostoReal,
+    manoObraCostoReal: det.manoObraCostoReal,
+    subContratoCostoReal: det.subContratoCostoReal,
+    otrosGastos: det.otrosGastos
+  })
+  
   const handleChange = e => {
     const { name, type, value, checked } = e.target
     setForm(f => ({ ...f, [name]: type==='checkbox'?checked:value }))
   }
   const handleSelect = sel => setForm(f=>({...f, cliente: sel}))
+  
+  // Clientes
+  fetch(`${API_BASE}/ClientApi/GetClients?usuario=${correo}`)
+    .then(res => res.json())
+    .then(data => setClientOpts(data.map(c=>({value:c.idCliente,label:c.razonSocial}))))
+    .catch(console.error)
+
+  if (loading) return <p className="detalle-loading">Cargando detalles…</p>
+  if (error) return <p className="detalle-error">{error}</p>
+  if (!presupuestoDetalle) return <p className="detalle-error">No se encontró el detalle del presupuesto.</p>
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -99,8 +89,17 @@ export default function DetalleDashboard() {
     setIsEditing(false)
   }
 
-  if(loading) return <p>Cargando…</p>
-  if(error)   return <p className="alert alert-danger">{error}</p>
+
+  // Array de campos monetarios
+  const camposMonetarios = [
+    { key: 'montoPenalizacion', label: 'Monto penalización:', condicional: presupuestoDetalle.penalizacion },
+    { key: 'materiaPrimaCotizada', label: 'Materia prima (cotizada):' },
+    { key: 'manoObraCotizada', label: 'Mano de obra (cotizada):' },
+    { key: 'materiaPrimaCostoReal', label: 'Materia prima (real):' },
+    { key: 'manoObraCostoReal', label: 'Mano de obra (real):' },
+    { key: 'subContratoCostoReal', label: 'Subcontrato (real):' },
+    { key: 'otrosGastos', label: 'Otros gastos:' }
+  ]
 
   return (
     <div className="form-dashboard-page" style={{ maxWidth: '900px' }}>
