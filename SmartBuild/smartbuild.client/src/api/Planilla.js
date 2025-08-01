@@ -12,3 +12,14 @@ export async function getPlanillaDetalle(correo, id) {
     return await res.json();
 }
 
+export async function updatePlanilla(payload) {
+    const res = await fetch(`${API_BASE}/PlanillaApi/UpdatePlanilla`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    return await res.json();
+}
