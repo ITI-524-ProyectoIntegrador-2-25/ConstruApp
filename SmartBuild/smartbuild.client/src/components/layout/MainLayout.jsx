@@ -61,6 +61,7 @@ export default function MainLayout() {
                 <li><NavLink to="/dashboard/productividad/actividades">Actividades</NavLink></li>
                 <li><NavLink to="/dashboard/productividad/clientes">Clientes</NavLink></li>
                 <li><NavLink to="/dashboard/productividad/empleados">Empleados</NavLink></li>
+                <li><NavLink to="/dashboard/productividad/subcontratos/nuevo">Subcontratos</NavLink></li>
               </ul>
             )}
           </div>
