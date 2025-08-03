@@ -73,7 +73,7 @@ export const usePlanillaDetalle = (idPlanilla) => {
     };
 
     fetchPlanillaDetalle();
-  }, []);
+  }, [idPlanilla]);
 
   return { planillaDetalle, loading, error };
 };

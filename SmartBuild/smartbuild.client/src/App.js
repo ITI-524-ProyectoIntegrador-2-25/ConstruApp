@@ -43,11 +43,11 @@ export default function App() {
         {/** Rutas protegidas bajo “/dashboard” **/}
           <Route path="/dashboard/*" element={<DashboardLayout/>}>
           <Route path="proyectos/nuevo"                 element={<FormDashboard />} />
-          <Route path="proyectos/:idPresupuesto" element={<DetalleDashboard />} />
+          <Route path="proyectos/:idPresupuesto"        element={<DetalleDashboard />} />
           <Route index                                  element={<Dashboard   />} />
           <Route path="planilla"                        element={<Planilla    />} />
           <Route path="planilla/nueva"                  element={<FormPlanilla />} />
-          <Route path="planilla/:idPlanilla"                    element={<DetallePlanilla />} />
+          <Route path="planilla/:idPlanilla"            element={<DetallePlanilla />} />
           <Route path="productividad/actividades"       element={<Actividades />} />
           <Route path="productividad/actividades/nueva" element={<FormActividades />} />
           <Route path="productividad/actividades/:idActividad"   element={<DetalleActividades />} />
