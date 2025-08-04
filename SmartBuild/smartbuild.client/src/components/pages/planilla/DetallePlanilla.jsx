@@ -27,6 +27,8 @@ export default function DetallePlanilla() {
 
   const [planilla, setPlanilla] = useState(null)
   const [detalles, setDetalles] = useState([])
+  const [presupuestos, setPresupuestos] = useState([])
+  const [empleados, setEmpleados] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -54,37 +56,35 @@ export default function DetallePlanilla() {
         const user = JSON.parse(usrStr)
         const correo = user.correo || user.usuario
 
-        const todas = await getPlanilla(correo)
-        const cab = todas.find(p => String(p.idPlanilla) === idPlanilla)
-        if (!cab) throw new Error(`Planilla ${idPlanilla} no encontrada`)
-        setPlanilla(cab)
-
-        const [resDetalles, resPres, resEmp] = await Promise.all([
+        const [todas, detallesRes, presRes, empRes] = await Promise.all([
+          getPlanilla(correo),
           fetch(`https://smartbuild-001-site1.ktempurl.com/PlanillaDetalleApi/GetPlanillaDetalle?usuario=${correo}`),
           fetch(`https://smartbuild-001-site1.ktempurl.com/PresupuestoApi/GetPresupuestos?usuario=${correo}`),
           fetch(`https://smartbuild-001-site1.ktempurl.com/EmpleadoApi/GetEmpleado?usuario=${correo}`)
         ])
 
-        if (!resDetalles.ok || !resPres.ok || !resEmp.ok) throw new Error('Error cargando datos')
+        if (!detallesRes.ok || !presRes.ok || !empRes.ok) throw new Error('Error cargando datos')
 
-        const [allDetalles, presupuestos, empleados] = await Promise.all([
-          resDetalles.json(),
-          resPres.json(),
-          resEmp.json()
-        ])
+        const cab = todas.find(p => String(p.idPlanilla) === idPlanilla)
+        if (!cab) throw new Error(`Planilla ${idPlanilla} no encontrada`)
 
-        const detallesFiltrados = allDetalles
+        const allDetalles = await detallesRes.json()
+        const presupuestosData = await presRes.json()
+        const empleadosData = await empRes.json()
+
+        setPresupuestos(presupuestosData)
+        setEmpleados(empleadosData)
+        setPlanilla(cab)
+
+        const filtrados = allDetalles
           .filter(d => d.planillaID === parseInt(idPlanilla))
           .map(d => ({
             ...d,
-            presupuestoNombre: presupuestos.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
-            empleadoNombre: empleados.find(e => e.idEmpleado === d.empleadoID)?.nombreEmpleado || 
-                empleados.find(e => e.idEmpleado === d.empleadoID)?.nombre + ' ' + empleados.find(e => e.idEmpleado === d.empleadoID)?.apellido ||
-                d.empleadoID
+            presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
+            empleadoNombre: empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombreEmpleado || d.empleadoID
           }))
 
-        setDetalles(detallesFiltrados)
-
+        setDetalles(filtrados)
         setForm({
           nombre: cab.nombre || '',
           fechaInicio: cab.fechaInicio?.slice(0, 10) || '',
@@ -128,13 +128,7 @@ export default function DetallePlanilla() {
     try {
       await updatePlanilla(payload)
       setIsEditing(false)
-      setPlanilla(p => ({
-        ...p,
-        nombre: form.nombre,
-        fechaInicio: form.fechaInicio,
-        fechaFin: form.fechaFin,
-        estado: form.estado
-      }))
+      setPlanilla(p => ({ ...p, ...form }))
     } catch (err) {
       console.error('Error al actualizar:', err)
       alert('Error al guardar cambios: ' + err.message)
@@ -151,31 +145,25 @@ export default function DetallePlanilla() {
     setIsEditing(false)
   }
 
-  const datosPlanilla = detalles.map(det => {
-    const totalHoras = (det.horasOrdinarias || 0) + (det.horasExtras || 0) + (det.horasDobles || 0)
-    const totalPago = (det.salarioHora || 0) * (
-      (det.horasOrdinarias || 0) +
-      (det.horasExtras || 0) * 1.5 +
-      (det.horasDobles || 0) * 2
-    )
+  const exportarXLSX = () => {
+    const resumen = detalles.map(d => ({
+      '#Código': d.idPlanillaDetalle,
+      Fecha: new Date(d.fecha).toLocaleDateString(),
+      Proyecto: d.presupuestoNombre,
+      Empleado: d.empleadoNombre,
+      'Salario/Hora': d.salarioHora,
+      'Horas Ordinarias': d.horasOrdinarias,
+      'Horas Extras': d.horasExtras,
+      'Horas Dobles': d.horasDobles,
+      'Total a Pagar': (
+        d.salarioHora * d.horasOrdinarias +
+        d.salarioHora * 1.5 * d.horasExtras +
+        d.salarioHora * 2 * d.horasDobles
+      ).toFixed(2)
+    }))
 
-    return {
-      Código: det.idPlanillaDetalle,
-      Fecha: new Date(det.fecha).toLocaleDateString(),
-      Empleado: det.empleadoNombre,
-      Presupuesto: det.presupuestoNombre,
-      SalarioHora: det.salarioHora,
-      HorasOrdinarias: det.horasOrdinarias,
-      HorasExtras: det.horasExtras,
-      HorasDobles: det.horasDobles,
-      TotalHoras: totalHoras,
-      TotalPago: totalPago.toFixed(2)
-    }
-  })
-
-  const exportarPlanillaXLSX = (data) => {
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(data)
+    const ws = XLSX.utils.json_to_sheet(resumen)
     XLSX.utils.book_append_sheet(wb, ws, 'Planilla')
     XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'reporte'}.xlsx`)
   }
@@ -253,9 +241,14 @@ export default function DetallePlanilla() {
             ))}
           </tbody>
         </table>
-        <button onClick={() => exportarPlanillaXLSX(datosPlanilla)} className="btn-submit" style={{ marginTop: '2rem' }}>
-          Exportar planilla
-        </button>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+          <button onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/AgregarDetalle`)} className="btn-submit">
+            Agregar registro
+          </button>
+
+          <button onClick={exportarXLSX} className="btn-submit">Exportar planilla</button>
+        </div>
       </div>
     </div>
   )
