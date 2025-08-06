@@ -19,7 +19,7 @@ export default function Actividades() {
   const results = useMemo(() => {
     let arr = Actividades
     if (filtros.presupuesto) {
-      arr = arr.filter(a => a.presupuestoID === filtros.presupuesto.value)
+      arr = arr.filter(a => a.descripcion === filtros.presupuesto.value)
     }
     if (filtros.fecha) {
       arr = arr.filter(a =>
@@ -51,8 +51,8 @@ export default function Actividades() {
         <div className="filter-group">
           <Select
             options={Actividades.map(a => ({
-              value: a.presupuestoID,
-              label: a.presupuestoNombre || `ID ${a.presupuestoID}`
+              value: a.descripcion,
+              label: a.descripcion 
             }))}
             value={filtros.presupuesto}
             onChange={handleFilterChange('presupuesto')}

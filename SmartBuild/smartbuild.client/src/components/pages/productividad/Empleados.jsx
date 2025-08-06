@@ -1,67 +1,52 @@
-import React, { useState, useEffect } from 'react'
-import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Filter, Calendar } from 'lucide-react'
-import '../../../styles/Dashboard.css'
-import './Empleados.css'
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Filter, Calendar } from 'lucide-react';
+import '../../../styles/Dashboard.css';
+import './Empleados.css';
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// ✅ Importa el hook
+import { useEmpleados } from '../../../hooks/Empleados'; // Ajusta la ruta si es diferente
 
 export default function Empleados() {
-  const navigate = useNavigate()
-  const [empleados, setEmpleados] = useState([])
-  const [results, setResults] = useState([])
-  const [filtroNombre, setFiltroNombre] = useState('')
-  const [filtroPuesto, setFiltroPuesto] = useState('')
-  const [filtroFecha, setFiltroFecha] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
 
+  // ✅ Hook en lugar de useEffect + fetch
+  const { Empleados, loading, error } = useEmpleados();
+
+  // Filtros y resultados
+  const [results, setResults] = useState([]);
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroPuesto, setFiltroPuesto] = useState('');
+  const [filtroFecha, setFiltroFecha] = useState('');
+
+  // Aplica filtros cuando cambian
   useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser')
-    if (!usuarioStr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-    const user = JSON.parse(usuarioStr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
+    let arr = Empleados;
 
-    fetch(`${API_BASE}/EmpleadoApi/GetEmpleado?usuario=${correo}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        setEmpleados(data)
-        setResults(data)
-      })
-      .catch(err => {
-        console.error(err)
-        setError('No se pudieron cargar los empleados.')
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  const handleSearch = () => {
-    let arr = empleados
     if (filtroNombre) {
-      const q = filtroNombre.toLowerCase()
-      arr = arr.filter(e => (`${e.nombre} ${e.apellido}` || '').toLowerCase().includes(q))
-    }
-    if (filtroPuesto) {
-      arr = arr.filter(e => e.puesto.toLowerCase().includes(filtroPuesto.toLowerCase()))
-    }
-    if (filtroFecha) {
-      // Supone que existe e.fechaIngreso en formato ISO
+      const q = filtroNombre.toLowerCase();
       arr = arr.filter(e =>
-        new Date(e.fechaIngreso).toISOString().slice(0,10) === filtroFecha
-      )
+        (`${e.nombre} ${e.apellido}` || '').toLowerCase().includes(q)
+      );
     }
-    setResults(arr)
-  }
 
-  if (loading) return <p>Cargando…</p>
-  if (error) return <p className="empleados-error">{error}</p>
+    if (filtroPuesto) {
+      arr = arr.filter(e =>
+        (e.puesto || '').toLowerCase().includes(filtroPuesto.toLowerCase())
+      );
+    }
+
+    if (filtroFecha) {
+      arr = arr.filter(e =>
+        new Date(e.fechaIngreso).toISOString().slice(0, 10) === filtroFecha
+      );
+    }
+
+    setResults(arr);
+  }, [Empleados, filtroNombre, filtroPuesto, filtroFecha]);
+
+  if (loading) return <p>Cargando…</p>;
+  if (error) return <p className="empleados-error">{error}</p>;
 
   return (
     <div className="empleados-page">
@@ -100,7 +85,7 @@ export default function Empleados() {
             onChange={e => setFiltroFecha(e.target.value)}
           />
         </div>
-        <button className="btn-search" onClick={handleSearch}>
+        <button className="btn-search" onClick={() => {}}>
           Buscar
         </button>
         <Link to="nuevo" className="btn-add">
@@ -116,15 +101,35 @@ export default function Empleados() {
               to={`${emp.idEmpleado}`}
               className="empleado-card"
             >
-              <div className="card-image">
+              <div className="card-imagen">
                 <img
                   src={require('../../../assets/img/dashboard.png')}
                   alt={`${emp.nombre} ${emp.apellido}`}
                 />
               </div>
+
               <div className="card-info">
                 <h3>{emp.nombre} {emp.apellido}</h3>
                 <p>{emp.puesto}</p>
+              </div>
+
+              <div className="card-extra">
+                <span>
+                  <span className="label">Identificación</span>
+                  {emp.identificacion}
+                </span>
+                <span>
+                  <span className="label">Salario ₡/h</span>
+                  {emp.salarioHora}
+                </span>
+                <span>
+                  <span className="label">Fecha ingreso</span>
+                  {new Date(emp.fechaIngreso).toLocaleDateString()}
+                </span>
+                <span>
+                  <span className="label">Estado</span>
+                  {emp.activo === "True" ? "Activo" : "Inactivo"}
+                </span>
               </div>
             </NavLink>
           ))
@@ -133,11 +138,12 @@ export default function Empleados() {
         )}
       </div>
 
-      {empleados.length > 0 && (
+      {Empleados.length > 0 && (
         <div className="results-footer">
-          Mostrando {results.length} de {empleados.length} empleado{empleados.length !== 1 ? 's' : ''}
+          Mostrando {results.length} de {Empleados.length} empleado
+          {Empleados.length !== 1 ? 's' : ''}
         </div>
       )}
     </div>
-  )
+  );
 }
