@@ -4,7 +4,8 @@ import { ChevronLeft } from 'lucide-react'
 import '../../../styles/Dashboard.css'
 import './FormCliente.css'
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// ✅ Hook de insertar/actualizar empleados
+import { useInsertarActualizarEmpleados } from '../../../hooks/Empleados'
 
 export default function FormEmpleado() {
   const navigate = useNavigate()
@@ -22,6 +23,9 @@ export default function FormEmpleado() {
   })
 
   const [error, setError] = useState('')
+
+  // ✅ Hook para insertar/actualizar
+  const { guardarEmpleado, loading } = useInsertarActualizarEmpleados()
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -64,23 +68,9 @@ export default function FormEmpleado() {
         activo: form.activo
       }
 
-      console.log('Payload enviado al API:', payload)
+      const ok = await guardarEmpleado(payload)
 
-      const res = await fetch(`${API_BASE}/EmpleadoApi/InsertEmpleado`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/plain'
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(txt || `Status ${res.status}`)
-      }
-
-      navigate('/dashboard/productividad/empleados')
+      if (ok) navigate('/dashboard/productividad/empleados')
     } catch (err) {
       console.error('Error al guardar empleado:', err)
       setError(err.message || 'No se pudo guardar el empleado. Inténtalo de nuevo.')
@@ -150,8 +140,8 @@ export default function FormEmpleado() {
           </select>
         </div>
 
-        <button type="submit" className="btn-submit">
-          Guardar empleado
+        <button type="submit" className="btn-submit" disabled={loading}>
+          {loading ? 'Guardando...' : 'Guardar empleado'}
         </button>
       </form>
     </div>
