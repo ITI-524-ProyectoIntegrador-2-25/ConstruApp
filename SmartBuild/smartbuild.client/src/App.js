@@ -19,6 +19,7 @@ import Planilla    from './components/pages/planilla/Planilla'
 import FormPlanilla    from './components/pages/planilla/FormPlanilla'
 import DetallePlanilla from './components/pages/planilla/DetallePlanilla'
 import AgregarDetalle from './components/pages/planilla/AgregarDetalle'
+import EditarDetalle from './components/pages/planilla/EditarDetalle'
 import Actividades from './components/pages/productividad/Actividades'
 import FormActividades from './components/pages/productividad/FormActividades'
 import DetalleActividades from './components/pages/productividad/DetalleActividades'
@@ -33,6 +34,15 @@ import FormSubcontrato   from './components/pages/productividad/FormSubcontrato'
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
+  
+  const ProtectedRoute = ({ children }) => {
+  const usrStr = localStorage.getItem('currentUser'); // Verifica si el usuario está autenticado
+  if (!usrStr) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+  
   return (
     <BrowserRouter>
       <Routes>
@@ -44,26 +54,27 @@ export default function App() {
         </Route>
 
         {/** Rutas protegidas bajo “/dashboard” **/}
-          <Route path="/dashboard/*" element={<DashboardLayout/>}>
-          <Route path="proyectos/nuevo"                 element={<FormDashboard />} />
-          <Route path="proyectos/:idPresupuesto"        element={<DetalleDashboard />} />
-          <Route index                                  element={<Dashboard   />} />
-          <Route path="planilla"                        element={<Planilla    />} />
-          <Route path="planilla/nueva"                  element={<FormPlanilla />} />
-          <Route path="planilla/:idPlanilla"            element={<DetallePlanilla />} />
-          <Route path="planilla/:idPlanilla/AgregarDetalle" element={<AgregarDetalle />} />
-          <Route path="productividad/actividades"       element={<Actividades />} />
-          <Route path="productividad/actividades/nueva" element={<FormActividades />} />
-          <Route path="productividad/actividades/:idActividad"   element={<DetalleActividades />} />
-          <Route path="productividad/clientes"               element={<Clientes    />} />
-          <Route path="productividad/clientes/nuevo"         element={<FormCliente />} />
-          <Route path="productividad/clientes/:idCliente"    element={<DetalleCliente />} />
-          <Route path="productividad/empleados"         element={<Empleados   />} />
-          <Route path="productividad/empleados/:idEmpleado"            element={<DetalleEmpleado />} />
-          <Route path="productividad/empleados/nuevo" element={<FormEmpleado />} />
-          <Route path="productividad/subcontratos"         element={<Subcontrato/>} />
-          <Route path="productividad/subcontratos/nuevo"         element={<FormSubcontrato/>} />
-          <Route path="usuario"                         element={<UserProfile />} />
+          <Route path="/dashboard/*"                              element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route path="proyectos/nuevo"                           element={<FormDashboard />} />
+          <Route path="proyectos/:idPresupuesto"                  element={<DetalleDashboard />} />
+          <Route index                                            element={<Dashboard   />} />
+          <Route path="planilla"                                  element={<Planilla    />} />
+          <Route path="planilla/nueva"                            element={<FormPlanilla />} />
+          <Route path="planilla/:idPlanilla"                      element={<DetallePlanilla />} />
+          <Route path="planilla/:idPlanilla/AgregarDetalle"       element={<AgregarDetalle />} />
+          <Route path="planilla/:idPlanilla/EditarDetalle"        element={<EditarDetalle />} />
+          <Route path="productividad/actividades"                 element={<Actividades />} />
+          <Route path="productividad/actividades/nueva"           element={<FormActividades />} />
+          <Route path="productividad/actividades/:idActividad"    element={<DetalleActividades />} />
+          <Route path="productividad/clientes"                    element={<Clientes    />} />
+          <Route path="productividad/clientes/nuevo"              element={<FormCliente />} />
+          <Route path="productividad/clientes/:idCliente"         element={<DetalleCliente />} />
+          <Route path="productividad/empleados"                   element={<Empleados   />} />
+          <Route path="productividad/empleados/:idEmpleado"       element={<DetalleEmpleado />} />
+          <Route path="productividad/empleados/nuevo"             element={<FormEmpleado />} />
+          <Route path="productividad/subcontratos"                element={<Subcontrato/>} />
+          <Route path="productividad/subcontratos/nuevo"          element={<FormSubcontrato/>} />
+          <Route path="usuario"                                   element={<UserProfile />} />
         </Route>
 
 

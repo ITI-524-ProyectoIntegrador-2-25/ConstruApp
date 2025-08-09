@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx'
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada']
 
 const COLUMN_LABELS = {
-  idPlanillaDetalle: '#Código',
+  idDetallePlanilla: '#Código',
   fecha: 'Fecha',
   presupuestoNombre: 'Presupuesto',
   empleadoNombre: 'Empleado',
@@ -24,7 +24,6 @@ const COLUMN_LABELS = {
 export default function DetallePlanilla() {
   const { idPlanilla } = useParams()
   const navigate = useNavigate()
-
   const [planilla, setPlanilla] = useState(null)
   const [detalles, setDetalles] = useState([])
   const [presupuestos, setPresupuestos] = useState([])
@@ -33,10 +32,12 @@ export default function DetallePlanilla() {
   const [error, setError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState({
+
     nombre: '',
     fechaInicio: '',
     fechaFin: '',
     estado: ESTADOS[0]
+
   })
 
   const estadoOptions = useMemo(() => ESTADOS.map(e => ({ value: e, label: e })), [])
@@ -77,16 +78,17 @@ export default function DetallePlanilla() {
         setPlanilla(cab)
 
         const filtrados = allDetalles
-          .filter(d => d.planillaID === parseInt(idPlanilla))
-          .map(d => ({
-            ...d,
-            presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
-            empleadoNombre: empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombreEmpleado || d.empleadoID
-          }))
+  .filter(d => d.planillaID === parseInt(idPlanilla))
+  .map(d => ({
+    ...d,
+    idDetallePlanilla: d.idDetallePlanilla, // Asegúrate de que este campo esté presente
+    presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
+    empleadoNombre: empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombreEmpleado || `${empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombre} ${empleadosData.find(e => e.idEmpleado === d.empleadoID)?.apellido}` || d.empleadoID
+  }))
 
         setDetalles(filtrados)
         setForm({
-          nombre: cab.nombre || '',
+          nombre: cab.nombre || '',  
           fechaInicio: cab.fechaInicio?.slice(0, 10) || '',
           fechaFin: cab.fechaFin?.slice(0, 10) || '',
           estado: cab.estado || ESTADOS[0]
@@ -147,7 +149,7 @@ export default function DetallePlanilla() {
 
   const exportarXLSX = () => {
     const resumen = detalles.map(d => ({
-      '#Código': d.idPlanillaDetalle,
+      '#Código': d.idDetallePlanilla,
       Fecha: new Date(d.fecha).toLocaleDateString(),
       Proyecto: d.presupuestoNombre,
       Empleado: d.empleadoNombre,
@@ -231,15 +233,15 @@ export default function DetallePlanilla() {
           </thead>
           <tbody>
             {detalles.map((item, i) => (
-              <tr key={i}>
+              <tr key={i} onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/EditarDetalle`)}>
                 {Object.keys(COLUMN_LABELS).map((key, j) => {
                   let val = item[key];
-                  if (key === 'fecha' && val) val = new Date(val).toLocaleDateString()
+                  if (key === 'fecha' && val) val = new Date(val).toLocaleDateString();
                   return <td key={j}>{val}</td>
-                })}
-              </tr>
-            ))}
-          </tbody>
+                  })}
+                  </tr>
+                ))}
+                </tbody>
         </table>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
