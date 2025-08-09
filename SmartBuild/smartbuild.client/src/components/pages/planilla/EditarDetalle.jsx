@@ -1,14 +1,11 @@
-// src/components/pages/planilla/EditarDetallePlanilla.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './Planilla.css'; // Si tienes estilos personalizados, usa este archivo
+import './Planilla.css';
 
 export default function EditarDetallePlanilla() {
   const { idDetallePlanilla } = useParams(); // Obtener el ID de la URL
   const navigate = useNavigate();
   
-  // Estado para manejar los datos y el formulario
   const [detalle, setDetalle] = useState(null);
   const [form, setForm] = useState({
     fecha: '',
@@ -17,21 +14,45 @@ export default function EditarDetallePlanilla() {
     horasExtras: '',
     horasDobles: ''
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Obtener los datos del detalle de planilla por ID
+  // Verificamos si el componente se monta
   useEffect(() => {
+    console.log('Componente EditarDetallePlanilla montado'); // Log para ver si el componente se monta
+
+    if (!idDetallePlanilla) {
+      console.error('ID de detalle de planilla no válido:', idDetallePlanilla);
+      setError('ID de detalle de planilla no válido');
+      setLoading(false);
+      return;
+    }
+
+    console.log('idDetallePlanilla recibido:', idDetallePlanilla); // Log para verificar el ID recibido
+
     async function fetchData() {
+      console.log('Iniciando fetch de datos...'); // Log antes de hacer el fetch
+
       try {
-        const response = await fetch(`https://smartbuild-001-site1.ktempurl.com/PlanillaDetalleApi/GetPlanillaDetalleByInfo?idPlanillaDetalle=${idDetallePlanilla}&usuario=${localStorage.usuario}`);
-        
+        const usuario = localStorage.getItem('usuario'); // Recuperar el usuario desde localStorage
+        if (!usuario) {
+          console.error('Usuario no autenticado');
+          setError('Usuario no autenticado');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`https://smartbuild-001-site1.ktempurl.com/PlanillaDetalleApi/GetPlanillaDetalleByInfo?idPlanillaDetalle=${idDetallePlanilla}&usuario=${usuario}`);
+        console.log('Respuesta de fetch:', response); // Log para ver si la respuesta es correcta
+
         if (!response.ok) {
           throw new Error('Error al obtener los datos del detalle');
         }
 
         const data = await response.json();
+        console.log('Datos recibidos de la API:', data); // Log para ver los datos recibidos
+
         setDetalle(data);
         setForm({
           fecha: data.fecha,
@@ -41,6 +62,7 @@ export default function EditarDetallePlanilla() {
           horasDobles: data.horasDobles
         });
       } catch (error) {
+        console.error('Error en fetchData:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -50,7 +72,6 @@ export default function EditarDetallePlanilla() {
     fetchData();
   }, [idDetallePlanilla]);
 
-  // Manejar los cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -59,10 +80,14 @@ export default function EditarDetallePlanilla() {
     }));
   };
 
-  // Manejar el envío del formulario para actualizar los datos
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const usuario = 'usuarioEjemplo'; // Aquí puedes obtener el usuario desde tu sistema (e.g., `localStorage`)
+    const usuario = localStorage.getItem('usuario'); // Obtener el usuario de nuevo desde localStorage
+
+    if (!usuario) {
+      setError('Usuario no autenticado');
+      return;
+    }
 
     const payload = {
       idPlanillaDetalle: idDetallePlanilla,
@@ -88,15 +113,28 @@ export default function EditarDetallePlanilla() {
       }
 
       alert('Datos actualizados correctamente');
-      navigate(`/planilla/${idDetallePlanilla}`); // Redirigir a la página de detalles después de la actualización
+      navigate(`/planilla/${idDetallePlanilla}`);
     } catch (error) {
       setError(error.message);
     }
   };
 
-  if (loading) return <p>Cargando...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!detalle) return null;
+  if (loading) {
+    console.log('Cargando...');
+    return <p>Cargando...</p>;
+  }
+
+  if (error) {
+    console.error('Error:', error);
+    return <p>Error: {error}</p>;
+  }
+
+  if (!detalle) {
+    console.log('No se recibió detalle');
+    return null;
+  }
+
+  console.log('Detalle cargado:', detalle); // Log para verificar si el detalle es cargado correctamente
 
   return (
     <div className="editar-detalle-planilla">

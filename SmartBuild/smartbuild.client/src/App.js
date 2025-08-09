@@ -62,7 +62,7 @@ export default function App() {
           <Route path="planilla/nueva"                            element={<FormPlanilla />} />
           <Route path="planilla/:idPlanilla"                      element={<DetallePlanilla />} />
           <Route path="planilla/:idPlanilla/AgregarDetalle"       element={<AgregarDetalle />} />
-          <Route path="planilla/:idPlanilla/EditarDetalle"        element={<EditarDetalle />} />
+          <Route path="planilla/:idDetallePlanilla/EditarDetalle" element={<EditarDetalle />} />
           <Route path="productividad/actividades"                 element={<Actividades />} />
           <Route path="productividad/actividades/nueva"           element={<FormActividades />} />
           <Route path="productividad/actividades/:idActividad"    element={<DetalleActividades />} />
