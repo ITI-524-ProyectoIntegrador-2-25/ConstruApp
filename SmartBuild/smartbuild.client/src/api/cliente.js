@@ -11,3 +11,23 @@ export async function getClienteDetalle(correo, id) {
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
 }
+
+export async function insertClient(cliente) {
+  const res = await fetch(`${API_BASE}/ClientApi/InsertClient`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cliente),
+  });
+  if (!res.ok) throw new Error(`Error al insertar: ${res.status}`);
+  return await res.json();
+}
+
+export async function updateCliente(cliente) {
+  const res = await fetch(`${API_BASE}/ClientApi/UpdateClient`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cliente),
+  });
+  if (!res.ok) throw new Error(`Error al actualizar: ${res.status}`);
+  return await res.json();
+}

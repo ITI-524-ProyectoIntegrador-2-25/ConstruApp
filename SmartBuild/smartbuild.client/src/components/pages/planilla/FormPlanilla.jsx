@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
-import Select from 'react-select'
 import '../../../styles/Dashboard.css'
 import './FormPlanilla.css'
 
