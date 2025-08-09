@@ -28,6 +28,8 @@ import FormCliente from './components/pages/productividad/FormCliente'
 import Empleados   from './components/pages/productividad/Empleados'
 import FormEmpleado   from './components/pages/productividad/FormEmpleado'
 import DetalleEmpleado from './components/pages/productividad/DetalleEmpleado'
+import Subcontrato   from './components/pages/productividad/Subcontratos'
+import FormSubcontrato   from './components/pages/productividad/FormSubcontrato'
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
@@ -59,6 +61,8 @@ export default function App() {
           <Route path="productividad/empleados"         element={<Empleados   />} />
           <Route path="productividad/empleados/:idEmpleado"            element={<DetalleEmpleado />} />
           <Route path="productividad/empleados/nuevo" element={<FormEmpleado />} />
+          <Route path="productividad/subcontratos"         element={<Subcontrato/>} />
+          <Route path="productividad/subcontratos/nuevo"         element={<FormSubcontrato/>} />
           <Route path="usuario"                         element={<UserProfile />} />
         </Route>
 
