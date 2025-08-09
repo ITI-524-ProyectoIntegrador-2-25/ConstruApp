@@ -18,7 +18,8 @@
     "react-scripts": "5.0.1",
     "react-select": "^5.10.2",
     "react-transition-group": "^4.4.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.19.3"
   },
   "eslintConfig": {
     "extends": [

@@ -157,34 +157,6 @@ export default function FormPlanilla() {
       )}
 
       <form onSubmit={handleSubmit} className="form-dashboard">
-        {/* Proyecto asociado */}
-        <div className="form-group">
-          <label>Proyecto asociado</label>
-          <Select
-            name="proyecto"
-            options={projectsOpts}
-            value={form.proyecto}
-            onChange={handleSelect('proyecto')}
-            placeholder="Seleccionar proyecto…"
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-        </div>
-
-        {/* Empleados asociados */}
-        <div className="form-group">
-          <label>Empleados asociados</label>
-          <Select
-            name="empleados"
-            options={employeesOpts}
-            value={form.empleados}
-            onChange={handleSelect('empleados')}
-            isMulti
-            placeholder="Seleccionar empleados…"
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-        </div>
 
         {/* Nombre de la planilla */}
         <div className="form-group">

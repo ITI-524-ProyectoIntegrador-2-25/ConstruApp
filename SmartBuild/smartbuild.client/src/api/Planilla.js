@@ -12,14 +12,23 @@ export async function getPlanillaDetalle(correo, id) {
     return await res.json();
 }
 
+export async function insertPlanilla(payload) {
+  const res = await fetch(`${API_BASE}/PlanillaApi/InsertPlanilla`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+// Nuevo: actualiza una planilla existente
 export async function updatePlanilla(payload) {
-    const res = await fetch(`${API_BASE}/PlanillaApi/UpdatePlanilla`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    return await res.json();
+  const res = await fetch(`${API_BASE}/PlanillaApi/UpdatePlanilla`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
 }

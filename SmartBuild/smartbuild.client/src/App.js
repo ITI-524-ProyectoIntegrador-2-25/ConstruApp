@@ -18,6 +18,7 @@ import FormDashboard from './components/pages/dashboard/FormDashboard'
 import Planilla    from './components/pages/planilla/Planilla'
 import FormPlanilla    from './components/pages/planilla/FormPlanilla'
 import DetallePlanilla from './components/pages/planilla/DetallePlanilla'
+import AgregarDetalle from './components/pages/planilla/AgregarDetalle'
 import Actividades from './components/pages/productividad/Actividades'
 import FormActividades from './components/pages/productividad/FormActividades'
 import DetalleActividades from './components/pages/productividad/DetalleActividades'
@@ -45,11 +46,12 @@ export default function App() {
         {/** Rutas protegidas bajo “/dashboard” **/}
           <Route path="/dashboard/*" element={<DashboardLayout/>}>
           <Route path="proyectos/nuevo"                 element={<FormDashboard />} />
-          <Route path="proyectos/:idPresupuesto" element={<DetalleDashboard />} />
+          <Route path="proyectos/:idPresupuesto"        element={<DetalleDashboard />} />
           <Route index                                  element={<Dashboard   />} />
           <Route path="planilla"                        element={<Planilla    />} />
           <Route path="planilla/nueva"                  element={<FormPlanilla />} />
-          <Route path="planilla/:idPlanilla"                    element={<DetallePlanilla />} />
+          <Route path="planilla/:idPlanilla"            element={<DetallePlanilla />} />
+          <Route path="planilla/:idPlanilla/AgregarDetalle" element={<AgregarDetalle />} />
           <Route path="productividad/actividades"       element={<Actividades />} />
           <Route path="productividad/actividades/nueva" element={<FormActividades />} />
           <Route path="productividad/actividades/:idActividad"   element={<DetalleActividades />} />
