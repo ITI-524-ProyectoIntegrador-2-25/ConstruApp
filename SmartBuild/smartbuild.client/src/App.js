@@ -20,6 +20,7 @@ import FormPlanilla    from './components/pages/planilla/FormPlanilla'
 import DetallePlanilla from './components/pages/planilla/DetallePlanilla'
 import AgregarDetalle from './components/pages/planilla/AgregarDetalle'
 import Actividades from './components/pages/productividad/Actividades'
+import EditarDetalle from './components/pages/planilla/EditarDetalle'
 import FormActividades from './components/pages/productividad/FormActividades'
 import DetalleActividades from './components/pages/productividad/DetalleActividades'
 import Clientes    from './components/pages/productividad/Clientes'
@@ -34,6 +35,13 @@ import FormPagoSubcontrato from './components/pages/productividad/FormPagoSubcon
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
+
+  const ProtectedRoute = ({ children }) => {
+    const usrStr = localStorage.getItem('currentUser');
+    if (!usrStr) return <Navigate to="/login" replace />;
+    return children;
+  };
+  
   return (
     <BrowserRouter>
       <Routes>
