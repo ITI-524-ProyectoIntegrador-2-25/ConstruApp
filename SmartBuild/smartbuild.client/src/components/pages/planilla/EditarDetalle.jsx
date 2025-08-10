@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import './Planilla.css'
-import { http } from '../../../api/client'
+import { http } from '../../../api/baseAPI'
 import { getPlanillaDetalleByInfo, updatePlanillaDetalle } from '../../../api/PlanillaDetalle'
 
 function dateOnly(v) {

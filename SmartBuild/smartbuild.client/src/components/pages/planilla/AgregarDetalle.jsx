@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import Select from 'react-select'
-import { http } from '../../../api/client'
+import { http } from '../../../api/baseAPI'
 import { insertPlanillaDetalle } from '../../../api/PlanillaDetalle'
 
 function dateOnly(v) {

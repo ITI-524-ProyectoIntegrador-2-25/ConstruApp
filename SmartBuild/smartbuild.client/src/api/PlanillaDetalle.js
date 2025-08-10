@@ -1,4 +1,4 @@
-import { http } from './client';
+import { http } from './baseAPI';
 
 export function getPlanillaDetalle(usuario) {
   return http.get('/PlanillaDetalleApi/GetPlanillaDetalle', { params: { usuario } });

@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import './Planilla.css';
 import Select from 'react-select';
 import * as XLSX from 'xlsx';
-import { http } from '../../../api/client';
+import { http } from '../../../api/baseAPI';
 import { getPlanilla, updatePlanilla } from '../../../api/Planilla';
 
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];
