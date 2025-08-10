@@ -1,34 +1,17 @@
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+import { http } from './baseAPI';
 
-export async function getPlanilla(correo) {
-    const res = await fetch(`${API_BASE}/PlanillaApi/GetPlanilla?usuario=${correo}`);
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    return await res.json();
+export function getPlanilla(usuario) {
+  return http.get('/PlanillaApi/GetPlanilla', { params: { usuario } });
 }
 
-export async function getPlanillaDetalle(correo, id) {
-    const res = await fetch(`${API_BASE}/PlanillaApi/GetPlanillabyInfo?idPlanilla=${id}&usuario=${correo}`)
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    return await res.json();
+export function getPlanillaByInfo(idPlanilla, Usuario) {
+  return http.get('/PlanillaApi/GetPlanillabyInfo', { params: { idPlanilla, Usuario } });
 }
 
-export async function insertPlanilla(payload) {
-  const res = await fetch(`${API_BASE}/PlanillaApi/InsertPlanilla`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
+export function insertPlanilla(body) {
+  return http.post('/PlanillaApi/InsertPlanilla', { data: body });
 }
 
-// Nuevo: actualiza una planilla existente
-export async function updatePlanilla(payload) {
-  const res = await fetch(`${API_BASE}/PlanillaApi/UpdatePlanilla`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
+export function updatePlanilla(body) {
+  return http.put('/PlanillaApi/UpdatePlanilla', { data: body });
 }

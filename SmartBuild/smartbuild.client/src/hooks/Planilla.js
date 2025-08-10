@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 
 // API
-import { getPlanilla, getPlanillaDetalle } from '../api/Planilla';
+import { getPlanilla } from '../api/Planilla'
+import { getPlanillaDetalle } from '../api/PlanillaDetalle'
 
 export const usePlanillas = () => {
   const [Planillas, setPlanillas] = useState([]);
