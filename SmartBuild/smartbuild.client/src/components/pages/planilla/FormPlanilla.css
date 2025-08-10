@@ -1,305 +1,148 @@
-.planilla-page {
-  padding: 1.5rem;
-  background: #f8fafc;
-}
-.planilla-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.planilla-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #374151;
-}
-.btn-add {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-.btn-add:hover {
-  background: #1e40af;
+/* src/components/pages/planilla/Planilla.css */
+:root {
+  --clr-bg:      #f8fafc;
+  --clr-white:   #ffffff;
+  --clr-border:  #e5e7eb;
+  --clr-text:    #374151;
+  --clr-muted:   #6b7280;
+  --clr-primary: #2563eb;
+  --radius:      0.75rem;
+  --spacing:     1.5rem;
+  --shadow:      0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.planilla-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+/* Contenedor principal ocupa todo el ancho disponible */
+.form-dashboard-page {
+  padding: var(--spacing);
+  background: var(--clr-bg);
+  color: var(--clr-text);
 }
-.filter-group {
+
+/* Eliminamos límite de ancho */
+.container {
+  max-width: 100%;
+  width: 100%;
+  padding: 0 var(--spacing);
+  margin: 0;
+}
+
+/* Encabezado */
+.form-dashboard-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  gap: 1rem;
+  margin-bottom: var(--spacing);
 }
-.filter-group select,
-.filter-group input {
-  border: none;
+.detalle-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+.back-btn {
   background: none;
-  outline: none;
-  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-text);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
 }
-.btn-search {
+.back-btn:hover {
+  background: var(--clr-border);
+}
+
+/* Grid de detalles generales */
+.detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing);
+  margin-bottom: var(--spacing);
+}
+.detalle-row .label {
+  font-size: 0.9rem;
+  color: var(--clr-muted);
+  margin-bottom: 0.25rem;
+}
+.detalle-row .value {
+  font-size: 1rem;
+}
+
+/* Formulario edición: ancho completo */
+.form-dashboard {
+  background: var(--clr-white);
+  padding: var(--spacing);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: var(--spacing);
+  width: 100%; /* ocupa todo el ancho */
+}
+.form-group {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #2563eb;
-  color: #fff;
+  flex-direction: column;
+}
+.form-group label {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: var(--clr-text);
+}
+.form-group input,
+.form-group select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--clr-border);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background: var(--clr-white);
+  transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--clr-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+.btn-submit {
+  padding: 0.75rem 1rem;
+  background: var(--clr-primary);
+  color: var(--clr-white);
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
+  transition: background 0.2s;
 }
-.btn-search:hover {
+.btn-submit:hover {
   background: #1e40af;
 }
 
-.planilla-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-.planilla-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-}
-.planilla-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
-.planilla-desc {
-  flex: 1;
-  font-size: 1rem;
-  color: #374151;
-  margin-bottom: 0.75rem;
-}
-.planilla-horas {
-  font-weight: 600;
-  color: #2563eb;
-  font-size: 0.95rem;
-}
-.no-results {
+/* Botones al final del formulario */
+.form-dashboard > div:last-child {
   grid-column: 1 / -1;
-  text-align: center;
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* src/styles/planillas.css */
-.planilla-page {
-  padding: 1.5rem;
-}
-.planilla-filters {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.planilla-filters select,
-.planilla-filters input {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-}
-
-.planilla-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-.planilla-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.planilla-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-.card-header .empleado {
-  font-size: 0.875rem;
-  color: #555;
-}
-
-.card-body .fila {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.times {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-}
-.times div {
-  font-size: 0.875rem;
-}
-
-/* src/components/pages/productividad/planillas.css */
-
-/* … tus estilos previos … */
-
-/* contenedor para el botón */
-.planilla-new {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 1rem; /* separa el botón de la lista */
 }
 
-/* estilo del botón nuevo */
-.btn-nueva {
-  display: inline-block;
-  background: var(--clr-primary);
-  color: #fff;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: background 0.2s;
+/* Tabla de detalles */
+.detalle-items {
+  margin-top: var(--spacing);
 }
-.btn-nueva:hover {
-  background: #1e40af; /* tono un poco más oscuro al pasar */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
-
-.planilla-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.back-btn:hover {
-  color: var(--clr-primary); /* o el color que uses */
-}
-
-.planilla-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-}
-.back-btn:hover {
-  color: var(--clr-primary);
-}
-
-.planilla-header {
-  display: flex !important;
-  align-items: center;
-  justify-content: flex-start !important;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.planilla-title {
-  margin: 0;             
-  padding: 0;            
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-/* src/styles/Planilla.css */
-
-/* agrupa filtros + botón en la misma fila */
-.planilla-controls {
-  display: flex;
-  flex-wrap: wrap;           /* en móvil baja a dos filas si hace falta */
-  align-items: center;       /* todos a la misma altura */
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;       /* espacio justo antes de la lista */
-}
-
-/* tus filtros siguen igual, sólo asegúrate de tener gap suficiente */
-.planilla-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-/* quita cualquier margen extra del botón */
-.planilla-new .btn-nueva {
-  margin: 0;
-}
-
-/* lista de cards justo debajo */
-.planilla-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-top: 0;
-}
-
-/* Aplica solo en el form genérico */
-.form-dashboard select[multiple] {
-  /* tamaño similar al resto de inputs */
-  min-height: 2.5rem;
-  max-height: 8rem;        /* deja espacio para varias opciones, luego scroll */
-  overflow-y: auto;        /* scroll interno cuando hay muchas opciones */
-  padding: 0.6rem 0.75rem; /* mismo padding que los inputs normales */
-  border: 1px solid var(--clr-border);
-  border-radius: 0.5rem;
+.detalle-table {
+  width: 100%;
+  border-collapse: collapse;
   background: var(--clr-white);
-  font-size: 1rem;
+  box-shadow: var(--shadow);
 }
-
-/* react-select */
-.react-select__control {
-  border: 1px solid var(--clr-border);
-  border-radius: 0.5rem;
-  padding: 0.1rem;
+.detalle-table th,
+.detalle-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--clr-border);
 }
-.react-select__control--is-focused {
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
-  border-color: var(--clr-primary);
-}
-.react-select__menu {
-  z-index: 1000;
+.detalle-table th {
+  background: var(--clr-border);
+  font-weight: 500;
 }

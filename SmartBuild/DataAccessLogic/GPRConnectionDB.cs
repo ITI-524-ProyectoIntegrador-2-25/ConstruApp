@@ -462,7 +462,7 @@ namespace DataAccessLogic
             return response.ToList();
         }
 
-        public List<Response> InsertPlanillaDetalle(PlanillaDetalle PlanillaDetalle)
+    public List<Response> InsertPlanillaDetalle(PlanillaDetalle PlanillaDetalle)
         {
             var msg = "";
             var parameters = new DynamicParameters();
@@ -478,16 +478,22 @@ namespace DataAccessLogic
             parameters.Add(nameof(PlanillaDetalle.HorasDobles), PlanillaDetalle.HorasDobles);
             parameters.Add(nameof(PlanillaDetalle.Detalle), PlanillaDetalle.Detalle);
 
-            parameters.Add("Usuario", PlanillaDetalle.Usuario);
-            parameters.Add("Sentence", "InsertPlanillaDetalle");
+        parameters.Add("Usuario", PlanillaDetalle.Usuario);
+        parameters.Add("Sentence", "InsertPlanillaDetalle");
 
-            parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
+        parameters.Add(nameof(msg), dbType: DbType.String, direction: ParameterDirection.InputOutput, size: 300);
 
-            var response = GetDbConnection().Query<Response>("sp_PlanillaDetalle_001", parameters, commandType: CommandType.StoredProcedure);
-            msg = parameters.Get<string>(nameof(msg));
+        var response = GetDbConnection().Query<Response>(
+            "sp_PlanillaDetalle_001",
+            parameters,
+            commandType: CommandType.StoredProcedure
+        );
 
-            return response.ToList();
-        }
+        msg = parameters.Get<string>(nameof(msg));
+
+    return response.ToList();
+}
+
 
         public List<Response> UpdatePlanillaDetalle(PlanillaDetalle PlanillaDetalle)
         {
@@ -496,7 +502,7 @@ namespace DataAccessLogic
 
             parameters.Add(nameof(PlanillaDetalle.IDDetallePlanilla), PlanillaDetalle.IDDetallePlanilla);
             parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.PlanillaID);
-            parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.EmpleadoID);
+            parameters.Add(nameof(PlanillaDetalle.EmpleadoID), PlanillaDetalle.EmpleadoID);
             parameters.Add(nameof(PlanillaDetalle.PresupuestoID), PlanillaDetalle.PresupuestoID);
             parameters.Add(nameof(PlanillaDetalle.Fecha), PlanillaDetalle.Fecha);
             parameters.Add(nameof(PlanillaDetalle.SalarioHora), PlanillaDetalle.SalarioHora);

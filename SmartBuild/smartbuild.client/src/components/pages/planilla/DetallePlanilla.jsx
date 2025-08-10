@@ -1,258 +1,276 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
-import '../../../styles/Dashboard.css'
-import Select from 'react-select'
+// src/components/pages/planilla/DetallePlanilla.jsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
+import './Planilla.css';
+import Select from 'react-select';
+import * as XLSX from 'xlsx';
+import { http } from '../../../api/baseAPI';
+import { getPlanilla, updatePlanilla } from '../../../api/Planilla';
 
-// Hook
-import { usePlanillaDetalle } from '../../../hooks/Planilla'
-// API
-import { updatePlanilla } from '../../../api/Planilla'
+const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];
 
-const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada']
-
-function formatDate(ds) {
-  if (!ds) return ''
-  const datePart = ds.split('T')[0]
-  let year, month, day
-  if (datePart.includes('/')) {
-    [month, day, year] = datePart.split('/')
-  } else {
-    [year, month, day] = datePart.split('-')
-  }
-  return new Date(+year, +month - 1, +day).toLocaleDateString()
-}
+const COLUMN_LABELS = {
+  fecha: 'Fecha',
+  presupuestoNombre: 'Presupuesto',
+  empleadoNombre: 'Empleado',
+  salarioHora: 'Salario/Hora',
+  horasOrdinarias: 'Horas Ordinarias',
+  horasExtras: 'Horas Extras',
+  horasDobles: 'Horas Dobles',
+};
 
 export default function DetallePlanilla() {
-  const { idPlanilla } = useParams()
-  const navigate = useNavigate()
+  const { idPlanilla } = useParams();
+  const navigate = useNavigate();
+  const [planilla, setPlanilla] = useState(null);
+  const [detalles, setDetalles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({ nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] });
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState({
-    nombre: '',
-    fechaInicio: '',
-    fechaFin: '',
-    estado: ESTADOS[0]
-  })
+  const estadoOptions = useMemo(() => ESTADOS.map(e => ({ value: e, label: e })), []);
 
-  const { planillaDetalle, loading, error } = usePlanillaDetalle(idPlanilla)
-
-  // Inicializar formulario cuando se cargan los datos
-  useEffect(() => {
-    if (planillaDetalle) {
-      setForm({
-        nombre: planillaDetalle.nombre || '',
-        fechaInicio: planillaDetalle.fechaInicio ? planillaDetalle.fechaInicio.slice(0, 10) : '',
-        fechaFin: planillaDetalle.fechaFin ? planillaDetalle.fechaFin.slice(0, 10) : '',
-        estado: planillaDetalle.estado || ESTADOS[0]
-      })
+  const getUsuario = () => {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return null;
+    try {
+      const u = JSON.parse(raw);
+      return u.correo || u.usuario || null;
+    } catch {
+      return null;
     }
-  }, [planillaDetalle])
+  };
 
-  if (loading) return <p className="detalle-loading">Cargando detalles…</p>
-  if (error) return <p className="detalle-error">{error}</p>
-  if (!planillaDetalle) return null
+  useEffect(() => {
+    if (!idPlanilla) {
+      setError('No se proporcionó ID de planilla.');
+      setLoading(false);
+      return;
+    }
+    const load = async () => {
+      setLoading(true);
+      try {
+        const usuario = getUsuario();
+        if (!usuario) throw new Error('Usuario no autenticado');
 
-  // Formateo de fecha de registro
-  const fechaRegistro = (() => {
-    if (!planillaDetalle.cuandoIngreso) return ''
-    const iso = planillaDetalle.cuandoIngreso.replace(' ', 'T')
-    const d = new Date(iso)
-    return isNaN(d) ? planillaDetalle.cuandoIngreso : d.toLocaleDateString()
-  })()
+        const [todas, detallesList, presupuestosData, empleadosData] = await Promise.all([
+          getPlanilla(usuario),
+          http.get('/PlanillaDetalleApi/GetPlanillaDetalle', { params: { usuario } }),
+          http.get('/PresupuestoApi/GetPresupuestos', { params: { usuario } }),
+          http.get('/EmpleadoApi/GetEmpleado', { params: { usuario } }),
+        ]);
 
-  // Manejadores de eventos
-  const handleChange = e => {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }
+        const cab = Array.isArray(todas) ? todas.find(p => String(p.idPlanilla) === String(idPlanilla)) : null;
+        if (!cab) throw new Error(`Planilla ${idPlanilla} no encontrada`);
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) return
-    
-    const user = JSON.parse(usr)
-    const ahora = new Date().toISOString()
+        const filtrados = (Array.isArray(detallesList) ? detallesList : [])
+          .filter(d => d.planillaID === Number(idPlanilla))
+          .map(d => {
+            const emp = empleadosData.find(e => e.idEmpleado === d.empleadoID);
+            const empNombre = emp?.nombreEmpleado || (emp ? `${emp.nombre || ''} ${emp.apellido || ''}`.trim() : d.empleadoID);
+            return {
+              ...d,
+              presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
+              empleadoNombre: empNombre,
+            };
+          });
 
+        setPlanilla(cab);
+        setDetalles(filtrados);
+        setForm({
+          nombre: cab.nombre || '',
+          fechaInicio: cab.fechaInicio?.slice(0, 10) || '',
+          fechaFin: cab.fechaFin?.slice(0, 10) || '',
+          estado: cab.estado || ESTADOS[0],
+        });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [idPlanilla]);
+
+  const resumen = useMemo(() => {
+    const sum = detalles.reduce(
+      (acc, d) => {
+        const so = Number(d.horasOrdinarias || 0);
+        const se = Number(d.horasExtras || 0);
+        const sd = Number(d.horasDobles || 0);
+        const sh = Number(d.salarioHora || 0);
+        acc.ord += so;
+        acc.ext += se;
+        acc.dob += sd;
+        acc.total += sh * so + sh * 1.5 * se + sh * 2 * sd;
+        return acc;
+      },
+      { ord: 0, ext: 0, dob: 0, total: 0 }
+    );
+    return { horasOrdinarias: sum.ord, horasExtras: sum.ext, horasDobles: sum.dob, montoTotal: sum.total };
+  }, [detalles]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return;
+    const user = JSON.parse(raw);
+    const ahora = new Date().toISOString();
     const payload = {
       usuario: user.correo || user.usuario,
-      quienIngreso: planillaDetalle.quienIngreso || '',
-      cuandoIngreso: planillaDetalle.cuandoIngreso || '',
+      quienIngreso: planilla.quienIngreso || '',
+      cuandoIngreso: planilla.cuandoIngreso || '',
       quienModifico: user.correo || user.usuario,
       cuandoModifico: ahora,
-      idPlanilla: planillaDetalle.idPlanilla,
+      idPlanilla: planilla.idPlanilla,
       nombre: form.nombre,
       fechaInicio: form.fechaInicio,
       fechaFin: form.fechaFin,
-      estado: form.estado
-    }
-
-    try {
-      await updatePlanilla(payload)
-      setIsEditing(false)
-      // Opcional: recargar datos o mostrar mensaje de éxito
-    } catch (error) {
-      console.error('Error al actualizar:', error)
-    }
-  }
+      estado: form.estado,
+    };
+    await updatePlanilla(payload);
+    setIsEditing(false);
+    setPlanilla((p) => ({ ...p, ...form }));
+  };
 
   const handleCancel = () => {
     setForm({
-      nombre: planillaDetalle.nombre,
-      fechaInicio: planillaDetalle.fechaInicio.slice(0, 10),
-      fechaFin: planillaDetalle.fechaFin.slice(0, 10),
-      estado: planillaDetalle.estado
-    })
-    setIsEditing(false)
-  }
+      nombre: planilla.nombre,
+      fechaInicio: planilla.fechaInicio?.slice(0, 10) || '',
+      fechaFin: planilla.fechaFin?.slice(0, 10) || '',
+      estado: planilla.estado,
+    });
+    setIsEditing(false);
+  };
+
+  const exportarXLSX = () => {
+  const rows = detalles.map((d) => {
+    const sh = Number(d.salarioHora || 0);
+    const ho = Number(d.horasOrdinarias || 0);
+    const he = Number(d.horasExtras || 0);
+    const hd = Number(d.horasDobles || 0);
+
+    const bruto  = sh * ho + sh * 1.5 * he + sh * 2 * hd;
+    const seguro = +(bruto * 0.1067).toFixed(2);
+    const neto   = +(bruto - seguro).toFixed(2);
+
+    return {
+      Fecha: d.fecha ? new Date(d.fecha).toLocaleDateString() : '',
+      Proyecto: d.presupuestoNombre,
+      Empleado: d.empleadoNombre,
+      'Salario/Hora': sh,
+      'Horas Ordinarias': ho,
+      'Horas Extras': he,
+      'Horas Dobles': hd,
+      'Salario Bruto': +bruto.toFixed(2),
+      'Seguro': seguro,
+      'Salario Neto': neto,
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Planilla');
+  XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'reporte'}.xlsx`);
+};
+
+  if (loading) return <p className="detalle-loading">Cargando detalles…</p>;
+  if (error) return <p className="detalle-error">{error}</p>;
+  if (!planilla) return null;
 
   return (
     <div className="form-dashboard-page" style={{ maxWidth: '900px' }}>
-      {/* Header */}
       <div className="form-dashboard-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          <ChevronLeft size={20}/>
+          <ChevronLeft size={20} />
         </button>
-        <h2 className="detalle-title">
-          Planilla #{planillaDetalle.idPlanilla}
-        </h2>
+        <h1>Planilla #{planilla.idPlanilla} - {planilla.nombre}</h1>
         {!isEditing && (
-          <button
-            className="btn-submit"
-            style={{ marginLeft: 'auto' }}
-            onClick={() => setIsEditing(true)}
-          >
+          <button className="btn-submit" style={{ marginLeft: 'auto' }} onClick={() => setIsEditing(true)}>
             Editar
           </button>
         )}
       </div>
 
-      {/* Información de solo lectura */}
-      <div className="detalle-grid">
-        <div className="detalle-row">
-          <span className="label">Nombre:</span>
-          <span className="value">{planillaDetalle.nombre}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Fecha inicio:</span>
-          <span className="value">
-            {new Date(planillaDetalle.fechaInicio).toLocaleDateString()}
-          </span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Fecha fin:</span>
-          <span className="value">
-            {new Date(planillaDetalle.fechaFin).toLocaleDateString()}
-          </span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Estado:</span>
-          <span className="value">{planillaDetalle.estado}</span>
-        </div>
-        <div className="detalle-row">
-          <span className="label">Registro:</span>
-          <span className="value">{fechaRegistro}</span>
-        </div>
-      </div>
-
-      {/* Formulario de edición o vista de solo lectura */}
       {isEditing ? (
-        <form
-          className="form-dashboard"
-          onSubmit={handleSubmit}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))',
-            gap: '1.5rem'
-          }}
-        >
+        <form className="form-dashboard" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
           <div className="form-group">
             <label>Nombre</label>
-            <input
-              name="nombre"
-              type="text"
-              value={form.nombre}
-              onChange={handleChange}
-              required
-            />
+            <input name="nombre" type="text" value={form.nombre} onChange={handleChange} required />
           </div>
           <div className="form-group">
             <label>Fecha Inicio</label>
-            <input
-              name="fechaInicio"
-              type="date"
-              value={form.fechaInicio}
-              onChange={handleChange}
-              required
-            />
+            <input name="fechaInicio" type="date" value={form.fechaInicio} onChange={handleChange} required />
           </div>
           <div className="form-group">
             <label>Fecha Fin</label>
-            <input
-              name="fechaFin"
-              type="date"
-              value={form.fechaFin}
-              onChange={handleChange}
-              required
-            />
+            <input name="fechaFin" type="date" value={form.fechaFin} onChange={handleChange} required />
           </div>
           <div className="form-group">
             <label>Estado</label>
-            <Select
-              name="estado"
-              options={ESTADOS.map(e => ({ value: e, label: e }))}
-              value={form.estado ? { value: form.estado, label: form.estado } : null}
-              onChange={opt => setForm(f => ({ ...f, estado: opt.value }))}
-              placeholder="Seleccionar estado…"
-              className="react-select-container"
-              classNamePrefix="react-select"
-              isSearchable={false}
-            />
+            <Select options={estadoOptions} value={{ value: form.estado, label: form.estado }} onChange={(opt) => setForm((f) => ({ ...f, estado: opt.value }))} isSearchable={false} />
           </div>
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button type="submit" className="btn-submit">Guardar cambios</button>
-            <button
-              type="button"
-              className="btn-submit"
-              style={{ background: '#ccc' }}
-              onClick={handleCancel}
-            >
-              Cancelar
-            </button>
+            <button type="button" className="btn-submit" style={{ background: '#ccc' }} onClick={handleCancel}>Cancelar</button>
           </div>
         </form>
       ) : (
-        <div
-          className="form-dashboard"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))',
-            gap: '1.5rem'
-          }}
-        >
-          <div className="form-group">
-            <label>Nombre</label>
-            <p className="value">{planillaDetalle.nombre}</p>
-          </div>
-          <div className="form-group">
-            <label>Fecha Inicio</label>
-            <p className="value">{formatDate(planillaDetalle.fechaInicio)}</p>
-          </div>
-          <div className="form-group">
-            <label>Fecha Fin</label>
-            <p className="value">{formatDate(planillaDetalle.fechaFin)}</p>
-          </div>
-          <div className="form-group">
-            <label>Estado</label>
-            <p className="value">{planillaDetalle.estado}</p>
-          </div>
-          <div className="form-group">
-            <label>Registro</label>
-            <p className="value">{formatDate(planillaDetalle.cuandoIngreso)}</p>
+        <div className="form-dashboard" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="form-group"><label>Nombre</label><p className="value">{planilla.nombre}</p></div>
+          <div className="form-group"><label>Fecha Inicio</label><p className="value">{new Date(planilla.fechaInicio).toLocaleDateString()}</p></div>
+          <div className="form-group"><label>Fecha Fin</label><p className="value">{new Date(planilla.fechaFin).toLocaleDateString()}</p></div>
+          <div className="form-group"><label>Estado</label><p className="value">{planilla.estado}</p></div>
+          <div className="form-group"><label>Registro</label><p className="value">{planilla.cuandoIngreso ? new Date(String(planilla.cuandoIngreso).replace(' ', 'T')).toLocaleDateString() : ''}</p></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>Resumen</label>
+            <div className="value" style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+              <span>Horas Ordinarias: <strong>{resumen.horasOrdinarias}</strong></span>
+              <span>Horas Extras: <strong>{resumen.horasExtras}</strong></span>
+              <span>Horas Dobles: <strong>{resumen.horasDobles}</strong></span>
+              <span>Monto Total ₡: <strong>{resumen.montoTotal.toFixed(2)}</strong></span>
+            </div>
           </div>
         </div>
       )}
+
+      <div className="detalle-items table-responsive">
+        <h3>Detalle de la planilla</h3>
+        <table className="detalle-table">
+          <thead>
+            <tr>
+              {Object.keys(COLUMN_LABELS).map((key) => (
+                <th key={key}>{COLUMN_LABELS[key]}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {detalles.map((item) => (
+              <tr key={item.idDetallePlanilla} onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`)}>
+                {Object.keys(COLUMN_LABELS).map((key, j) => {
+                  let val = item[key];
+                  if (key === 'fecha' && val) val = new Date(val).toLocaleDateString();
+                  return <td key={j}>{val}</td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+          <button onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/AgregarDetalle`)} className="btn-submit">
+            Agregar registro
+          </button>
+          <button onClick={exportarXLSX} className="btn-submit">Exportar planilla</button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }

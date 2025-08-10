@@ -20,6 +20,7 @@
     "react-transition-group": "^4.4.5",
     "recharts": "^3.1.2",
     "web-vitals": "^2.1.4"
+    "xlsx": "^0.18.5"
   },
   "eslintConfig": {
     "extends": [
@@ -48,7 +49,7 @@
   },
   "homepage": ".",
   "scripts": {
-    "start": "cross-env HOST=0.0.0.0 react-scripts start",
+    "start": "react-scripts start",
     "tw:init": "tailwindcss init -p",
     "build": "react-scripts build",
     "test": "react-scripts test",
