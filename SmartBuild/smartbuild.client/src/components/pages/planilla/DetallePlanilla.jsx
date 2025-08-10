@@ -151,26 +151,35 @@ export default function DetallePlanilla() {
   };
 
   const exportarXLSX = () => {
-    const rows = detalles.map((d) => ({
-      '#Código': d.idDetallePlanilla,
+  const rows = detalles.map((d) => {
+    const sh = Number(d.salarioHora || 0);
+    const ho = Number(d.horasOrdinarias || 0);
+    const he = Number(d.horasExtras || 0);
+    const hd = Number(d.horasDobles || 0);
+
+    const bruto  = sh * ho + sh * 1.5 * he + sh * 2 * hd;
+    const seguro = +(bruto * 0.1067).toFixed(2);
+    const neto   = +(bruto - seguro).toFixed(2);
+
+    return {
       Fecha: d.fecha ? new Date(d.fecha).toLocaleDateString() : '',
       Proyecto: d.presupuestoNombre,
       Empleado: d.empleadoNombre,
-      'Salario/Hora': d.salarioHora,
-      'Horas Ordinarias': d.horasOrdinarias,
-      'Horas Extras': d.horasExtras,
-      'Horas Dobles': d.horasDobles,
-      'Total a Pagar': (
-        Number(d.salarioHora || 0) * Number(d.horasOrdinarias || 0) +
-        Number(d.salarioHora || 0) * 1.5 * Number(d.horasExtras || 0) +
-        Number(d.salarioHora || 0) * 2 * Number(d.horasDobles || 0)
-      ).toFixed(2),
-    }));
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, 'Planilla');
-    XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'reporte'}.xlsx`);
-  };
+      'Salario/Hora': sh,
+      'Horas Ordinarias': ho,
+      'Horas Extras': he,
+      'Horas Dobles': hd,
+      'Salario Bruto': +bruto.toFixed(2),
+      'Seguro': seguro,
+      'Salario Neto': neto,
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Planilla');
+  XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'reporte'}.xlsx`);
+};
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>;
   if (error) return <p className="detalle-error">{error}</p>;
