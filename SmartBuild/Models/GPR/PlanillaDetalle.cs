@@ -2,7 +2,7 @@
 {
     public class PlanillaDetalle : Base
     {
-        public int? IDPlanillaDetalle  { get; set; }
+        public int? IDDetallePlanilla { get; set; }
         public int? PlanillaID { get; set; }
         public int? EmpleadoID { get; set; }
         public int? PresupuestoID { get; set; }

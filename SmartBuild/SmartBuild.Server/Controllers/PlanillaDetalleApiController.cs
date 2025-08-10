@@ -45,11 +45,11 @@ namespace SmartBuild.Server.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idPlanillaDetalle, string Usuario)
+        public List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idDetallePlanilla, string Usuario)
         {
             try
             {
-                var planillaData = _repository.GetPlanillaDetallebyInfo(idPlanillaDetalle, Usuario);
+                var planillaData = _repository.GetPlanillaDetallebyInfo(idDetallePlanilla, Usuario);
                 return planillaData;
             }
             catch (Exception ex)

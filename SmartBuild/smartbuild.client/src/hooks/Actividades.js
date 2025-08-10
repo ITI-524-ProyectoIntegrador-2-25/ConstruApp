@@ -22,7 +22,6 @@ export const useActividades = () => {
     const fetchActvidades = async () => {
       try {
         const data = await getActividades(correo);
-         console.log('Actividades:', data); 
         setActividades(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);

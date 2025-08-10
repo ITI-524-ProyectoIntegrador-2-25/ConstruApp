@@ -8,5 +8,7 @@
         public string? Tipo { get; set; }
 
         public string? NombreContacto { get; set; }
+        public string? CorreoContacto { get; set; }
+        public string? TelefonoContacto { get; set; }
     }
 }
