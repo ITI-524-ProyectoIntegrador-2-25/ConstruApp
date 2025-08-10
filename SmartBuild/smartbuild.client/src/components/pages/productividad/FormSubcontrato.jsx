@@ -30,6 +30,22 @@ export default function FormSubcontrato() {
     montoCotizado: ''
   })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // Cargar presupuestos
   useEffect(() => {
     const usr = localStorage.getItem('currentUser')
@@ -49,6 +65,12 @@ export default function FormSubcontrato() {
       })
       .catch(err => console.error('Error cargando presupuestos:', err))
   }, [])
+
+
+
+
+
+
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -105,6 +127,18 @@ export default function FormSubcontrato() {
     }))
     setError('')
   }
+
+
+
+
+
+
+
+
+
+
+
+  
 
   const handleSubmit = async e => {
     e.preventDefault()
