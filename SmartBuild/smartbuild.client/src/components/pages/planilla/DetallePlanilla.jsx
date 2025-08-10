@@ -1,15 +1,16 @@
+// src/components/pages/planilla/DetallePlanilla.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import './Planilla.css';
 import Select from 'react-select';
-import { getPlanilla, updatePlanilla } from '../../../api/Planilla';
 import * as XLSX from 'xlsx';
+import { http } from '../../../api/client';
+import { getPlanilla, updatePlanilla } from '../../../api/Planilla';
 
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];
 
 const COLUMN_LABELS = {
-  idDetallePlanilla: '#Código',
   fecha: 'Fecha',
   presupuestoNombre: 'Presupuesto',
   empleadoNombre: 'Empleado',
@@ -21,23 +22,26 @@ const COLUMN_LABELS = {
 
 export default function DetallePlanilla() {
   const { idPlanilla } = useParams();
-  const { idDetallePlanilla } = useParams(); // Aseguramos que se extraiga el idDetallePlanilla correctamente.
   const navigate = useNavigate();
   const [planilla, setPlanilla] = useState(null);
   const [detalles, setDetalles] = useState([]);
-  const [presupuestos, setPresupuestos] = useState([]);
-  const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({
-    nombre: '',
-    fechaInicio: '',
-    fechaFin: '',
-    estado: ESTADOS[0],
-  });
+  const [form, setForm] = useState({ nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] });
 
   const estadoOptions = useMemo(() => ESTADOS.map(e => ({ value: e, label: e })), []);
+
+  const getUsuario = () => {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return null;
+    try {
+      const u = JSON.parse(raw);
+      return u.correo || u.usuario || null;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (!idPlanilla) {
@@ -45,44 +49,35 @@ export default function DetallePlanilla() {
       setLoading(false);
       return;
     }
-
-    async function fetchData() {
+    const load = async () => {
       setLoading(true);
       try {
-        const usrStr = localStorage.getItem('currentUser');
-        if (!usrStr) throw new Error('Usuario no autenticado');
-        const user = JSON.parse(usrStr);
-        const correo = user.correo || user.usuario;
+        const usuario = getUsuario();
+        if (!usuario) throw new Error('Usuario no autenticado');
 
-        const [todas, detallesRes, presRes, empRes] = await Promise.all([
-          getPlanilla(correo),
-          fetch(`https://smartbuild-001-site1.ktempurl.com/PlanillaDetalleApi/GetPlanillaDetalle?usuario=${correo}`),
-          fetch(`https://smartbuild-001-site1.ktempurl.com/PresupuestoApi/GetPresupuestos?usuario=${correo}`),
-          fetch(`https://smartbuild-001-site1.ktempurl.com/EmpleadoApi/GetEmpleado?usuario=${correo}`),
+        const [todas, detallesList, presupuestosData, empleadosData] = await Promise.all([
+          getPlanilla(usuario),
+          http.get('/PlanillaDetalleApi/GetPlanillaDetalle', { params: { usuario } }),
+          http.get('/PresupuestoApi/GetPresupuestos', { params: { usuario } }),
+          http.get('/EmpleadoApi/GetEmpleado', { params: { usuario } }),
         ]);
 
-        if (!detallesRes.ok || !presRes.ok || !empRes.ok) throw new Error('Error cargando datos');
-
-        const cab = todas.find(p => String(p.idPlanilla) === idPlanilla);
+        const cab = Array.isArray(todas) ? todas.find(p => String(p.idPlanilla) === String(idPlanilla)) : null;
         if (!cab) throw new Error(`Planilla ${idPlanilla} no encontrada`);
 
-        const allDetalles = await detallesRes.json();
-        const presupuestosData = await presRes.json();
-        const empleadosData = await empRes.json();
+        const filtrados = (Array.isArray(detallesList) ? detallesList : [])
+          .filter(d => d.planillaID === Number(idPlanilla))
+          .map(d => {
+            const emp = empleadosData.find(e => e.idEmpleado === d.empleadoID);
+            const empNombre = emp?.nombreEmpleado || (emp ? `${emp.nombre || ''} ${emp.apellido || ''}`.trim() : d.empleadoID);
+            return {
+              ...d,
+              presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
+              empleadoNombre: empNombre,
+            };
+          });
 
-        setPresupuestos(presupuestosData);
-        setEmpleados(empleadosData);
         setPlanilla(cab);
-
-        const filtrados = allDetalles
-          .filter(d => d.planillaID === parseInt(idPlanilla))
-          .map(d => ({
-            ...d,
-            idDetallePlanilla: d.idDetallePlanilla, // Asegúrate de que este campo esté presente
-            presupuestoNombre: presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID,
-            empleadoNombre: empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombreEmpleado || `${empleadosData.find(e => e.idEmpleado === d.empleadoID)?.nombre} ${empleadosData.find(e => e.idEmpleado === d.empleadoID)?.apellido}` || d.empleadoID,
-          }));
-
         setDetalles(filtrados);
         setForm({
           nombre: cab.nombre || '',
@@ -90,14 +85,32 @@ export default function DetallePlanilla() {
           fechaFin: cab.fechaFin?.slice(0, 10) || '',
           estado: cab.estado || ESTADOS[0],
         });
-      } catch (err) {
-        setError(err.message);
+      } catch (e) {
+        setError(e.message);
       } finally {
         setLoading(false);
       }
-    }
-    fetchData();
+    };
+    load();
   }, [idPlanilla]);
+
+  const resumen = useMemo(() => {
+    const sum = detalles.reduce(
+      (acc, d) => {
+        const so = Number(d.horasOrdinarias || 0);
+        const se = Number(d.horasExtras || 0);
+        const sd = Number(d.horasDobles || 0);
+        const sh = Number(d.salarioHora || 0);
+        acc.ord += so;
+        acc.ext += se;
+        acc.dob += sd;
+        acc.total += sh * so + sh * 1.5 * se + sh * 2 * sd;
+        return acc;
+      },
+      { ord: 0, ext: 0, dob: 0, total: 0 }
+    );
+    return { horasOrdinarias: sum.ord, horasExtras: sum.ext, horasDobles: sum.dob, montoTotal: sum.total };
+  }, [detalles]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,11 +119,10 @@ export default function DetallePlanilla() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const usrStr = localStorage.getItem('currentUser');
-    if (!usrStr) return;
-    const user = JSON.parse(usrStr);
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return;
+    const user = JSON.parse(raw);
     const ahora = new Date().toISOString();
-
     const payload = {
       usuario: user.correo || user.usuario,
       quienIngreso: planilla.quienIngreso || '',
@@ -118,21 +130,14 @@ export default function DetallePlanilla() {
       quienModifico: user.correo || user.usuario,
       cuandoModifico: ahora,
       idPlanilla: planilla.idPlanilla,
-      idDetallePlanilla: planilla.DetallePlanilla.idDetallePlanilla,
       nombre: form.nombre,
       fechaInicio: form.fechaInicio,
       fechaFin: form.fechaFin,
       estado: form.estado,
     };
-
-    try {
-      await updatePlanilla(payload);
-      setIsEditing(false);
-      setPlanilla((p) => ({ ...p, ...form }));
-    } catch (err) {
-      console.error('Error al actualizar:', err);
-      alert('Error al guardar cambios: ' + err.message);
-    }
+    await updatePlanilla(payload);
+    setIsEditing(false);
+    setPlanilla((p) => ({ ...p, ...form }));
   };
 
   const handleCancel = () => {
@@ -146,9 +151,9 @@ export default function DetallePlanilla() {
   };
 
   const exportarXLSX = () => {
-    const resumen = detalles.map((d) => ({
+    const rows = detalles.map((d) => ({
       '#Código': d.idDetallePlanilla,
-      Fecha: new Date(d.fecha).toLocaleDateString(),
+      Fecha: d.fecha ? new Date(d.fecha).toLocaleDateString() : '',
       Proyecto: d.presupuestoNombre,
       Empleado: d.empleadoNombre,
       'Salario/Hora': d.salarioHora,
@@ -156,14 +161,13 @@ export default function DetallePlanilla() {
       'Horas Extras': d.horasExtras,
       'Horas Dobles': d.horasDobles,
       'Total a Pagar': (
-        d.salarioHora * d.horasOrdinarias +
-        d.salarioHora * 1.5 * d.horasExtras +
-        d.salarioHora * 2 * d.horasDobles
+        Number(d.salarioHora || 0) * Number(d.horasOrdinarias || 0) +
+        Number(d.salarioHora || 0) * 1.5 * Number(d.horasExtras || 0) +
+        Number(d.salarioHora || 0) * 2 * Number(d.horasDobles || 0)
       ).toFixed(2),
     }));
-
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(resumen);
+    const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'Planilla');
     XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'reporte'}.xlsx`);
   };
@@ -215,7 +219,16 @@ export default function DetallePlanilla() {
           <div className="form-group"><label>Fecha Inicio</label><p className="value">{new Date(planilla.fechaInicio).toLocaleDateString()}</p></div>
           <div className="form-group"><label>Fecha Fin</label><p className="value">{new Date(planilla.fechaFin).toLocaleDateString()}</p></div>
           <div className="form-group"><label>Estado</label><p className="value">{planilla.estado}</p></div>
-          <div className="form-group"><label>Registro</label><p className="value">{planilla.cuandoIngreso ? new Date(planilla.cuandoIngreso.replace(' ', 'T')).toLocaleDateString() : ''}</p></div>
+          <div className="form-group"><label>Registro</label><p className="value">{planilla.cuandoIngreso ? new Date(String(planilla.cuandoIngreso).replace(' ', 'T')).toLocaleDateString() : ''}</p></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>Resumen</label>
+            <div className="value" style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+              <span>Horas Ordinarias: <strong>{resumen.horasOrdinarias}</strong></span>
+              <span>Horas Extras: <strong>{resumen.horasExtras}</strong></span>
+              <span>Horas Dobles: <strong>{resumen.horasDobles}</strong></span>
+              <span>Monto Total ₡: <strong>{resumen.montoTotal.toFixed(2)}</strong></span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -230,8 +243,8 @@ export default function DetallePlanilla() {
             </tr>
           </thead>
           <tbody>
-            {detalles.map((item, i) => (
-              <tr key={i} onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`)}>
+            {detalles.map((item) => (
+              <tr key={item.idDetallePlanilla} onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`)}>
                 {Object.keys(COLUMN_LABELS).map((key, j) => {
                   let val = item[key];
                   if (key === 'fecha' && val) val = new Date(val).toLocaleDateString();
@@ -246,7 +259,6 @@ export default function DetallePlanilla() {
           <button onClick={() => navigate(`/dashboard/planilla/${idPlanilla}/AgregarDetalle`)} className="btn-submit">
             Agregar registro
           </button>
-
           <button onClick={exportarXLSX} className="btn-submit">Exportar planilla</button>
         </div>
       </div>
