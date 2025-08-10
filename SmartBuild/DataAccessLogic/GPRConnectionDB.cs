@@ -439,17 +439,17 @@ namespace DataAccessLogic
             return response.ToList();
         }
 
-        public List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idPlanillaDetalle, string Usuario)
+        public List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idDetallePlanilla, string Usuario)
         {
-            return GetPlanillaDetalleInfo("sp_PlanillaDetalle_001", idPlanillaDetalle, Usuario);
+            return GetPlanillaDetalleInfo("sp_PlanillaDetalle_001", idDetallePlanilla, Usuario);
         }
 
-        protected List<PlanillaDetalle> GetPlanillaDetalleInfo(string procedure, int idPlanillaDetalle, string Usuario)
+        protected List<PlanillaDetalle> GetPlanillaDetalleInfo(string procedure, int idDetallePlanilla, string Usuario)
         {
             var msg = "";
             var parameters = new DynamicParameters();
 
-            parameters.Add(nameof(idPlanillaDetalle), idPlanillaDetalle);
+            parameters.Add(nameof(idDetallePlanilla), idDetallePlanilla);
 
             parameters.Add("Usuario", Usuario);
             parameters.Add("Sentence", "LoadPlanillaDetalleByID");
@@ -467,9 +467,9 @@ namespace DataAccessLogic
             var msg = "";
             var parameters = new DynamicParameters();
 
-            parameters.Add(nameof(PlanillaDetalle.IDPlanillaDetalle), PlanillaDetalle.IDPlanillaDetalle);
+            parameters.Add(nameof(PlanillaDetalle.IDDetallePlanilla), PlanillaDetalle.IDDetallePlanilla);
             parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.PlanillaID);
-            parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.EmpleadoID);
+            parameters.Add(nameof(PlanillaDetalle.EmpleadoID), PlanillaDetalle.EmpleadoID);
             parameters.Add(nameof(PlanillaDetalle.PresupuestoID), PlanillaDetalle.PresupuestoID);
             parameters.Add(nameof(PlanillaDetalle.Fecha), PlanillaDetalle.Fecha);
             parameters.Add(nameof(PlanillaDetalle.SalarioHora), PlanillaDetalle.SalarioHora);
@@ -494,7 +494,7 @@ namespace DataAccessLogic
             var msg = "";
             var parameters = new DynamicParameters();
 
-            parameters.Add(nameof(PlanillaDetalle.IDPlanillaDetalle), PlanillaDetalle.IDPlanillaDetalle);
+            parameters.Add(nameof(PlanillaDetalle.IDDetallePlanilla), PlanillaDetalle.IDDetallePlanilla);
             parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.PlanillaID);
             parameters.Add(nameof(PlanillaDetalle.PlanillaID), PlanillaDetalle.EmpleadoID);
             parameters.Add(nameof(PlanillaDetalle.PresupuestoID), PlanillaDetalle.PresupuestoID);
@@ -571,8 +571,10 @@ namespace DataAccessLogic
             parameters.Add(nameof(presupuesto.ClienteID), presupuesto.ClienteID);
             parameters.Add(nameof(presupuesto.FechaInicio), presupuesto.FechaInicio);
             parameters.Add(nameof(presupuesto.FechaFin), presupuesto.FechaFin);
+            parameters.Add(nameof(presupuesto.MontoProyecto), presupuesto.MontoProyecto);
             parameters.Add(nameof(presupuesto.Penalizacion), presupuesto.Penalizacion);
             parameters.Add(nameof(presupuesto.MontoPenalizacion), presupuesto.MontoPenalizacion);
+            parameters.Add(nameof(presupuesto.PeriodoPenalizacion), presupuesto.PeriodoPenalizacion);
             parameters.Add(nameof(presupuesto.Descripcion), presupuesto.Descripcion);
             parameters.Add(nameof(presupuesto.MateriaPrimaCotizada), presupuesto.MateriaPrimaCotizada);
             parameters.Add(nameof(presupuesto.ManoObraCotizada), presupuesto.ManoObraCotizada);
@@ -580,7 +582,9 @@ namespace DataAccessLogic
             parameters.Add(nameof(presupuesto.ManoObraCostoReal), presupuesto.ManoObraCostoReal);
             parameters.Add(nameof(presupuesto.SubContratoCostoReal), presupuesto.SubContratoCostoReal);
             parameters.Add(nameof(presupuesto.OtrosGastos), presupuesto.OtrosGastos);
+            parameters.Add(nameof(presupuesto.FechaInicioReal), presupuesto.FechaInicioReal);
             parameters.Add(nameof(presupuesto.FechaFinReal), presupuesto.FechaFinReal);
+            parameters.Add(nameof(presupuesto.Estado), presupuesto.Estado);
 
             parameters.Add("Usuario", presupuesto.Usuario);
             parameters.Add("Sentence", "InsertPresupuesto");
@@ -601,8 +605,10 @@ namespace DataAccessLogic
             parameters.Add(nameof(presupuesto.ClienteID), presupuesto.ClienteID);
             parameters.Add(nameof(presupuesto.FechaInicio), presupuesto.FechaInicio);
             parameters.Add(nameof(presupuesto.FechaFin), presupuesto.FechaFin);
+            parameters.Add(nameof(presupuesto.MontoProyecto), presupuesto.MontoProyecto);
             parameters.Add(nameof(presupuesto.Penalizacion), presupuesto.Penalizacion);
             parameters.Add(nameof(presupuesto.MontoPenalizacion), presupuesto.MontoPenalizacion);
+            parameters.Add(nameof(presupuesto.PeriodoPenalizacion), presupuesto.PeriodoPenalizacion);
             parameters.Add(nameof(presupuesto.Descripcion), presupuesto.Descripcion);
             parameters.Add(nameof(presupuesto.MateriaPrimaCotizada), presupuesto.MateriaPrimaCotizada);
             parameters.Add(nameof(presupuesto.ManoObraCotizada), presupuesto.ManoObraCotizada);
@@ -610,7 +616,9 @@ namespace DataAccessLogic
             parameters.Add(nameof(presupuesto.ManoObraCostoReal), presupuesto.ManoObraCostoReal);
             parameters.Add(nameof(presupuesto.SubContratoCostoReal), presupuesto.SubContratoCostoReal);
             parameters.Add(nameof(presupuesto.OtrosGastos), presupuesto.OtrosGastos);
+            parameters.Add(nameof(presupuesto.FechaInicioReal), presupuesto.FechaInicioReal);
             parameters.Add(nameof(presupuesto.FechaFinReal), presupuesto.FechaFinReal);
+            parameters.Add(nameof(presupuesto.Estado), presupuesto.Estado);
 
             parameters.Add("Usuario", presupuesto.Usuario);
             parameters.Add("Sentence", "UpdatePresupuesto");
@@ -863,6 +871,8 @@ namespace DataAccessLogic
             var parameters = new DynamicParameters();
 
             parameters.Add(nameof(subContrato.IDSubcontrato), subContrato.IDSubcontrato);
+            parameters.Add(nameof(subContrato.PresupuestoID), subContrato.PresupuestoID);
+            parameters.Add(nameof(subContrato.NombreProveedor), subContrato.NombreProveedor);
             parameters.Add(nameof(subContrato.Descripcion), subContrato.Descripcion);
             parameters.Add(nameof(subContrato.FechaInicioProyectada), subContrato.FechaFinProyectada);
             parameters.Add(nameof(subContrato.FechaFinProyectada), subContrato.FechaFinProyectada);
@@ -887,6 +897,8 @@ namespace DataAccessLogic
             var parameters = new DynamicParameters();
 
             parameters.Add(nameof(subContrato.IDSubcontrato), subContrato.IDSubcontrato);
+            parameters.Add(nameof(subContrato.PresupuestoID), subContrato.PresupuestoID);
+            parameters.Add(nameof(subContrato.NombreProveedor), subContrato.NombreProveedor);
             parameters.Add(nameof(subContrato.Descripcion), subContrato.Descripcion);
             parameters.Add(nameof(subContrato.FechaInicioProyectada), subContrato.FechaFinProyectada);
             parameters.Add(nameof(subContrato.FechaFinProyectada), subContrato.FechaFinProyectada);

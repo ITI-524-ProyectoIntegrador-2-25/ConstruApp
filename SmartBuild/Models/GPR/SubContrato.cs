@@ -3,6 +3,8 @@
     public class SubContrato : Base
     {
         public int? IDSubcontrato { get; set; }
+        public int? PresupuestoID { get; set; }
+        public string? NombreProveedor { get; set; }
         public string? Descripcion { get; set; }
         public DateTime? FechaInicioProyectada { get; set; }
         public DateTime? FechaFinProyectada { get; set; }
@@ -10,5 +12,7 @@
         public DateTime? FechaFinReal { get; set; }
         public decimal? PorcentajeAvance { get; set; }
         public decimal? MontoCotizado { get; set; }
+
+        public string? DescripcionPresupuesto { get; set; }
     }
 }

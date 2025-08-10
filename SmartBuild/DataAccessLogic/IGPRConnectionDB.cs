@@ -29,7 +29,7 @@ namespace DataAccessLogic
 
         #region PlanillaDetalle
         List<PlanillaDetalle> GetPlanillasDetalle(string Usuario);
-        List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idPlanilla, string Usuario);
+        List<PlanillaDetalle> GetPlanillaDetallebyInfo(int idDetallePlanilla, string Usuario);
         List<Response> InsertPlanillaDetalle(PlanillaDetalle planillaDetalle);
         List<Response> UpdatePlanillaDetalle(PlanillaDetalle planillaDetalle);
         #endregion
