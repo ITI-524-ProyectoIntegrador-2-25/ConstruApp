@@ -31,6 +31,7 @@ import FormEmpleado   from './components/pages/productividad/FormEmpleado'
 import DetalleEmpleado from './components/pages/productividad/DetalleEmpleado'
 import Subcontrato   from './components/pages/productividad/Subcontratos'
 import FormSubcontrato   from './components/pages/productividad/FormSubcontrato'
+import FormPagoSubcontrato from './components/pages/productividad/FormPagoSubcontrato'
 import UserProfile from './components/pages/usuario/UserProfile'
 
 export default function App() {
@@ -78,6 +79,8 @@ export default function App() {
 
           <Route path="productividad/subcontratos" element={<Subcontrato />} />
           <Route path="productividad/subcontratos/nuevo" element={<FormSubcontrato />} />
+          <Route path="productividad/subcontratos/editar/:idSubcontrato" element={<FormSubcontrato />} />
+          <Route path="productividad/subcontratos/pagos/nuevo" element={<FormPagoSubcontrato />} />
           <Route path="usuario" element={<UserProfile />} />
         </Route>
 
