@@ -10,6 +10,7 @@
         public string? SegundoApellido { get; set; }
         public string? Telefono { get; set; }
         public string? CorreoElectronico { get; set; }
+        public int? EsPrincipal { get; set; } // 1 = Si, 0 = No
 
         public string? NombreCompleto { get; set; }
     }

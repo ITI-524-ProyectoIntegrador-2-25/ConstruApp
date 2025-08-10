@@ -2,6 +2,9 @@
   "name": "proyecto",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -18,26 +21,16 @@
     "react-scripts": "5.0.1",
     "react-select": "^5.10.2",
     "react-transition-group": "^4.4.5",
+    "recharts": "^3.1.2",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
@@ -48,7 +41,7 @@
   },
   "homepage": ".",
   "scripts": {
-    "start": "cross-env HOST=0.0.0.0 react-scripts start",
+    "start": "react-scripts start",
     "tw:init": "tailwindcss init -p",
     "build": "react-scripts build",
     "test": "react-scripts test",

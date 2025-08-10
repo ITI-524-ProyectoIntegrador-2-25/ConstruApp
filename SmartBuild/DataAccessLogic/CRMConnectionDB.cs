@@ -275,6 +275,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(contacto.SegundoApellido), contacto.SegundoApellido);
             parameters.Add(nameof(contacto.Telefono), contacto.Telefono);
             parameters.Add(nameof(contacto.CorreoElectronico), contacto.CorreoElectronico);
+            parameters.Add(nameof(contacto.EsPrincipal), contacto.EsPrincipal);
 
             parameters.Add("Usuario", contacto.Usuario);
             parameters.Add("Sentence", "InsertContacto");
@@ -298,6 +299,7 @@ namespace DataAccessLogic
             parameters.Add(nameof(contacto.SegundoApellido), contacto.SegundoApellido);
             parameters.Add(nameof(contacto.Telefono), contacto.Telefono);
             parameters.Add(nameof(contacto.CorreoElectronico), contacto.CorreoElectronico);
+            parameters.Add(nameof(contacto.EsPrincipal), contacto.EsPrincipal);
 
             parameters.Add("Usuario", contacto.Usuario);
             parameters.Add("Sentence", "UpdateContacto");
