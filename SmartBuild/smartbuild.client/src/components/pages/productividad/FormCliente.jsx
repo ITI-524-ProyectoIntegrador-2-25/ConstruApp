@@ -61,7 +61,6 @@ export default function FormCliente() {
         razonSocial:    form.razonSocial,
         identificacion: form.identificacion,
         tipo:           form.tipo.value,
-        nombreContacto: form.nombreContacto
       }
 
       const res = await fetch(
@@ -142,17 +141,6 @@ export default function FormCliente() {
             className="react-select-container"
             classNamePrefix="react-select"
             isClearable
-          />
-        </div>
-
-        {/* Nombre del contacto */}
-        <div className="form-group">
-          <label>Nombre del contacto</label>
-          <input
-            name="nombreContacto"
-            type="text"
-            value={form.nombreContacto}
-            onChange={handleChange}
           />
         </div>
 

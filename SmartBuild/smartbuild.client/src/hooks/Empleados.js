@@ -39,9 +39,9 @@ export const useEmpleados = () => {
 };
 
 export const useEmpleado = (idEmpleado) => {
-  const [EmpleadoDetalle, setEmpleado] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [EmpleadoDetalle, setEmpleado] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const usuarioStr = localStorage.getItem('currentUser');
@@ -57,15 +57,15 @@ export const useEmpleado = (idEmpleado) => {
     const fetchEmpleado = async () => {
       try {
         const data = await getEmpleado(correo, idEmpleado);
-        console.log('data')
-        console.dir(data)
+        console.log('data');
+        console.dir(data);
         if (Array.isArray(data)) {
-            if (data.length === 0) throw new Error('Empleado no encontrado')
-            setEmpleado(data[0])
+          if (data.length === 0) throw new Error('Empleado no encontrado');
+          setEmpleado(data[0]);
         } else if (typeof data === 'object' && data.idEmpleado) {
-            setEmpleado(data)
+          setEmpleado(data);
         } else {
-            throw new Error('Formato inesperado del API')
+          throw new Error('Formato inesperado del API');
         }
       } catch (err) {
         console.error(err);
@@ -79,36 +79,34 @@ export const useEmpleado = (idEmpleado) => {
   }, [idEmpleado]);
 
   return { EmpleadoDetalle, loading, error };
-
-
-  
 };
 
 export const useInsertarActualizarEmpleados = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const guardarEmpleado = async (Empleado) => {
-    setLoading(true)
-    setError('')
-    setSuccess(false)
+    setLoading(true);
+    setError('');
+    setSuccess(false);
 
     try {
+      console.log('Payload a enviar:', Empleado);
       Empleado.idEmpleado
         ? await updateEmpleado(Empleado)
-        : await insertEmpleado(Empleado)
+        : await insertEmpleado(Empleado);
 
-      setSuccess(true)
-      return true
+      setSuccess(true);
+      return true;
     } catch (err) {
-      console.error(err)
-      setError(err.message || 'Error al guardar el Emp')
-      return false
+      console.error(err);
+      setError(err.message || 'Error al guardar el Empleado');
+      return false;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  return { guardarEmpleado, loading, error, success }
-}
+  return { guardarEmpleado, loading, error, success };
+};
