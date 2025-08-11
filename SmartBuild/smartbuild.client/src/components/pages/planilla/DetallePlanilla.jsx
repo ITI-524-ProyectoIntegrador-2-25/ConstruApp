@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ChevronLeft, Edit, Plus, Download, Calendar, Search,
-  User, Info, ChevronDown, ChevronUp, FileSpreadsheet
+  User, Info, ChevronDown, ChevronUp, FileSpreadsheet, Building2, Clock
 } from 'lucide-react';
 import Select from 'react-select';
 import * as XLSX from 'xlsx';
@@ -17,13 +17,13 @@ const COLUMN_LABELS = {
   fecha: 'Fecha',
   presupuestoNombre: 'Presupuesto',
   empleadoNombre: 'Empleado',
-  salarioHora: 'Salario/Hora',
-  horasOrdinarias: 'Horas Ord.',
-  horasExtras: 'Horas Ext.',
+  salarioHora: 'Salario',
+  horasOrdinarias: 'Horas Ordinarias',
+  horasExtras: 'Horas Extras',
   horasDobles: 'Horas Dobles',
-  bruto: 'Bruto',
+  bruto: 'Salario bruto',
   seguro: 'Seguro',
-  neto: 'Neto',
+  neto: 'Salario neto',
 };
 
 const estadoOptions = ESTADOS.map(e => ({ value: e, label: e }));
@@ -227,6 +227,34 @@ export default function DetallePlanilla() {
     });
   }, [detalles, q, fDate]);
 
+  const resultsByEmpleado = useMemo(() => {
+  const m = new Map();
+  results.forEach(r => {
+    const id = r.empleadoID;
+    if (!m.has(id)) {
+      m.set(id, {
+        empleadoID: id,
+        empleadoNombre: r.empleadoNombre,
+        items: [],
+        tot: { ho: 0, he: 0, hd: 0, bruto: 0, seguro: 0, neto: 0 },
+      });
+    }
+    const g = m.get(id);
+    g.items.push(r);
+    g.tot.ho    += Number(r.horasOrdinarias || 0);
+    g.tot.he    += Number(r.horasExtras || 0);
+    g.tot.hd    += Number(r.horasDobles || 0);
+    g.tot.bruto += Number(r.bruto || 0);
+    g.tot.seguro+= Number(r.seguro || 0);
+    g.tot.neto  += Number(r.neto || 0);
+  });
+  // orden por nombre de empleado
+  return [...m.values()].sort((a, b) =>
+    (a.empleadoNombre || '').localeCompare(b.empleadoNombre || '')
+  );
+}, [results]);
+
+
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -295,9 +323,9 @@ export default function DetallePlanilla() {
         'Horas extra',
         'Horas dobles',
         'Total horas',
-        'Bruto',
-        'Seguro (10.67%)',
-        'Neto a pagar',
+        'Monto bruto',
+        'Seguro',
+        'Monto neto',
       ],
       [
         `#${planilla.idPlanilla} — ${planilla.nombre}`,
@@ -510,7 +538,7 @@ export default function DetallePlanilla() {
             <div className="col-lg-4">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h2 className="h5 fw-semibold mb-3">Horas</h2>
+                  <h2 className="h5 fw-semibold mb-3">Horas totales</h2>
                   <div className="row text-center g-3">
                     <div className="col-4">
                       <div className="p-2 border rounded">
@@ -532,7 +560,7 @@ export default function DetallePlanilla() {
                     </div>
                   </div>
                   <div className="mt-3 d-flex justify-content-between">
-                    <span className="text-muted">Total horas</span>
+                    <span className="text-muted">Total de horas</span>
                     <span className="fw-semibold">
                       {(resumen.ho + resumen.he + resumen.hd).toFixed(2)}
                     </span>
@@ -544,17 +572,17 @@ export default function DetallePlanilla() {
             <div className="col-lg-4">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h2 className="h5 fw-semibold mb-3">Financiero</h2>
+                  <h2 className="h5 fw-semibold mb-3">Financiamiento</h2>
                   <div className="d-flex justify-content-between border-bottom py-2">
-                    <span className="text-muted">Bruto</span>
+                    <span className="text-muted">Monto Bruto</span>
                     <span className="fw-semibold">{crc(resumen.bruto)}</span>
                   </div>
                   <div className="d-flex justify-content-between border-bottom py-2">
-                    <span className="text-muted">Seguro (10.67%)</span>
+                    <span className="text-muted">Seguro social</span>
                     <span className="fw-semibold">{crc(resumen.seguro)}</span>
                   </div>
                   <div className="d-flex justify-content-between py-2">
-                    <span className="text-muted">Neto</span>
+                    <span className="text-muted">Monto Neto</span>
                     <span className="fw-bold text-success">{crc(resumen.neto)}</span>
                   </div>
                 </div>
@@ -569,15 +597,15 @@ export default function DetallePlanilla() {
                 <div className="card shadow-sm">
                   <div className="card-body">
                     <h2 className="h6 fw-semibold mb-3 d-flex align-items-center gap-2">
-                      <User size={16} /> Top empleados por horas
+                      <User size={16} /> Empleados por horas
                     </h2>
                     <div className="table-responsive">
                       <table className="table table-sm mb-0 align-middle">
                         <thead className="table-light">
                           <tr>
                             <th>Empleado</th>
-                            <th className="text-end">Horas</th>
-                            <th className="text-end">Neto (₡)</th>
+                            <th className="text-end">Horas totales</th>
+                            <th className="text-end">Monto Neto (₡)</th>
                             <th className="text-end">Acciones</th>
                           </tr>
                         </thead>
@@ -631,7 +659,7 @@ export default function DetallePlanilla() {
                                             <div>{t.puesto || '—'}</div>
                                           </div>
                                           <div className="col-md-3">
-                                            <div className="small text-muted">Salario/Hora</div>
+                                            <div className="small text-muted">Salario</div>
                                             <div>{t.salarioHora != null ? crc(t.salarioHora) : '—'}</div>
                                           </div>
                                           <div className="col-md-6">
@@ -649,11 +677,11 @@ export default function DetallePlanilla() {
                                                 <div className="fw-semibold">{crc(t.money.bruto)}</div>
                                               </div>
                                               <div className="col-sm-3">
-                                                <div className="small text-muted">Seguro</div>
+                                                <div className="small text-muted">Seguro social</div>
                                                 <div className="fw-semibold">{crc(t.money.seguro)}</div>
                                               </div>
                                               <div className="col-sm-3">
-                                                <div className="small text-muted">Neto</div>
+                                                <div className="small text-muted">Monto Neto</div>
                                                 <div className="fw-bold text-success">{crc(t.money.neto)}</div>
                                               </div>
                                             </div>
@@ -726,91 +754,156 @@ export default function DetallePlanilla() {
             </div>
           </div>
 
-          {/* Tabla detalle */}
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h2 className="h6 fw-semibold mb-3">Detalle de la planilla</h2>
-              <div className="table-responsive">
-                <table className="table table-hover table-striped align-middle">
-                  <thead className="table-light">
-                    <tr>
-                      {Object.keys(COLUMN_LABELS).map(key => (
-                        <th key={key}>{COLUMN_LABELS[key]}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={Object.keys(COLUMN_LABELS).length}
-                          className="text-center text-muted py-4"
-                        >
-                          Sin registros
-                        </td>
-                      </tr>
-                    ) : (
-                      results.map(item => (
-                        <tr
-                          key={item.idDetallePlanilla}
-                          style={{ cursor: 'pointer' }}
-                          onClick={() =>
-                            navigate(
-                              `/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`
-                            )
-                          }
-                        >
-                          {Object.keys(COLUMN_LABELS).map((key, j) => {
-                            if (key === 'fecha')
-                              return (
-                                <td key={j}>
-                                  {item.fecha
-                                    ? new Date(item.fecha).toLocaleDateString()
-                                    : ''}
-                                </td>
-                              );
-                            if (key === 'bruto')
-                              return (
-                                <td key={j} className="text-end">
-                                  {crc(item.bruto)}
-                                </td>
-                              );
-                            if (key === 'seguro')
-                              return (
-                                <td key={j} className="text-end">
-                                  {crc(item.seguro)}
-                                </td>
-                              );
-                            if (key === 'neto')
-                              return (
-                                <td key={j} className="text-end fw-semibold">
-                                  {crc(item.neto)}
-                                </td>
-                              );
-                            if (key === 'salarioHora')
-                              return (
-                                <td key={j} className="text-end">
-                                  {crc(item.salarioHora ?? item.empleadoSalarioHora)}
-                                </td>
-                              );
-                            if (
-                              ['horasOrdinarias', 'horasExtras', 'horasDobles'].includes(key)
-                            )
-                              return (
-                                <td key={j} className="text-end">
-                                  {Number(item[key] || 0)}
-                                </td>
-                              );
-                            return <td key={j}>{item[key]}</td>;
-                          })}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+{/* Tabla detalle agrupada por empleado */}
+<div className="card shadow-sm">
+  <div className="card-body">
+    <h2 className="h6 fw-semibold mb-3">Detalle de la planilla</h2>
+    <div className="table-responsive">
+      <table className="table table-hover table-striped align-middle">
+        <thead className="table-light">
+          <tr>
+            {Object.keys(COLUMN_LABELS).map(key => (
+              <th key={key}>{COLUMN_LABELS[key]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {resultsByEmpleado.length === 0 ? (
+            <tr>
+              <td
+                colSpan={Object.keys(COLUMN_LABELS).length}
+                className="text-center text-muted py-4"
+              >
+                Sin registros
+              </td>
+            </tr>
+          ) : (
+            resultsByEmpleado.map(group => (
+              <React.Fragment key={group.empleadoID}>
+                {/* Fila separadora por empleado */}
+                <tr className="table-secondary">
+                  <td colSpan={Object.keys(COLUMN_LABELS).length} className="fw-semibold">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className="d-flex align-items-center gap-2">
+                        <User size={16} className="text-dark" />
+                        {group.empleadoNombre}
+                      </span>
+                      <span className="d-flex gap-3">
+                        <span>
+                          <strong>Horas:{' '}</strong>               
+                            {(group.tot.ho + group.tot.he + group.tot.hd).toFixed(2)}
+                        </span>
+                        <span>
+                          Neto:{' '}
+                          <strong className="text-success">{crc(group.tot.neto)}</strong>
+                        </span>
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* Filas de registros del empleado */}
+                {group.items.map(item => (
+                  <tr
+                    key={item.idDetallePlanilla}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() =>
+                      navigate(
+                        `/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`
+                      )
+                    }
+                  >
+                    {Object.keys(COLUMN_LABELS).map((key, j) => {
+                      // Fecha con icono de calendario
+                      if (key === 'fecha') {
+                        return (
+                          <td key={j}>
+                            <span className="d-inline-flex align-items-center gap-2">
+                              <Calendar size={14} className="text-muted" />
+                              {item.fecha ? new Date(item.fecha).toLocaleDateString() : ''}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      // Proyecto con icono de edificio
+                      if (key === 'presupuestoNombre') {
+                        return (
+                          <td key={j}>
+                            <span className="d-inline-flex align-items-center gap-2">
+                              <Building2 size={14} className="text-muted" />
+                              {item.presupuestoNombre}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      // Empleado con icono de usuario (negro)
+                      if (key === 'empleadoNombre') {
+                        return (
+                          <td key={j}>
+                            <span className="d-inline-flex align-items-center gap-2">
+                              <User size={14} className="text-dark" />
+                              {item.empleadoNombre}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      // Salario/Hora formateado
+                      if (key === 'salarioHora') {
+                        return (
+                          <td key={j} className="text-end">
+                            {crc(item.salarioHora ?? item.empleadoSalarioHora)}
+                          </td>
+                        );
+                      }
+
+                      // Horas (Ord./Ext./Dobles) con icono reloj
+                      if (['horasOrdinarias', 'horasExtras', 'horasDobles'].includes(key)) {
+                        return (
+                          <td key={j} className="text-end">
+                            <span className="d-inline-flex align-items-center justify-content-end gap-1 w-100">
+                              <Clock size={13} className="text-muted" />
+                              {Number(item[key] || 0)}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      // Bruto / Seguro / Neto
+                      if (key === 'bruto')
+                        return (
+                          <td key={j} className="text-end">
+                            {crc(item.bruto)}
+                          </td>
+                        );
+                      if (key === 'seguro')
+                        return (
+                          <td key={j} className="text-end">
+                            {crc(item.seguro)}
+                          </td>
+                        );
+                      if (key === 'neto')
+                        return (
+                          <td key={j} className="text-end fw-semibold">
+                            {crc(item.neto)}
+                          </td>
+                        );
+
+                      // Fallback
+                      return <td key={j}>{item[key]}</td>;
+                    })}
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
         </div>
       </div>
     </>
