@@ -1,7 +1,7 @@
-// DetalleEmpleado.jsx - Versión Mejorada
+// DetalleEmpleado.jsx - Versión Mejorada con corrección de estado activo
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Edit2, Save, X, User, Mail, IdCard, Briefcase, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-react'
+import { ChevronLeft, Edit2, Save, X, User, Mail, IdCard, Briefcase, BadgeCent, Calendar, CheckCircle, XCircle } from 'lucide-react'
 import '../../../styles/Dashboard.css'
 import '../dashboard/FormDashboard.css'
 import './DetalleEmpleado.css'
@@ -13,7 +13,8 @@ export default function DetalleEmpleado() {
   const { idEmpleado } = useParams()
   const navigate = useNavigate()
 
-  const { EmpleadoDetalle, loading, error } = useEmpleado(idEmpleado)
+  // 🔹 IMPORTANTE: Obtenemos setEmpleadoDetalle del hook
+  const { EmpleadoDetalle, setEmpleadoDetalle, loading, error } = useEmpleado(idEmpleado)
   const { guardarEmpleado } = useInsertarActualizarEmpleados()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -26,11 +27,6 @@ export default function DetalleEmpleado() {
   React.useEffect(() => {
     if (!EmpleadoDetalle) return
 
-    // DEBUG: Ver qué formato viene la fecha
-    console.log('EmpleadoDetalle completo:', EmpleadoDetalle)
-    console.log('fechaIngreso original:', EmpleadoDetalle.fechaIngreso)
-    console.log('cuandoIngreso original:', EmpleadoDetalle.cuandoIngreso)
-
     let activoStr = 'true'
     if (EmpleadoDetalle.activo != null) {
       const valor = EmpleadoDetalle.activo
@@ -41,14 +37,9 @@ export default function DetalleEmpleado() {
       }
     }
 
-    // Manejo robusto de fechas - SIMPLIFICADO
     const formatearFechaParaInput = (fecha) => {
       if (!fecha) return ''
-      
-      console.log('Procesando fecha:', fecha, typeof fecha)
-      
       try {
-        // Para fechas ISO como "2025-08-09T06:00:00.000Z"
         const fechaObj = new Date(fecha)
         if (!isNaN(fechaObj.getTime())) {
           const año = fechaObj.getFullYear()
@@ -56,18 +47,14 @@ export default function DetalleEmpleado() {
           const dia = String(fechaObj.getDate()).padStart(2, '0')
           return `${año}-${mes}-${dia}`
         }
-        
         return ''
-      } catch (error) {
-        console.warn('Error al formatear fecha:', fecha, error)
+      } catch {
         return ''
       }
     }
-    
+
     const defaultFecha = formatearFechaParaInput(EmpleadoDetalle.fechaIngreso) || 
                          formatearFechaParaInput(EmpleadoDetalle.cuandoIngreso)
-    
-    console.log('Fecha formateada para input:', defaultFecha)
 
     setForm({
       nombre:         EmpleadoDetalle.nombre        ?? '',
@@ -90,61 +77,112 @@ export default function DetalleEmpleado() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    if (!form.nombre.trim() || !form.identificacion.trim()) {
+      alert('Nombre e identificación son obligatorios')
+      return
+    }
     const usr = localStorage.getItem('currentUser')
     if (!usr) return alert('Usuario no autenticado')
-    const user = JSON.parse(usr)
-    const ahora = new Date().toISOString()
 
-    let fechaFormateada = form.fechaIngreso
-    if (form.fechaIngreso && form.fechaIngreso.includes('-')) {
-      fechaFormateada = form.fechaIngreso // Ya está en formato correcto
-    }
-
-    // Construir payload limpio - solo campos necesarios
     const payload = {
-      idEmpleado: EmpleadoDetalle.idEmpleado,
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      identificacion: form.identificacion.trim(),
-      correo: form.correo.trim(),
-      puesto: form.puesto.trim(),
-      salarioHora: parseFloat(form.salarioHora) || 0,
-      activo: form.activo === 'true' ? 1 : 0,
-      fechaIngreso: fechaFormateada,
-      usuario: user.correo || user.usuario,
-      quienIngreso: EmpleadoDetalle.quienIngreso,
-      cuandoIngreso: EmpleadoDetalle.cuandoIngreso,
-      quienModifico: user.correo || user.usuario,
-      cuandoModifico: ahora
-    }// Para debug
+      idEmpleado: Number(idEmpleado),
+      nombre: form.nombre,
+      apellido: form.apellido,
+      identificacion: form.identificacion,
+      puesto: form.puesto,
+      salarioHora: String(form.salarioHora), 
+      fechaIngreso: new Date(form.fechaIngreso).toISOString(), 
+      correo: form.correo,
+      activo: form.activo === 'true' ? 'True' : 'False'
+    }
 
     try {
       const success = await guardarEmpleado(payload)
       if (success) {
-        setIsEditing(false)
-        alert('Empleado actualizado correctamente')
+        
+        // 🔹 SOLUCIÓN: Actualizar el estado local con los nuevos datos
+        const empleadoActualizado = {
+          ...EmpleadoDetalle,
+          nombre: form.nombre,
+          apellido: form.apellido,
+          identificacion: form.identificacion,
+          puesto: form.puesto,
+          salarioHora: form.salarioHora,
+          correo: form.correo,
+          activo: form.activo === 'true' ? 1 : 0, 
+        }
+        
+        setEmpleadoDetalle(empleadoActualizado)
+        
+        setIsEditing(false) // salir de edición
       } else {
         alert('Error al guardar los cambios')
       }
     } catch (error) {
       console.error('Error en handleSubmit:', error)
-      alert('Error al guardar: ' + error.message)
+      alert('Error al guardar: ' + (error.message || 'Desconocido'))
     }
   }
 
-  // Función helper para determinar si está activo
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    // Restaurar form con los datos originales
+    if (EmpleadoDetalle) {
+      let activoStr = 'true'
+      if (EmpleadoDetalle.activo != null) {
+        const valor = EmpleadoDetalle.activo
+        if (valor === 1 || valor === '1' || valor === true || valor === 'true') {
+          activoStr = 'true'
+        } else if (valor === 0 || valor === '0' || valor === false || valor === 'false') {
+          activoStr = 'false'
+        }
+      }
+
+      const formatearFechaParaInput = (fecha) => {
+        if (!fecha) return ''
+        try {
+          const fechaObj = new Date(fecha)
+          if (!isNaN(fechaObj.getTime())) {
+            const año = fechaObj.getFullYear()
+            const mes = String(fechaObj.getMonth() + 1).padStart(2, '0')
+            const dia = String(fechaObj.getDate()).padStart(2, '0')
+            return `${año}-${mes}-${dia}`
+          }
+          return ''
+        } catch {
+          return ''
+        }
+      }
+
+      const defaultFecha = formatearFechaParaInput(EmpleadoDetalle.fechaIngreso) || 
+                           formatearFechaParaInput(EmpleadoDetalle.cuandoIngreso)
+
+      setForm({
+        nombre:         EmpleadoDetalle.nombre        ?? '',
+        apellido:       EmpleadoDetalle.apellido      ?? '',
+        identificacion: EmpleadoDetalle.identificacion?? '',
+        correo:         EmpleadoDetalle.correo        ?? '',
+        puesto:         EmpleadoDetalle.puesto        ?? '',
+        salarioHora:    EmpleadoDetalle.salarioHora != null
+                           ? String(EmpleadoDetalle.salarioHora)
+                           : '',
+        activo:         activoStr,
+        fechaIngreso:   defaultFecha
+      })
+    }
+  }
+
   const isEmployeeActive = (activo) => {
     return activo === 1 || activo === '1' || activo === true || activo === 'true'
   }
 
-  // Configuración de campos con iconos y metadatos
   const fieldsConfig = {
     nombre: { icon: User, label: 'Nombre', type: 'text' },
     apellido: { icon: User, label: 'Apellido', type: 'text' },
     identificacion: { icon: IdCard, label: 'Identificación', type: 'text' },
     correo: { icon: Mail, label: 'Correo electrónico', type: 'email' },
     puesto: { icon: Briefcase, label: 'Puesto', type: 'text' },
-    salarioHora: { icon: DollarSign, label: 'Salario por hora', type: 'number' }
+    salarioHora: { icon: BadgeCent, label: 'Salario por hora', type: 'number' }
   }
 
   if (loading) return (
@@ -178,7 +216,7 @@ export default function DetalleEmpleado() {
 
   return (
     <div className="detalle-empleado-container">
-      {/* Header mejorado */}
+      {/* Header */}
       <div className="detalle-header">
         <div className="header-left">
           <button className="btn-back" onClick={() => navigate(-1)}>
@@ -191,6 +229,7 @@ export default function DetalleEmpleado() {
             </div>
             <div>
               <h1>
+                {/* 🔹 Mostrar datos actualizados del EmpleadoDetalle */}
                 {EmpleadoDetalle.nombre} {EmpleadoDetalle.apellido}
               </h1>
               <p className="employee-id">ID: #{EmpleadoDetalle.idEmpleado}</p>
@@ -200,6 +239,7 @@ export default function DetalleEmpleado() {
         
         <div className="header-right">
           <div className={`status-badge ${isEmployeeActive(EmpleadoDetalle.activo) ? 'active' : 'inactive'}`}>
+            {/* 🔹 Mostrar el estado actual del EmpleadoDetalle */}
             {isEmployeeActive(EmpleadoDetalle.activo) ? (
               <>
                 <CheckCircle size={16} />
@@ -227,7 +267,7 @@ export default function DetalleEmpleado() {
               <button 
                 type="button" 
                 className="btn-secondary" 
-                onClick={() => setIsEditing(false)}
+                onClick={handleCancelEdit} 
               >
                 <X size={16} />
                 <span>Cancelar</span>
@@ -237,7 +277,7 @@ export default function DetalleEmpleado() {
         </div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Contenido */}
       <div className="detalle-content">
         {isEditing ? (
           <form
@@ -324,16 +364,13 @@ export default function DetalleEmpleado() {
               <div className="details-grid">
                 {Object.entries(fieldsConfig).map(([key, config]) => {
                   const Icon = config.icon
-                  let displayValue = EmpleadoDetalle[key]
-                  
-                  // Formateo especial para salario
+                  let displayValue = EmpleadoDetalle[key] // 🔹 Usar EmpleadoDetalle actualizado
                   if (key === 'salarioHora' && displayValue) {
                     displayValue = `₡${parseFloat(displayValue).toLocaleString('es-CR', { 
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2 
                     })}`
                   }
-                  
                   return (
                     <div className="detail-field" key={key}>
                       <div className="field-label">
@@ -383,13 +420,20 @@ export default function DetalleEmpleado() {
                     Fecha de ingreso
                   </div>
                   <div className="field-value">
-                    {form.fechaIngreso ? 
-                      new Date(form.fechaIngreso).toLocaleDateString('es-CR', {
+                    {EmpleadoDetalle.fechaIngreso ? 
+                      new Date(EmpleadoDetalle.fechaIngreso).toLocaleDateString('es-CR', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                       }) 
-                      : '-'
+                      : (EmpleadoDetalle.cuandoIngreso ? 
+                          new Date(EmpleadoDetalle.cuandoIngreso).toLocaleDateString('es-CR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) 
+                          : '-'
+                        )
                     }
                   </div>
                 </div>
