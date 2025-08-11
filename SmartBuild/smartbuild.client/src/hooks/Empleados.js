@@ -1,112 +1,111 @@
-import { useEffect , useState } from 'react';
+import { useEffect, useState } from 'react'
 
 // API
-import { getEmpleados, getEmpleado, updateEmpleado, insertEmpleado } from '../api/Empleados';
+import { getEmpleados, getEmpleado, updateEmpleado, insertEmpleado } from '../api/Empleados'
 
 export const useEmpleados = () => {
-  const [Empleados, setEmpleados] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [Empleados, setEmpleados] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser');
+    const usuarioStr = localStorage.getItem('currentUser')
     if (!usuarioStr) {
-      setError('Usuario no autenticado');
-      setLoading(false);
-      return;
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
     }
 
-    const user = JSON.parse(usuarioStr);
-    const correo = encodeURIComponent(user.correo || user.usuario);
+    const user = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
 
     const fetchEmpleados = async () => {
       try {
-        const data = await getEmpleados(correo);
-         console.log('Empleados:', data); 
-        setEmpleados(Array.isArray(data) ? data : []);
+        const data = await getEmpleados(correo)
+        console.log('Empleados:', data)
+        setEmpleados(Array.isArray(data) ? data : [])
       } catch (err) {
-        console.error(err);
-        setError('No se pudieron cargar las Empleados.');
+        console.error(err)
+        setError('No se pudieron cargar los Empleados.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    fetchEmpleados();
-  }, []);
-
-  return { Empleados, loading, error };
-};
-
-export const useEmpleado = (idEmpleado) => {
-  const [EmpleadoDetalle, setEmpleado] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser');
-    if (!usuarioStr) {
-      setError('Usuario no autenticado');
-      setLoading(false);
-      return;
     }
 
-    const user = JSON.parse(usuarioStr);
-    const correo = encodeURIComponent(user.correo || user.usuario);
+    fetchEmpleados()
+  }, [])
+
+  return { Empleados, loading, error }
+}
+
+export const useEmpleado = (idEmpleado) => {
+  const [EmpleadoDetalle, setEmpleadoDetalle] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const usuarioStr = localStorage.getItem('currentUser')
+    if (!usuarioStr) {
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
+    }
+
+    const user = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
 
     const fetchEmpleado = async () => {
       try {
-        const data = await getEmpleado(correo, idEmpleado);
-        console.log('data');
-        console.dir(data);
+        const data = await getEmpleado(correo, idEmpleado)
+        console.log('data')
+        console.dir(data)
         if (Array.isArray(data)) {
-          if (data.length === 0) throw new Error('Empleado no encontrado');
-          setEmpleado(data[0]);
+          if (data.length === 0) throw new Error('Empleado no encontrado')
+          setEmpleadoDetalle(data[0])
         } else if (typeof data === 'object' && data.idEmpleado) {
-          setEmpleado(data);
+          setEmpleadoDetalle(data)
         } else {
-          throw new Error('Formato inesperado del API');
+          throw new Error('Formato inesperado del API')
         }
       } catch (err) {
-        console.error(err);
-        setError('No se pudieron cargar los Empleados.');
+        console.error(err)
+        setError('No se pudieron cargar los Empleados.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchEmpleado();
-  }, [idEmpleado]);
+    fetchEmpleado()
+  }, [idEmpleado])
 
-  return { EmpleadoDetalle, loading, error };
-};
+  return { EmpleadoDetalle, setEmpleadoDetalle, loading, error }
+}
 
 export const useInsertarActualizarEmpleados = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
   const guardarEmpleado = async (Empleado) => {
-    setLoading(true);
-    setError('');
-    setSuccess(false);
+    setLoading(true)
+    setError('')
+    setSuccess(false)
 
     try {
-      console.log('Payload a enviar:', Empleado);
       Empleado.idEmpleado
         ? await updateEmpleado(Empleado)
-        : await insertEmpleado(Empleado);
+        : await insertEmpleado(Empleado)
 
-      setSuccess(true);
-      return true;
+      setSuccess(true)
+      return true
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Error al guardar el Empleado');
-      return false;
+      console.error(err)
+      setError(err.message || 'Error al guardar el Empleado')
+      return false
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  return { guardarEmpleado, loading, error, success };
-};
+  return { guardarEmpleado, loading, error, success }
+}
