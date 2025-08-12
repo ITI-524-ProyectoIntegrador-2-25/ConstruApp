@@ -1,8 +1,8 @@
-// src/components/pages/planilla/AgregarDetalle.jsx
 import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Plus, Calendar, User, Building2, Clock } from 'lucide-react'
 import Select from 'react-select'
+import './Planilla.css' // variables/colores tipográficos
 import { http } from '../../../api/baseAPI'
 import { insertPlanillaDetalle } from '../../../api/PlanillaDetalle'
 
@@ -195,134 +195,195 @@ export default function AgregarDetalle() {
     form.empleado && form.fecha && detallesIndex.has(`${form.empleado.value}|${dateOnly(form.fecha)}`)
 
   return (
-    <div className="form-dashboard-page">
-      <header className="form-dashboard-header">
-        <button className="back-btn" onClick={() => navigate(-1)} title="Regresar" aria-label="Regresar">
-          <ChevronLeft size={20} />
-        </button>
-      </header>
-
-      <form
-        className="form-dashboard"
-        onSubmit={handleSubmit}
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}
-      >
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label>Proyecto</label>
-          <Select
-            options={projectsOpts}
-            value={form.proyecto}
-            onChange={val => handleSelectChange('proyecto', val)}
-            placeholder="Seleccionar proyecto…"
-            isDisabled={sending}
-          />
-        </div>
-
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label>Empleado</label>
-          <Select
-            options={employeesOpts}
-            value={form.empleado}
-            onChange={val => handleSelectChange('empleado', val)}
-            placeholder="Seleccionar empleado…"
-            isDisabled={sending}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>
-            Fecha {rangoPlanilla.ini && rangoPlanilla.fin ? `(${rangoPlanilla.ini} → ${rangoPlanilla.fin})` : ''}
-          </label>
-          <input
-            type="date"
-            name="fecha"
-            value={form.fecha}
-            onChange={handleChange}
-            disabled={sending}
-            min={rangoPlanilla.ini || undefined}
-            max={rangoPlanilla.fin || undefined}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Salario por hora</label>
-          <input
-            type="number"
-            name="salarioHora"
-            value={form.salarioHora}
-            onChange={handleChange}
-            min="0.01"
-            step="0.01"
-            disabled={sending || !!(form.empleado && form.salarioHora)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Horas ordinarias</label>
-          <input
-            type="number"
-            name="horasOrdinarias"
-            value={form.horasOrdinarias}
-            onChange={handleChange}
-            min="0"
-            step="0.5"
-            disabled={sending}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Horas extras</label>
-          <input
-            type="number"
-            name="horasExtras"
-            value={form.horasExtras}
-            onChange={handleChange}
-            min="0"
-            step="0.5"
-            disabled={sending}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Horas dobles</label>
-          <input
-            type="number"
-            name="horasDobles"
-            value={form.horasDobles}
-            onChange={handleChange}
-            min="0"
-            step="0.5"
-            disabled={sending}
-          />
-        </div>
-
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label>Resumen</label>
-          <div className="value" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <span>Ordinarias: <strong>{so || 0}</strong></span>
-            <span>Extras: <strong>{se || 0}</strong></span>
-            <span>Dobles: <strong>{sd || 0}</strong></span>
-            <span>Total ₡: <strong>{Number.isFinite(total) ? total.toFixed(2) : '0.00'}</strong></span>
-          </div>
-        </div>
-
-        {(empleadoFechaBloqueado || error) && (
-          <div className="alert alert-danger" style={{ gridColumn: '1 / -1' }}>
-            {empleadoFechaBloqueado ? 'Ese empleado ya tiene un registro en esa fecha' : error}
-          </div>
-        )}
-
-        <div style={{ gridColumn: '1 / -1' }}>
-          <button
-            type="submit"
-            className="btn-submit"
-            style={{ width: '100%' }}
-            disabled={sending || empleadoFechaBloqueado}
-          >
-            {sending ? 'Agregando…' : 'Agregar registro'}
+    <div className="empleados-page-modern form-planilla-modern">
+      {/* HEADER MODERNO */}
+      <div className="page-header">
+        <div className="header-left">
+          <button className="btn-back-modern" onClick={() => navigate(-1)} title="Volver">
+            <ChevronLeft size={20} />
           </button>
+          <div className="title-section">
+            <h1 className="page-title">
+              <Plus size={28} /> Agregar registro
+            </h1>
+            <p className="page-subtitle">Carga un registro de horas dentro del rango de la planilla</p>
+          </div>
         </div>
-      </form>
+      </div>
+
+      {/* PANEL / FORM */}
+      <div className="filters-panel">
+        <div className="filters-content">
+          <form
+            onSubmit={handleSubmit}
+            className="form-dashboard"
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}
+          >
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label d-flex align-items-center gap-2">
+                <Building2 size={16} /> Proyecto
+              </label>
+              <Select
+                className="modern-select"
+                classNamePrefix="react-select"
+                options={projectsOpts}
+                value={form.proyecto}
+                onChange={val => handleSelectChange('proyecto', val)}
+                placeholder="Seleccionar proyecto…"
+                isDisabled={sending}
+              />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label d-flex align-items-center gap-2">
+                <User size={16} /> Empleado
+              </label>
+              <Select
+                className="modern-select"
+                classNamePrefix="react-select"
+                options={employeesOpts}
+                value={form.empleado}
+                onChange={val => handleSelectChange('empleado', val)}
+                placeholder="Seleccionar empleado…"
+                isDisabled={sending}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Calendar size={16} />
+                Fecha {rangoPlanilla.ini && rangoPlanilla.fin ? `(${rangoPlanilla.ini} → ${rangoPlanilla.fin})` : ''}
+              </label>
+              <input
+                type="date"
+                name="fecha"
+                value={form.fecha}
+                onChange={handleChange}
+                disabled={sending}
+                min={rangoPlanilla.ini || undefined}
+                max={rangoPlanilla.fin || undefined}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label">Salario por hora</label>
+              <input
+                type="number"
+                name="salarioHora"
+                value={form.salarioHora}
+                onChange={handleChange}
+                min="0.01"
+                step="0.01"
+                disabled={sending || !!(form.empleado && form.salarioHora)}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas ordinarias
+              </label>
+              <input
+                type="number"
+                name="horasOrdinarias"
+                value={form.horasOrdinarias}
+                onChange={handleChange}
+                min="0"
+                step="0.5"
+                disabled={sending}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas extras
+              </label>
+              <input
+                type="number"
+                name="horasExtras"
+                value={form.horasExtras}
+                onChange={handleChange}
+                min="0"
+                step="0.5"
+                disabled={sending}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas dobles
+              </label>
+              <input
+                type="number"
+                name="horasDobles"
+                value={form.horasDobles}
+                onChange={handleChange}
+                min="0"
+                step="0.5"
+                disabled={sending}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label">Resumen</label>
+              <div className="value" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <span>Ordinarias: <strong>{so || 0}</strong></span>
+                <span>Extras: <strong>{se || 0}</strong></span>
+                <span>Dobles: <strong>{sd || 0}</strong></span>
+                <span>Total ₡: <strong>{Number.isFinite(total) ? total.toFixed(2) : '0.00'}</strong></span>
+              </div>
+            </div>
+
+            {(empleadoFechaBloqueado || error) && (
+              <div className="alert alert-danger" style={{ gridColumn: '1 / -1' }}>
+                {empleadoFechaBloqueado ? 'Ese empleado ya tiene un registro en esa fecha' : error}
+              </div>
+            )}
+
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '.75rem' }}>
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="btn-secondary-modern"
+                disabled={sending}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="btn-primary-modern"
+                disabled={sending || empleadoFechaBloqueado}
+              >
+                {sending ? 'Agregando…' : 'Agregar registro'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Pequeñas “stats” visuales opcionales */}
+      <div className="stats-cards">
+        <div className="stat-card">
+          <div className="stat-icon"><Clock size={18} /></div>
+          <div className="stat-content">
+            <span className="stat-number">{(so + se + sd) || 0}</span>
+            <span className="stat-label">Horas totales</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><Calendar size={18} /></div>
+          <div className="stat-content">
+            <span className="stat-number">
+              {rangoPlanilla.ini ? `${rangoPlanilla.ini} → ${rangoPlanilla.fin}` : '—'}
+            </span>
+            <span className="stat-label">Rango planilla</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
