@@ -1,7 +1,6 @@
-// src/components/pages/planilla/EditarDetalle.jsx
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react'
 import './Planilla.css'
 import { http } from '../../../api/baseAPI'
 import { getPlanillaDetalleByInfo, updatePlanillaDetalle } from '../../../api/PlanillaDetalle'
@@ -175,99 +174,150 @@ export default function EditarDetalle() {
   if (!detalle) return null
 
   return (
-    <div className="form-dashboard-page">
-      <header className="form-dashboard-header">
-        <button className="back-btn" onClick={() => navigate(-1)} title="Regresar" aria-label="Regresar">
-          <ChevronLeft size={20} />
-        </button>
-        <h1>Editar Detalle de Planilla #{idDetallePlanilla}</h1>
-      </header>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      <form onSubmit={handleSubmit} className="form-dashboard">
-        <div className="form-group">
-          <label>Fecha {rangoPlanilla.ini && rangoPlanilla.fin ? `(${rangoPlanilla.ini} → ${rangoPlanilla.fin})` : ''}</label>
-          <input
-            type="date"
-            name="fecha"
-            value={form.fecha}
-            onChange={handleChange}
-            required
-            disabled={sending}
-            min={rangoPlanilla.ini || undefined}
-            max={rangoPlanilla.fin || undefined}
-          />
+    <div className="empleados-page-modern form-planilla-modern">
+      {/* HEADER MODERNO */}
+      <div className="page-header">
+        <div className="header-left">
+          <button className="btn-back-modern" onClick={() => navigate(-1)} title="Volver">
+            <ChevronLeft size={20} />
+          </button>
+          <div className="title-section">
+            <h1 className="page-title">
+              <Edit size={28} /> Editar detalle
+            </h1>
+            <p className="page-subtitle">Actualiza las horas del registro dentro del rango de la planilla</p>
+          </div>
         </div>
+      </div>
 
-        <div className="form-group">
-          <label>Salario/Hora</label>
-          <input
-            type="number"
-            name="salarioHora"
-            value={form.salarioHora}
-            onChange={handleChange}
-            disabled={sending || empleadoSalario != null}
-            min="0.01"
-            step="0.01"
-          />
+      {/* PANEL / FORM */}
+      <div className="filters-panel">
+        <div className="filters-content">
+          {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+          <form onSubmit={handleSubmit} className="form-dashboard"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Calendar size={16} />
+                Fecha {rangoPlanilla.ini && rangoPlanilla.fin ? `(${rangoPlanilla.ini} → ${rangoPlanilla.fin})` : ''}
+              </label>
+              <input
+                type="date"
+                name="fecha"
+                value={form.fecha}
+                onChange={handleChange}
+                required
+                disabled={sending}
+                min={rangoPlanilla.ini || undefined}
+                max={rangoPlanilla.fin || undefined}
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label">Salario/Hora</label>
+              <input
+                type="number"
+                name="salarioHora"
+                value={form.salarioHora}
+                onChange={handleChange}
+                disabled={sending || empleadoSalario != null}
+                min="0.01"
+                step="0.01"
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas Ordinarias
+              </label>
+              <input
+                type="number"
+                name="horasOrdinarias"
+                value={form.horasOrdinarias}
+                onChange={handleChange}
+                required
+                disabled={sending}
+                min="0"
+                step="0.5"
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas Extras
+              </label>
+              <input
+                type="number"
+                name="horasExtras"
+                value={form.horasExtras}
+                onChange={handleChange}
+                required
+                disabled={sending}
+                min="0"
+                step="0.5"
+                className="modern-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="field-label d-flex align-items-center gap-2">
+                <Clock size={16} /> Horas Dobles
+              </label>
+              <input
+                type="number"
+                name="horasDobles"
+                value={form.horasDobles}
+                onChange={handleChange}
+                required
+                disabled={sending}
+                min="0"
+                step="0.5"
+                className="modern-input"
+              />
+            </div>
+
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '.75rem' }}>
+              <button
+                type="button"
+                className="btn-secondary-modern"
+                onClick={() => (idPlanilla ? navigate(`/dashboard/planilla/${idPlanilla}`) : navigate(-1))}
+                disabled={sending}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="btn-primary-modern" disabled={sending}>
+                {sending ? 'Guardando…' : 'Guardar cambios'}
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
 
-        <div className="form-group">
-          <label>Horas Ordinarias</label>
-          <input
-            type="number"
-            name="horasOrdinarias"
-            value={form.horasOrdinarias}
-            onChange={handleChange}
-            required
-            disabled={sending}
-            min="0"
-            step="0.5"
-          />
+      {/* Tarjetas de apoyo visual */}
+      <div className="stats-cards">
+        <div className="stat-card">
+          <div className="stat-icon"><Calendar size={18} /></div>
+          <div className="stat-content">
+            <span className="stat-number">
+              {rangoPlanilla.ini ? `${rangoPlanilla.ini} → ${rangoPlanilla.fin}` : '—'}
+            </span>
+            <span className="stat-label">Rango planilla</span>
+          </div>
         </div>
-
-        <div className="form-group">
-          <label>Horas Extras</label>
-          <input
-            type="number"
-            name="horasExtras"
-            value={form.horasExtras}
-            onChange={handleChange}
-            required
-            disabled={sending}
-            min="0"
-            step="0.5"
-          />
+        <div className="stat-card">
+          <div className="stat-icon"><Clock size={18} /></div>
+          <div className="stat-content">
+            <span className="stat-number">
+              {(Number(form.horasOrdinarias || 0) + Number(form.horasExtras || 0) + Number(form.horasDobles || 0)) || 0}
+            </span>
+            <span className="stat-label">Horas totales</span>
+          </div>
         </div>
-
-        <div className="form-group">
-          <label>Horas Dobles</label>
-          <input
-            type="number"
-            name="horasDobles"
-            value={form.horasDobles}
-            onChange={handleChange}
-            required
-            disabled={sending}
-            min="0"
-            step="0.5"
-          />
-        </div>
-
-        <button type="submit" className="btn-submit" disabled={sending}>
-          {sending ? 'Guardando…' : 'Guardar Cambios'}
-        </button>
-        <button
-          type="button"
-          className="btn-submit"
-          style={{ background: '#ccc', marginLeft: 12 }}
-          onClick={() => (idPlanilla ? navigate(`/dashboard/planilla/${idPlanilla}`) : navigate(-1))}
-          disabled={sending}
-        >
-          Cancelar
-        </button>
-      </form>
+      </div>
     </div>
   )
 }
