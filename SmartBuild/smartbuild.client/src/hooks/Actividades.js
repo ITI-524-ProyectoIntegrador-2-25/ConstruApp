@@ -1,7 +1,7 @@
 import { useEffect , useState } from 'react';
 
 // API
-import { getPresupuestos } from '../api/presupuesto'
+import { getPresupuestos } from '../api/dashboard'
 import { getEmpleados } from '../api/Empleados'
 import { getActividades, getActividad, updateActividad, insertActividad } from '../api/Actividades';
 
