@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { Calendar, Filter, ChevronLeft, Plus, Activity, Clock, CheckCircle, AlertCircle, Pause, Search, Users, Eye } from 'lucide-react';
+import { Calendar, Filter, ChevronLeft, Plus, Activity, Clock, CheckCircle, Pause, Search, Users, Eye } from 'lucide-react';
 import { useActividades } from '../../../hooks/Actividades';
 import '../../../styles/Dashboard.css';
 import './Actividades.css';
