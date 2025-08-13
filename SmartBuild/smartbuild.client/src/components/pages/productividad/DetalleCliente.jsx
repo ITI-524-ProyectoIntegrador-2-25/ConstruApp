@@ -54,7 +54,6 @@ const contactosCliente = contactos
     if (a.esPrincipal === 1 && b.esPrincipal !== 1) return -1;
     // Si 'b' es principal y 'a' no, 'b' va primero  
     if (b.esPrincipal === 1 && a.esPrincipal !== 1) return 1;
-    // Si ambos son principales o ninguno es principal, mantener orden alfabético por nombre
     const nombreA = `${a.nombre || ''} ${a.primerApellido || ''}`.trim();
     const nombreB = `${b.nombre || ''} ${b.primerApellido || ''}`.trim();
     return nombreA.localeCompare(nombreB);
