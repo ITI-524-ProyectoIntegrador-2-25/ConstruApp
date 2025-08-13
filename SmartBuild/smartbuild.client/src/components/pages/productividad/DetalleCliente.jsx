@@ -24,7 +24,7 @@ const {
   contacto: contactos,
   loadingContacts,
   errorContacts,
-  refetch: refetchContacts, // <-- agregado para refrescar contactos
+  refetch: refetchContacts, 
 } = useContactos();
 
 const [isEditing, setIsEditing] = useState(false);
@@ -47,9 +47,17 @@ const [contactForm, setContactForm] = useState({
   esPrincipal: 0,
 });
 
-const contactosCliente = contactos.filter(
-  (c) => c.clientID === parseInt(idCliente, 10)
-);
+const contactosCliente = contactos
+  .filter((c) => c.clientID === parseInt(idCliente, 10))
+  .sort((a, b) => {
+    // Si 'a' es principal y 'b' no, 'a' va primero
+    if (a.esPrincipal === 1 && b.esPrincipal !== 1) return -1;
+    // Si 'b' es principal y 'a' no, 'b' va primero  
+    if (b.esPrincipal === 1 && a.esPrincipal !== 1) return 1;
+    const nombreA = `${a.nombre || ''} ${a.primerApellido || ''}`.trim();
+    const nombreB = `${b.nombre || ''} ${b.primerApellido || ''}`.trim();
+    return nombreA.localeCompare(nombreB);
+  });
 
 useEffect(() => {
   if (detalle) {
@@ -339,7 +347,7 @@ return (
               <div className="info-item">
                 <label>Estado</label>
                 <p>
-                  <span className="status-badge active">Activo</span>
+                  <span className="estado-badge active">Activo</span>
                 </p>
               </div>
             </div>
