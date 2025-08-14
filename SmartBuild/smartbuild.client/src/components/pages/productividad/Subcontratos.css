@@ -101,7 +101,7 @@
 
 /* Progress bar moderno */
 .progress-bar {
-  background-color: #e5e7eb;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 100%);
   border-radius: 12px;
   width: 120px;
   height: 18px;
