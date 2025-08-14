@@ -17,34 +17,20 @@ export default function FormSubcontrato() {
   const [loading, setLoading] = useState(!!idSubcontrato)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [rawResponse, setRawResponse] = useState(null) // Guarda el JSON crudo de la API
+  const [rawResponse, setRawResponse] = useState(null)
 
   const [form, setForm] = useState({
     presupuesto: null,
     nombreProveedor: '',
     descripcionPresupuesto: '',
     descripcion: '',
-    fechaInicio: '',
-    fechaFin: '',
-    porcentajeAvance: '',
+    fechaInicioProyectada: '',
+    fechaFinProyectada: '',
+    fechaInicioReal: '',
+    fechaFinReal: '',
+    porcentajeAvance: '0',
     montoCotizado: ''
   })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // Cargar presupuestos
   useEffect(() => {
@@ -66,12 +52,6 @@ export default function FormSubcontrato() {
       .catch(err => console.error('Error cargando presupuestos:', err))
   }, [])
 
-
-
-
-
-
-
   // Cargar datos si es edición
   useEffect(() => {
     if (!idSubcontrato) return
@@ -91,7 +71,7 @@ export default function FormSubcontrato() {
         if (!res.ok) throw new Error(`Error ${res.status}`)
         const data = await res.json()
 
-        setRawResponse(data) // Guardar JSON crudo para mostrar
+        setRawResponse(data)
 
         const presupuestoSelected = presupuestosOpts.find(p => p.value === data.presupuestoID) || null
 
@@ -100,9 +80,11 @@ export default function FormSubcontrato() {
           nombreProveedor: data.nombreProveedor || '',
           descripcionPresupuesto: data.descripcionPresupuesto || '',
           descripcion: data.descripcion || '',
-          fechaInicio: data.fechaInicioProyectada ? data.fechaInicioProyectada.slice(0, 16) : '',
-          fechaFin: data.fechaFinProyectada ? data.fechaFinProyectada.slice(0, 16) : '',
-          porcentajeAvance: data.porcentajeAvance?.toString() || '',
+          fechaInicioProyectada: data.fechaInicioProyectada ? data.fechaInicioProyectada.slice(0, 16) : '',
+          fechaFinProyectada: data.fechaFinProyectada ? data.fechaFinProyectada.slice(0, 16) : '',
+          fechaInicioReal: data.fechaInicioReal ? data.fechaInicioReal.slice(0, 16) : '',
+          fechaFinReal: data.fechaFinReal ? data.fechaFinReal.slice(0, 16) : '',
+          porcentajeAvance: data.porcentajeAvance?.toString() || '0',
           montoCotizado: data.montoCotizado?.toString() || ''
         })
       })
@@ -128,37 +110,47 @@ export default function FormSubcontrato() {
     setError('')
   }
 
-
-
-
-
-
-
-
-
-
-
-  
-
   const handleSubmit = async e => {
     e.preventDefault()
     setSaving(true)
     setError('')
 
-    const { presupuesto, nombreProveedor, descripcionPresupuesto, descripcion, fechaInicio, fechaFin, porcentajeAvance, montoCotizado } = form
+    const {
+      presupuesto,
+      nombreProveedor,
+      descripcionPresupuesto,
+      descripcion,
+      fechaInicioProyectada,
+      fechaFinProyectada,
+      fechaInicioReal,
+      fechaFinReal,
+      porcentajeAvance,
+      montoCotizado
+    } = form
 
-    if (!presupuesto || !nombreProveedor.trim() || !descripcion.trim() || !fechaInicio || !fechaFin) {
-      setError('Presupuesto, proveedor, descripción, fecha de inicio y fin son obligatorias')
+    // Validaciones
+    if (!presupuesto || !nombreProveedor.trim() || !descripcion.trim() || !fechaInicioProyectada || !fechaFinProyectada) {
+      setError('Presupuesto, proveedor, descripción y fechas proyectadas son obligatorias')
       setSaving(false)
       return
     }
 
-    const start = new Date(fechaInicio)
-    const end = new Date(fechaFin)
-    if (end <= start) {
-      setError('La fecha de fin debe ser posterior a la de inicio')
+    const startProj = new Date(fechaInicioProyectada)
+    const endProj = new Date(fechaFinProyectada)
+    if (endProj <= startProj) {
+      setError('La fecha proyectada de fin debe ser posterior a la de inicio')
       setSaving(false)
       return
+    }
+
+    if (fechaInicioReal && fechaFinReal) {
+      const startReal = new Date(fechaInicioReal)
+      const endReal = new Date(fechaFinReal)
+      if (endReal <= startReal) {
+        setError('La fecha real de fin debe ser posterior a la de inicio')
+        setSaving(false)
+        return
+      }
     }
 
     try {
@@ -179,10 +171,10 @@ export default function FormSubcontrato() {
         nombreProveedor,
         descripcionPresupuesto,
         descripcion,
-        fechaInicioProyectada: fechaInicio,
-        fechaFinProyectada: fechaFin,
-        fechaInicioReal: fechaInicio,
-        fechaFinReal: fechaFin,
+        fechaInicioProyectada,
+        fechaFinProyectada,
+        fechaInicioReal: fechaInicioReal || null,
+        fechaFinReal: fechaFinReal || null,
         porcentajeAvance: parseFloat(porcentajeAvance) || 0,
         montoCotizado: parseFloat(montoCotizado) || 0
       }
@@ -280,27 +272,55 @@ export default function FormSubcontrato() {
           />
         </div>
 
+        {/* Fechas proyectadas */}
         <div className="form-group">
-          <label>Fecha y hora de inicio</label>
+          <label>Fecha y hora de inicio (Proyectada)</label>
           <input
-            name="fechaInicio"
+            name="fechaInicioProyectada"
             type="datetime-local"
-            value={form.fechaInicio}
+            value={form.fechaInicioProyectada}
             onChange={handleChange}
             required
           />
         </div>
 
         <div className="form-group">
-          <label>Fecha y hora de fin</label>
+          <label>Fecha y hora de fin (Proyectada)</label>
           <input
-            name="fechaFin"
+            name="fechaFinProyectada"
             type="datetime-local"
-            value={form.fechaFin}
+            value={form.fechaFinProyectada}
             onChange={handleChange}
             required
           />
         </div>
+
+        {/* Fechas reales solo si editando */}
+        {idSubcontrato && (
+          <>
+            <div className="form-group">
+              <label>Fecha y hora de inicio (Real)</label>
+              <input
+                name="fechaInicioReal"
+                type="datetime-local"
+                value={form.fechaInicioReal}
+                onChange={handleChange}
+                disabled={!!form.fechaInicioReal}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Fecha y hora de fin (Real)</label>
+              <input
+                name="fechaFinReal"
+                type="datetime-local"
+                value={form.fechaFinReal}
+                onChange={handleChange}
+                disabled={!!form.fechaFinReal}
+              />
+            </div>
+          </>
+        )}
 
         <div className="form-group">
           <label>Porcentaje de avance (%)</label>
@@ -312,6 +332,7 @@ export default function FormSubcontrato() {
             step="0.1"
             value={form.porcentajeAvance}
             onChange={handleChange}
+            disabled={!idSubcontrato} // solo editable al editar
           />
         </div>
 
@@ -331,7 +352,6 @@ export default function FormSubcontrato() {
           {saving ? 'Guardando...' : idSubcontrato ? 'Actualizar Subcontrato' : 'Crear Subcontrato'}
         </button>
 
-        {/* Cuadro Raw Response */}
         {idSubcontrato && (
           <div className="form-group" style={{ marginTop: '20px' }}>
             <label>Raw Response (API)</label>
