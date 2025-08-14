@@ -63,3 +63,28 @@
 .payments-table tbody tr:hover {
   background-color: #eef2ff;
 }
+
+.progress-bar {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  width: 100px;  /* ancho fijo o puedes ajustarlo */
+  height: 16px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.progress-bar-fill {
+  background-color: #0062ff; /* verde, puede cambiar a azul u otro color */
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Subcontratos.css */
+.total-row {
+  background-color: #f0f0f0;
+}
+.total-row td {
+  font-weight: bold;
+}
