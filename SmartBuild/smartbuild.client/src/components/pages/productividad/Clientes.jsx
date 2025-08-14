@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { Calendar, Filter, ChevronLeft, Search } from 'lucide-react'
+import { Calendar, Filter, ChevronLeft, Search, Users, UserCheck, UserX, TrendingUp } from 'lucide-react'
 import './Clientes.css'
 
 // Hook
@@ -77,10 +77,14 @@ export default function Clientes() {
 
   if (loadingClients) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="glass-loading">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="text-gray-700 text-lg font-medium mt-4">Cargando clientes...</p>
+      <div className="clientes-loading">
+        <div className="loading-content">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <div className="spinner-bg"></div>
+          </div>
+          <p className="loading-text">Cargando clientes...</p>
+          <p className="loading-subtext">Un momento por favor</p>
         </div>
       </div>
     )
@@ -88,12 +92,16 @@ export default function Clientes() {
 
   if (errorClients) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="glass-error">
-          <p className="text-red-600 text-lg font-medium">{errorClients}</p>
+      <div className="clientes-error">
+        <div className="error-content">
+          <div className="error-icon">
+            <UserX size={40} />
+          </div>
+          <p className="error-title">Error al cargar</p>
+          <p className="error-message">{errorClients}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="glass-btn mt-4"
+            className="error-btn"
           >
             Reintentar
           </button>
@@ -115,21 +123,49 @@ export default function Clientes() {
                 className="back-btn"
                 title="Volver"
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={24} />
+                <div className="btn-overlay"></div>
               </button>
-              <h1 className="clientes-title">Clientes</h1>
+              <div className="title-content">
+                <h1 className="clientes-title">Clientes</h1>
+                <p className="clientes-subtitle">Gestiona y supervisa tu cartera de clientes</p>
+              </div>
             </div>
-            
-            <div className="stats-group">
-              <div className="stat-card">
+          </div>
+          
+          <div className="stats-group">
+            <div className="stat-card stat-total">
+              <div className="stat-icon">
+                <Users size={28} />
+              </div>
+              <div className="stat-content">
                 <span className="stat-number">{estadisticas.total}</span>
                 <span className="stat-label">Total</span>
               </div>
-              <div className="stat-card">
+            </div>
+            <div className="stat-card stat-nuevos">
+              <div className="stat-icon">
+                <TrendingUp size={28} />
+              </div>
+              <div className="stat-content">
                 <span className="stat-number">{estadisticas.nuevosMes}</span>
                 <span className="stat-label">Nuevos</span>
               </div>
-              <div className="stat-card">
+            </div>
+            <div className="stat-card stat-con-contacto">
+              <div className="stat-icon">
+                <UserCheck size={28} />
+              </div>
+              <div className="stat-content">
+                <span className="stat-number">{estadisticas.conContacto}</span>
+                <span className="stat-label">Con contacto</span>
+              </div>
+            </div>
+            <div className="stat-card stat-sin-contacto">
+              <div className="stat-icon">
+                <UserX size={28} />
+              </div>
+              <div className="stat-content">
                 <span className="stat-number">{estadisticas.sinContacto}</span>
                 <span className="stat-label">Sin contacto</span>
               </div>
@@ -144,7 +180,7 @@ export default function Clientes() {
               <Search className="input-icon" size={20} />
               <input
                 type="text"
-                placeholder="Buscar nombre"
+                placeholder="Buscar por nombre, identificación o contacto..."
                 value={filtroDesc}
                 onChange={e => setFiltroDesc(e.target.value)}
                 className="search-input"
@@ -171,7 +207,7 @@ export default function Clientes() {
             </button>
             
             <Link to="nuevo" className="btn-add">
-              + Agregar cliente
+              <span className="add-icon">+</span> Agregar cliente
             </Link>
           </div>
 
@@ -184,25 +220,25 @@ export default function Clientes() {
               Todos los tipos
             </button>
             <button 
-              className={`filter-pill ${filtroTipo === 'Publico' ? 'active' : ''}`}
+              className={`filter-pill filter-publico ${filtroTipo === 'Publico' ? 'active' : ''}`}
               onClick={() => setFiltroTipo('Publico')}
             >
               🏛️ Público ({estadisticas.publicos})
             </button>
             <button 
-              className={`filter-pill ${filtroTipo === 'Privado' ? 'active' : ''}`}
+              className={`filter-pill filter-privado ${filtroTipo === 'Privado' ? 'active' : ''}`}
               onClick={() => setFiltroTipo('Privado')}
             >
               🏢 Privado ({estadisticas.privados})
             </button>
             <button 
-              className={`filter-pill ${filtroContacto === 'si' ? 'active' : ''}`}
+              className={`filter-pill filter-con-contacto ${filtroContacto === 'si' ? 'active' : ''}`}
               onClick={() => setFiltroContacto('si')}
             >
               👥 Con contacto ({estadisticas.conContacto})
             </button>
             <button 
-              className={`filter-pill ${filtroContacto === 'no' ? 'active' : ''}`}
+              className={`filter-pill filter-sin-contacto ${filtroContacto === 'no' ? 'active' : ''}`}
               onClick={() => setFiltroContacto('no')}
             >
               ❌ Sin contacto ({estadisticas.sinContacto})
@@ -226,6 +262,7 @@ export default function Clientes() {
                     <div className="dashboard-chart"></div>
                     <div className="dashboard-circles"></div>
                   </div>
+                  <div className="card-overlay"></div>
                 </div>
 
                 <div className="card-info">
@@ -233,21 +270,32 @@ export default function Clientes() {
                   
                   <div className="card-meta">
                     <div className="meta-item">
-                      <Calendar size={12} />
-                      <span>{new Date(cliente.cuandoIngreso).toLocaleDateString()}</span>
+                      <Calendar size={16} />
+                      <span>
+                        {new Date(cliente.cuandoIngreso).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
                     </div>
                   </div>
 
                   {/* Indicadores adicionales */}
                   <div className="card-indicators">
                     {cliente.tipo && (
-                      <div className={`indicator ${cliente.tipo?.toLowerCase()}`}>
+                      <div className={`indicator indicator-${cliente.tipo?.toLowerCase()}`}>
                         {cliente.tipo === 'Publico' ? '🏛️' : '🏢'} {cliente.tipo}
                       </div>
                     )}
                     {!cliente.nombreContacto && (
-                      <div className="indicator warning">
-                        Sin contacto
+                      <div className="indicator indicator-warning">
+                        ⚠️ Sin contacto
+                      </div>
+                    )}
+                    {cliente.nombreContacto && (
+                      <div className="indicator indicator-success">
+                        ✅ Con contacto
                       </div>
                     )}
                   </div>
@@ -256,10 +304,12 @@ export default function Clientes() {
             ))
           ) : (
             <div className="empty-state">
-              <div className="empty-icon">🔍</div>
+              <div className="empty-icon">
+                <Search size={48} />
+              </div>
               <h3 className="empty-title">No se encontraron clientes</h3>
               <p className="empty-text">
-                Prueba ajustando los filtros de búsqueda
+                No hay clientes que coincidan con los filtros seleccionados. Prueba ajustando los criterios de búsqueda.
               </p>
               <button 
                 className="btn-clear-filters"
