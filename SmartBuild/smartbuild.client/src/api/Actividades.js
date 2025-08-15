@@ -7,7 +7,7 @@ export async function getActividades(correo) {
 }
 
 export async function getActividad(correo, id) {
-    const res = await fetch(`${API_BASE}/ActividadApi/GetActividadbyInfo?idCliente=${id}&usuario=${correo}`)
+    const res = await fetch(`${API_BASE}/ActividadApi/GetActividadbyInfo?idActividad=${id}&usuario=${correo}`)
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
 }

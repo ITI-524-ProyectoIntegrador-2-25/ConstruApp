@@ -4,65 +4,70 @@ import { ChevronLeft } from 'lucide-react'
 import Select from 'react-select'
 import '../../../styles/Dashboard.css'
 import '../dashboard/FormDashboard.css'
-
-
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+// Importa tus hooks personalizados
+import { useActividad,useInsertarActualizarActividades } from '../../../hooks/Actividades'
+import { usePresupuestos } from '../../../hooks/dashboard'
+import { useEmpleados } from '../../../hooks/Empleados'
 
 export default function DetalleActividades() {
   const { idActividad } = useParams()
-  const navigate        = useNavigate()
+  const navigate = useNavigate()
 
-  const [detalle, setDetalle]         = useState(null)
-  const [presupuestos, setPresupuestos] = useState([])
-  const [empleados, setEmpleados]     = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [error, setError]             = useState('')
-  const [isEditing, setIsEditing]     = useState(false)
-  const [form, setForm]               = useState({})
+  // Usar los hooks personalizados
+  const { ActividadDetalle: detalle, loading: loadingActividad, error: errorActividad, refetch: refetchActividad } = useActividad(idActividad)
+  const { presupuestos: presupuestosData, loading: loadingPresupuestos, error: errorPresupuestos } = usePresupuestos()
+  const { Empleados: empleadosData, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados()
+  const { guardarActividad, loading: loadingGuardar, error: errorGuardar, success } = useInsertarActualizarActividades()
 
+  // Estados locales para el formulario
+  const [isEditing, setIsEditing] = useState(false)
+  const [form, setForm] = useState({})
+
+  // Formatear datos para react-select
+  const presupuestos = presupuestosData.map(p => ({ 
+    value: p.idPresupuesto, 
+    label: p.descripcion 
+  }))
+  
+  const empleados = empleadosData.map(e => ({ 
+    value: e.idEmpleado, 
+    label: e.nombreEmpleado || `${e.nombre} ${e.apellido}` 
+  }))
+
+  // Estados derivados
+  const loading = loadingActividad || loadingPresupuestos || loadingEmpleados
+  const error = errorActividad || errorPresupuestos || errorEmpleados
+
+  // Inicializar el formulario cuando se cargan los datos
   useEffect(() => {
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) {
-      setError('Usuario no autenticado.')
-      setLoading(false)
-      return
-    }
-    const user   = JSON.parse(usr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-
-    // Carga simultánea de actividad, presupuestos y empleados
-    Promise.all([
-      fetch(`${API_BASE}/ActividadApi/GetActividadbyInfo?idActividad=${idActividad}&usuario=${correo}`)
-        .then(res => { if (!res.ok) throw new Error(res.status); return res.json() }),
-      fetch(`${API_BASE}/PresupuestoApi/GetPresupuestos?usuario=${correo}`)
-        .then(res => { if (!res.ok) throw new Error(res.status); return res.json() }),
-      fetch(`${API_BASE}/EmpleadoApi/GetEmpleado?usuario=${correo}`)
-        .then(res => { if (!res.ok) throw new Error(res.status); return res.json() })
-    ])
-    .then(([rawAct, presData, empData]) => {
-      const act = Array.isArray(rawAct) ? rawAct[0] : rawAct
-      setDetalle(act)
-      setPresupuestos(presData.map(p => ({ value: p.idPresupuesto, label: p.descripcion })))
-      setEmpleados(empData.map(e => ({ value: e.idEmpleado, label: e.nombreEmpleado || `${e.nombre} ${e.apellido}` })))
+    if (detalle && presupuestosData.length > 0 && empleadosData.length > 0) {
+      const presupuestoSeleccionado = presupuestosData.find(p => p.idPresupuesto === detalle.presupuestoID)
+      const empleadoSeleccionado = empleadosData.find(e => e.idEmpleado === detalle.empleadoID)
+      
       setForm({
-        presupuesto: presData.find(p => p.idPresupuesto === act.presupuestoID) ? { value: act.presupuestoID, label: '' } : null,
-        empleado:    empData.find(e => e.idEmpleado === act.empleadoID)   ? { value: act.empleadoID,    label: '' } : null,
-        descripcion: act.descripcion,
-        fechaInicioProyectada: act.fechaInicioProyectada.slice(0,16),
-        fechaFinProyectada:    act.fechaFinProyectada.slice(0,16),
-        fechaInicioReal:       act.fechaInicioReal.slice(0,16),
-        fechaFinReal:          act.fechaFinReal.slice(0,16),
-        estado:      act.estado
+        presupuesto: presupuestoSeleccionado ? { 
+          value: presupuestoSeleccionado.idPresupuesto, 
+          label: presupuestoSeleccionado.descripcion 
+        } : null,
+        empleado: empleadoSeleccionado ? { 
+          value: empleadoSeleccionado.idEmpleado, 
+          label: empleadoSeleccionado.nombreEmpleado || `${empleadoSeleccionado.nombre} ${empleadoSeleccionado.apellido}` 
+        } : null,
+        descripcion: detalle.descripcion || '',
+        fechaInicioProyectada: detalle.fechaInicioProyectada?.slice(0,16) || '',
+        fechaFinProyectada: detalle.fechaFinProyectada?.slice(0,16) || '',
+        fechaInicioReal: detalle.fechaInicioReal?.slice(0,16) || '',
+        fechaFinReal: detalle.fechaFinReal?.slice(0,16) || '',
+        estado: detalle.estado || ''
       })
-    })
-    .catch(() => setError('No se pudo cargar la información.'))
-    .finally(() => setLoading(false))
-  }, [idActividad])
+    }
+  }, [detalle, presupuestosData, empleadosData])
 
   const handleChange = e => {
     const { name, value } = e.target
     setForm(f => ({ ...f, [name]: value }))
   }
+
   const handleSelect = field => selected => {
     setForm(f => ({ ...f, [field]: selected }))
   }
@@ -71,38 +76,51 @@ export default function DetalleActividades() {
     e.preventDefault()
     const usr = localStorage.getItem('currentUser')
     if (!usr) return
-    const user  = JSON.parse(usr)
+    const user = JSON.parse(usr)
     const ahora = new Date().toISOString()
 
     const payload = {
-      usuario:                 user.correo || user.usuario,
-      quienIngreso:           detalle.quienIngreso,
-      cuandoIngreso:          detalle.cuandoIngreso,
-      quienModifico:           user.correo || user.usuario,
-      cuandoModifico:          ahora,
-      idActividad:            detalle.idActividad,
-      presupuestoID:          form.presupuesto.value,
-      empleadoID:             form.empleado.value,
-      descripcion:            form.descripcion,
+      usuario: user.correo || user.usuario,
+      quienIngreso: detalle.quienIngreso,
+      cuandoIngreso: detalle.cuandoIngreso,
+      quienModifico: user.correo || user.usuario,
+      cuandoModifico: ahora,
+      idActividad: detalle.idActividad,
+      presupuestoID: form.presupuesto?.value,
+      empleadoID: form.empleado?.value,
+      descripcion: form.descripcion,
       fechaInicioProyectada: form.fechaInicioProyectada,
-      fechaFinProyectada:    form.fechaFinProyectada,
-      fechaInicioReal:       form.fechaInicioReal,
-      fechaFinReal:          form.fechaFinReal,
-      estado:                 form.estado
+      fechaFinProyectada: form.fechaFinProyectada,
+      fechaInicioReal: form.fechaInicioReal,
+      fechaFinReal: form.fechaFinReal,
+      estado: form.estado
     }
-    const res = await fetch(`${API_BASE}/ActividadApi/UpdateActividad`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    if (!res.ok) throw new Error(await res.text())
-    setDetalle({ ...detalle, ...payload })
-    setIsEditing(false)
+
+    const resultado = await guardarActividad(payload)
+    if (resultado) {
+      setIsEditing(false)
+    }
   }
 
+  // Efecto para manejar el éxito de la actualización
+  useEffect(() => {
+    if (success) {
+      alert('Actividad actualizada exitosamente')
+      // Refrescar los datos después de una actualización exitosa
+      refetchActividad()
+    }
+  }, [success, refetchActividad])
+
+
+  useEffect(() => {
+    if (errorGuardar) {
+      alert('Error al actualizar la actividad: ' + errorGuardar)
+    }
+  }, [errorGuardar])
+
   if (loading) return <p>Cargando detalles…</p>
-  if (error)   return <p className="alert alert-danger">{error}</p>
-  if (!detalle) return null
+  if (error) return <p className="alert alert-danger">{error}</p>
+  if (!detalle) return <p>No se encontró la actividad</p>
 
   return (
     <div className="form-dashboard-page" style={{ maxWidth: '900px' }}>
@@ -111,11 +129,22 @@ export default function DetalleActividades() {
           <ChevronLeft size={20}/>
         </button>
         <h1>Actividad #{detalle.idActividad}</h1>
-        {!isEditing && (
-          <button className="btn-submit" style={{ marginLeft: 'auto' }} onClick={() => setIsEditing(true)}>
-            Editar
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+          <button 
+            className="btn-submit" 
+            style={{ background: '#007bff' }}
+            onClick={refetchActividad}
+            disabled={loadingActividad}
+            title="Refrescar datos"
+          >
+            {loadingActividad ? '🔄' : '↻'}
           </button>
-        )}
+          {!isEditing && (
+            <button className="btn-submit" onClick={() => setIsEditing(true)}>
+              Editar
+            </button>
+          )}
+        </div>
       </div>
 
       {isEditing ? (
@@ -163,7 +192,7 @@ export default function DetalleActividades() {
 
           {/* Fechas */}
           <div className="form-group">
-            <label>Inicio Proyectada</label>
+            <label>Fecha Inicio Proyectada</label>
             <input
               type="datetime-local"
               name="fechaInicioProyectada"
@@ -173,7 +202,7 @@ export default function DetalleActividades() {
             />
           </div>
           <div className="form-group">
-            <label>Fin Proyectada</label>
+            <label>Fecha Fin Proyectada</label>
             <input
               type="datetime-local"
               name="fechaFinProyectada"
@@ -183,7 +212,7 @@ export default function DetalleActividades() {
             />
           </div>
           <div className="form-group">
-            <label>Inicio Real</label>
+            <label>Fecha Inicio Real</label>
             <input
               type="datetime-local"
               name="fechaInicioReal"
@@ -193,7 +222,7 @@ export default function DetalleActividades() {
             />
           </div>
           <div className="form-group">
-            <label>Fin Real</label>
+            <label>Fecha Fin Real</label>
             <input
               type="datetime-local"
               name="fechaFinReal"
@@ -217,23 +246,69 @@ export default function DetalleActividades() {
 
           {/* Botones */}
           <div style={{ gridColumn: '1 / -1', display:'flex', gap:'1rem', marginTop:'1rem' }}>
-            <button type="submit" className="btn-submit">Guardar cambios</button>
-            <button type="button" className="btn-submit" style={{ background:'#ccc' }} onClick={() => setIsEditing(false)}>Cancelar</button>
+            <button 
+              type="submit" 
+              className="btn-submit"
+              disabled={loadingGuardar}
+            >
+              {loadingGuardar ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+            <button 
+              type="button" 
+              className="btn-submit" 
+              style={{ background:'#ccc' }} 
+              onClick={() => setIsEditing(false)}
+              disabled={loadingGuardar}
+            >
+              Cancelar
+            </button>
           </div>
 
         </form>
       ) : (
         <div className="form-dashboard" style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))',gap:'1.5rem' }}>
 
-          <div className="form-group"><label>Presupuesto</label><p className="value">{presupuestos.find(p=>p.value===detalle.presupuestoID)?.label}</p></div>
-          <div className="form-group"><label>Empleado</label><p className="value">{empleados.find(e=>e.value===detalle.empleadoID)?.label}</p></div>
-          <div className="form-group"><label>Descripción</label><p className="value">{detalle.descripcion}</p></div>
-          <div className="form-group"><label>Inicio Proyectada</label><p className="value">{new Date(detalle.fechaInicioProyectada).toLocaleString()}</p></div>
-          <div className="form-group"><label>Fin Proyectada</label><p className="value">{new Date(detalle.fechaFinProyectada).toLocaleString()}</p></div>
-          <div className="form-group"><label>Inicio Real</label><p className="value">{new Date(detalle.fechaInicioReal).toLocaleString()}</p></div>
-          <div className="form-group"><label>Fin Real</label><p className="value">{new Date(detalle.fechaFinReal).toLocaleString()}</p></div>
-          <div className="form-group"><label>Duración (h)</label><p className="value">{((new Date(detalle.fechaFinReal)-new Date(detalle.fechaInicioReal))/3600000).toFixed(2)}</p></div>
-          <div className="form-group"><label>Estado</label><p className="value">{detalle.estado}</p></div>
+          <div className="form-group">
+            <label>Presupuesto</label>
+            <p className="value">{presupuestos.find(p=>p.value===detalle.presupuestoID)?.label || 'No asignado'}</p>
+          </div>
+          <div className="form-group">
+            <label>Empleado</label>
+            <p className="value">{empleados.find(e=>e.value===detalle.empleadoID)?.label || 'No asignado'}</p>
+          </div>
+          <div className="form-group">
+            <label>Descripción</label>
+            <p className="value">{detalle.descripcion}</p>
+          </div>
+          <div className="form-group">
+            <label>Fecha Inicio Proyectada</label>
+            <p className="value">{detalle.fechaInicioProyectada ? new Date(detalle.fechaInicioProyectada).toLocaleString() : 'No definido'}</p>
+          </div>
+          <div className="form-group">
+            <label>Fecha Fin Proyectada</label>
+            <p className="value">{detalle.fechaFinProyectada ? new Date(detalle.fechaFinProyectada).toLocaleString() : 'No definido'}</p>
+          </div>
+          <div className="form-group">
+            <label>Fecha Inicio Real</label>
+            <p className="value">{detalle.fechaInicioReal ? new Date(detalle.fechaInicioReal).toLocaleString() : 'No definido'}</p>
+          </div>
+          <div className="form-group">
+            <label>Fecha Fin Real</label>
+            <p className="value">{detalle.fechaFinReal ? new Date(detalle.fechaFinReal).toLocaleString() : 'No definido'}</p>
+          </div>
+          <div className="form-group">
+            <label>Duración (h)</label>
+            <p className="value">
+              {detalle.fechaFinReal && detalle.fechaInicioReal 
+                ? ((new Date(detalle.fechaFinReal) - new Date(detalle.fechaInicioReal)) / 3600000).toFixed(2)
+                : 'No calculado'
+              }
+            </p>
+          </div>
+          <div className="form-group">
+            <label>Estado</label>
+            <p className="value">{detalle.estado}</p>
+          </div>
 
         </div>
       )}
