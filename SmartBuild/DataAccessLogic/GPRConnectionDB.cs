@@ -182,6 +182,7 @@ namespace DataAccessLogic
 
             parameters.Add(nameof(actividad.IDActividad), actividad.IDActividad);
             parameters.Add(nameof(actividad.ActividadID), actividad.ActividadID);
+            parameters.Add(nameof(actividad.EmpleadoID), actividad.EmpleadoID);
             parameters.Add(nameof(actividad.PresupuestoID), actividad.PresupuestoID);
             parameters.Add(nameof(actividad.Descripcion), actividad.Descripcion);
             parameters.Add(nameof(actividad.FechaInicioProyectada), actividad.FechaFinProyectada);
@@ -189,6 +190,8 @@ namespace DataAccessLogic
             parameters.Add(nameof(actividad.FechaInicioReal), actividad.FechaInicioReal);
             parameters.Add(nameof(actividad.FechaFinReal), actividad.FechaFinReal);
             parameters.Add(nameof(actividad.Estado), actividad.Estado);
+            
+
 
             parameters.Add("Usuario", actividad.Usuario);
             parameters.Add("Sentence", "InsertActividad");
@@ -208,6 +211,7 @@ namespace DataAccessLogic
 
             parameters.Add(nameof(actividad.IDActividad), actividad.IDActividad);
             parameters.Add(nameof(actividad.ActividadID), actividad.ActividadID);
+            parameters.Add(nameof(actividad.EmpleadoID), actividad.EmpleadoID);
             parameters.Add(nameof(actividad.PresupuestoID), actividad.PresupuestoID);
             parameters.Add(nameof(actividad.Descripcion), actividad.Descripcion);
             parameters.Add(nameof(actividad.FechaInicioProyectada), actividad.FechaFinProyectada);
