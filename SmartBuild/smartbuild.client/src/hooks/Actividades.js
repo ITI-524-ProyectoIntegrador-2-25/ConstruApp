@@ -1,7 +1,6 @@
 import { useEffect , useState, useCallback } from 'react';
 
 // API
-
 import { getActividades, getActividad, updateActividad, insertActividad } from '../api/Actividades';
 
 export const useActividades = () => {
@@ -25,7 +24,6 @@ export const useActividades = () => {
         const data = await getActividades(correo);
         setActividades(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err)
         setError('No se pudieron cargar las Actividades.');
       } finally {
         setLoading(false);
@@ -59,7 +57,6 @@ export const useActividad = (idActividad) => {
 
     try {
       const data = await getActividad(correo, idActividad)
-      console.dir(data)
       
       if (Array.isArray(data)) {
         if (data.length === 0) throw new Error('Actividad no encontrada')
@@ -70,7 +67,6 @@ export const useActividad = (idActividad) => {
         throw new Error('Formato inesperado del API')
       }
     } catch (err) {
-      console.error('Error al cargar actividad:', err)
       setError('No se pudieron cargar las Actividades.')
     } finally {
       setLoading(false)
@@ -84,13 +80,12 @@ export const useActividad = (idActividad) => {
   return { ActividadDetalle, loading, error, refetch }
 }
 
-
 export const useInsertarActualizarActividades = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  // CAMBIO: esta función ya no comienza con "use"
+
   const guardarActividad = async (actividad) => {
     setLoading(true)
     setError('')
@@ -104,7 +99,6 @@ export const useInsertarActualizarActividades = () => {
       setSuccess(true)
       return true
     } catch (err) {
-      console.error(err)
       setError(err.message || 'Error al guardar la actividad')
       return false
     } finally {

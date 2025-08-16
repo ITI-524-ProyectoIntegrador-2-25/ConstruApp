@@ -8,7 +8,6 @@ export const useEmpleados = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // 🔹 Función refetch para recargar empleados
   const refetch = useCallback(async () => {
     const usuarioStr = localStorage.getItem('currentUser')
     if (!usuarioStr) {
@@ -28,7 +27,6 @@ export const useEmpleados = () => {
       console.log('Empleados recargados:', data)
       setEmpleados(Array.isArray(data) ? data : [])
     } catch (err) {
-      console.error('Error al recargar empleados:', err)
       setError('No se pudieron cargar los Empleados.')
     } finally {
       setLoading(false)
@@ -47,7 +45,6 @@ export const useEmpleado = (idEmpleado) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // 🔹 Función refetch para recargar un empleado específico
   const refetch = useCallback(async () => {
     if (!idEmpleado) {
       setError('ID de empleado requerido')
@@ -81,7 +78,6 @@ export const useEmpleado = (idEmpleado) => {
         throw new Error('Formato inesperado del API')
       }
     } catch (err) {
-      console.error('Error al recargar empleado:', err)
       setError(err.message || 'No se pudo cargar el empleado.')
     } finally {
       setLoading(false)
@@ -110,10 +106,8 @@ export const useInsertarActualizarEmpleados = () => {
     try {
       let resultado
       if (Empleado.idEmpleado) {
-        console.log('Actualizando empleado:', Empleado)
         resultado = await updateEmpleado(Empleado)
       } else {
-        console.log('Insertando empleado:', Empleado)
         resultado = await insertEmpleado(Empleado)
       }
 
@@ -121,15 +115,12 @@ export const useInsertarActualizarEmpleados = () => {
       setSuccess(true)
       return true
     } catch (err) {
-      console.error('Error al guardar empleado:', err)
       setError(err.message || 'Error al guardar el Empleado')
       return false
     } finally {
       setLoading(false)
     }
   }
-
-  // 🔹 Reset de estados
   const resetStates = () => {
     setError('')
     setSuccess(false)

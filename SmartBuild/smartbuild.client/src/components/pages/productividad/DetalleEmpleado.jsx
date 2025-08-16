@@ -18,7 +18,7 @@ export default function DetalleEmpleado() {
   const { guardarEmpleado } = useInsertarActualizarEmpleados()
 
   const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false) // Estado para indicar guardado
+  const [isSaving, setIsSaving] = useState(false) 
   const [form, setForm] = useState({
     nombre: '', apellido: '', identificacion: '', correo: '',
     puesto: '', salarioHora: '', activo: 'true', fechaIngreso: ''
@@ -69,63 +69,73 @@ export default function DetalleEmpleado() {
   }
 
   const handleSubmit = async e => {
-    e.preventDefault()
-    if (!form.nombre.trim() || !form.identificacion.trim()) {
-      alert('Nombre e identificación son obligatorios')
-      return
-    }
-    
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) return alert('Usuario no autenticado')
+  e.preventDefault()
+  
+  if (!form.nombre.trim() || !form.identificacion.trim()) {
+    return
+  }
+  
+  const usr = localStorage.getItem('currentUser')
+  if (!usr) return
 
-    setIsSaving(true)
+  setIsSaving(true)
 
+  try {
+    // Parsear usuario actual
+    let usuarioActual;
     try {
-      // 🔹 Preparar fecha sin problemas de zona horaria
-      let fechaISO = ''
-      if (form.fechaIngreso) {
+      const userObj = JSON.parse(usr);
+      usuarioActual = userObj.correo || userObj.usuario || usr;
+    } catch {
+      usuarioActual = usr;
+    }
+
+    // Preparar fecha en formato ISO
+    let fechaISO = ''
+    if (form.fechaIngreso) {
+      try {
         const fechaLocal = new Date(form.fechaIngreso + 'T12:00:00')
         fechaISO = fechaLocal.toISOString()
+      } catch {
+        fechaISO = new Date().toISOString()
       }
-
-      const payload = {
-        idEmpleado: Number(idEmpleado),
-        nombre: form.nombre,
-        apellido: form.apellido,
-        identificacion: form.identificacion,
-        puesto: form.puesto,
-        salarioHora: String(form.salarioHora), 
-        fechaIngreso: fechaISO,
-        correo: form.correo,
-        activo: normalizeActivoForDB(form.activo) 
-      }
-
-      console.log('Payload enviado:', payload) 
-
-      const success = await guardarEmpleado(payload)
-      
-      if (success) {
-        console.log('Guardado exitoso, recargando datos desde la BD...')
-        
-        await refetch()
-        
-        setIsEditing(false)
-        console.log('Datos recargados correctamente desde la base de datos')
-
-        
-      } else {
-        throw new Error('La operación de guardado falló')
-      }
-      
-    } catch (error) {
-      console.error('Error en handleSubmit:', error)
-      alert('Error al guardar: ' + (error.message || 'Desconocido'))
-      
-      await refetch()
-    } finally {
-      setIsSaving(false)
     }
+
+    const payload = {
+      // Campos de auditoría obligatorios
+      usuario: usuarioActual,
+      quienIngreso: EmpleadoDetalle?.quienIngreso || usuarioActual,
+      cuandoIngreso: EmpleadoDetalle?.cuandoIngreso || new Date().toISOString(),
+      quienModifico: usuarioActual,
+      cuandoModifico: new Date().toISOString(),
+      
+      // Datos del empleado
+      idEmpleado: Number(idEmpleado),
+      nombre: form.nombre.trim(),
+      apellido: form.apellido.trim(),
+      identificacion: form.identificacion.trim(),
+      puesto: form.puesto.trim(),
+      salarioHora: String(form.salarioHora || '0'),
+      fechaIngreso: fechaISO,
+      correo: form.correo.trim(),
+      activo: form.activo === 'true' ? 'True' : 'False'
+    }
+
+    const success = await guardarEmpleado(payload)
+    
+    if (success) {
+      await refetch()
+      setIsEditing(false)
+    } else {
+      throw new Error('La operación de guardado falló')
+    }
+    
+  } catch (error) {
+    await refetch()
+  } finally {
+    setIsSaving(false)
   }
+}
 
   const handleCancelEdit = () => {
     setIsEditing(false)
