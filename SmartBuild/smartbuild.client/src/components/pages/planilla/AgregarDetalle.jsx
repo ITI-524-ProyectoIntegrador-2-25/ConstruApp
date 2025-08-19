@@ -5,14 +5,12 @@ import { ChevronLeft, Plus, Calendar, User, Building2, Clock } from 'lucide-reac
 import Select from 'react-select';
 import './css/Planilla.css';
 
-// 🔧 Hooks (sube 3 niveles hasta src/hooks)
+// Hooks
 import { usePlanillas, usePlanillaDetalles, useInsertarPlanillaDetalle } from '../../../hooks/Planilla';
 import { useEmpleados } from '../../../hooks/Empleados';
 import { usePresupuestos } from '../../../hooks/dashboard';
 
-/* =========================
-   Helpers
-   ========================= */
+// ===== utils =====
 function dateOnly(v) {
   if (!v) return '';
   if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
@@ -22,16 +20,16 @@ function dateOnly(v) {
 function isHalfStep(n) {
   return Number.isFinite(n) && Math.round(n * 2) === n * 2;
 }
-function toNum(v, fallback = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
+function isActiveFlag(v) {
+  const s = String(v).toLowerCase();
+  return v === 1 || v === true || s === '1' || s === 'true';
 }
 
 export default function AgregarDetalle() {
   const { idPlanilla } = useParams();
   const navigate = useNavigate();
 
-  // ✅ Planillas para obtener rango
+  // Planilla para el rango
   const { Planillas } = usePlanillas();
   const planillaActual = useMemo(
     () =>
@@ -41,7 +39,6 @@ export default function AgregarDetalle() {
     [Planillas, idPlanilla]
   );
 
-  // ✅ Rango de fechas de la planilla
   const rangoPlanilla = useMemo(() => {
     if (!planillaActual) return { ini: '', fin: '' };
     return {
@@ -50,24 +47,12 @@ export default function AgregarDetalle() {
     };
   }, [planillaActual]);
 
-  // ✅ Listados (hooks)
+  // Listados
   const { Empleados } = useEmpleados();
   const { presupuestos: Presupuestos } = usePresupuestos();
-  // ⚠️ Trae TODOS los detalles (global) para validar duplicados por empleado+fecha
-  const { Detalles } = usePlanillaDetalles();
+  const { Detalles } = usePlanillaDetalles(); // todas las planillas (para validar duplicados globales)
 
-  // ✅ Opciones para selects
-  const employeesOpts = useMemo(() => {
-    const list = Array.isArray(Empleados) ? Empleados : [];
-    return list.map(e => ({
-      value: e.idEmpleado,
-      label:
-        e.nombreEmpleado ||
-        `${e.nombre || ''} ${e.apellido || ''}`.trim() ||
-        `Empleado ${e.idEmpleado}`,
-    }));
-  }, [Empleados]);
-
+  // ===== opciones de selects =====
   const projectsOpts = useMemo(() => {
     const list = Array.isArray(Presupuestos) ? Presupuestos : [];
     return list.map(p => ({
@@ -76,70 +61,81 @@ export default function AgregarDetalle() {
     }));
   }, [Presupuestos]);
 
-  // ✅ Índice de bloqueo GLOBAL (empleado + fecha)
+  const employeesOpts = useMemo(() => {
+    const list = Array.isArray(Empleados) ? Empleados : [];
+    return list
+      .filter(e => isActiveFlag(e.activo)) // 👈 solo activos para planilla
+      .map(e => ({
+        value: e.idEmpleado,
+        label:
+          e.nombreEmpleado ||
+          `${e.nombre || ''} ${e.apellido || ''}`.trim() ||
+          `Empleado ${e.idEmpleado}`,
+        salarioHora: e.salarioHora ?? null,
+      }));
+  }, [Empleados]);
+
+  // ===== índice duplicados global (empleado + fecha) =====
   const detallesIndex = useMemo(() => {
     const idx = new Set();
     const all = Array.isArray(Detalles) ? Detalles : [];
     for (const d of all) {
-      const empId = d.empleadoID ?? d.EmpleadoID;
+      const empId = Number(d.empleadoID ?? d.EmpleadoID);
       const fecha = dateOnly(d.fecha || d.Fecha);
-      if (empId != null && fecha) idx.add(`${empId}|${fecha}`);
+      if (empId && fecha) idx.add(`${empId}|${fecha}`);
     }
     return idx;
   }, [Detalles]);
 
-  // ✅ Estado local del formulario
-  const [error, setError] = useState('');
+  // ===== form =====
   const [form, setForm] = useState({
     proyecto: null,
     empleado: null,
     fecha: '',
-    salarioHora: '', // SIEMPRE viene del empleado (solo-lectura)
+    salarioHora: '',
     horasOrdinarias: '',
     horasExtras: '',
     horasDobles: '',
   });
 
-  // ✅ Guardado vía hook (INSERT separado)
-  const {
-    insertarPlanillaDetalle,
-    loading: sending,
-    error: saveError,
-  } = useInsertarPlanillaDetalle();
-
-  // ✅ Al seleccionar empleado, tomar su salario automáticamente
+  // si el empleado seleccionado deja de estar en el listado (p.e., desactivado), limpiamos el campo
   useEffect(() => {
-    if (!form.empleado) {
-      setForm(f => ({ ...f, salarioHora: '' }));
-      return;
+    if (!form.empleado) return;
+    if (!employeesOpts.some(o => o.value === form.empleado.value)) {
+      setForm(f => ({ ...f, empleado: null, salarioHora: '' }));
     }
-    const emp = (Empleados || []).find(e => e.idEmpleado === form.empleado.value);
-    const salario = emp?.salarioHora;
-    setForm(f => ({
-      ...f,
-      salarioHora: salario != null && salario !== '' ? String(salario) : '',
-    }));
-  }, [form.empleado, Empleados]);
+  }, [employeesOpts]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ✅ Totales live
-  const so = toNum(form.horasOrdinarias);
-  const se = toNum(form.horasExtras);
-  const sd = toNum(form.horasDobles);
-  const sh = toNum(form.salarioHora);
+  // totales
+  const so = Number(form.horasOrdinarias || 0);
+  const se = Number(form.horasExtras || 0);
+  const sd = Number(form.horasDobles || 0);
+  const sh = Number(form.salarioHora || 0);
   const total = useMemo(() => sh * so + sh * 1.5 * se + sh * 2 * sd, [sh, so, se, sd]);
 
-  // ✅ Handlers
+  // handlers
+  const [error, setError] = useState('');
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
     setError('');
   };
   const handleSelectChange = (name, val) => {
-    setForm(f => ({ ...f, [name]: val }));
+    if (name === 'empleado') {
+      setForm(f => ({
+        ...f,
+        empleado: val,
+        salarioHora: val?.salarioHora != null ? String(val.salarioHora) : '',
+      }));
+    } else {
+      setForm(f => ({ ...f, [name]: val }));
+    }
     setError('');
   };
 
-  // ✅ Submit
+  // guardar
+  const { insertarPlanillaDetalle, loading: sending, error: saveError } = useInsertarPlanillaDetalle();
+
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
@@ -149,13 +145,13 @@ export default function AgregarDetalle() {
       return;
     }
 
-    // Salario del empleado debe existir y ser válido
-    if (!Number.isFinite(sh) || sh <= 0) {
-      setError('El empleado seleccionado no tiene un salario por hora válido.');
+    // Por si el hook trae empleados inactivos: validación final
+    const empRaw = (Empleados || []).find(e => e.idEmpleado === form.empleado.value);
+    if (!isActiveFlag(empRaw?.activo)) {
+      setError('El empleado está inactivo y no puede registrar horas.');
       return;
     }
 
-    // Fechas dentro del rango de la planilla
     const dStr = dateOnly(form.fecha);
     const dNum = Date.parse(dStr);
     const iniNum = Date.parse(rangoPlanilla.ini);
@@ -170,9 +166,8 @@ export default function AgregarDetalle() {
       return;
     }
 
-    // Validaciones cuantitativas de horas
-    if ([so, se, sd].some(v => v < 0)) {
-      setError('Las horas deben ser ≥ 0');
+    if ([so, se, sd].some(v => v < 0) || Number(form.salarioHora) <= 0) {
+      setError('Horas y salario deben ser ≥ 0; el salario mayor a 0');
       return;
     }
     if (!isHalfStep(so) || !isHalfStep(se) || !isHalfStep(sd)) {
@@ -188,26 +183,20 @@ export default function AgregarDetalle() {
       return;
     }
 
-    // 🔒 Bloqueo GLOBAL: mismo empleado y misma fecha aunque sea otra planilla
+    // duplicado global
     const key = `${form.empleado.value}|${dStr}`;
     if (detallesIndex.has(key)) {
-      setError('Ese empleado ya tiene un registro en esa fecha (en otra planilla).');
-      return;
-    }
-
-    // Usuario actual
-    const currentUser = (() => {
-      try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch { return {}; }
-    })();
-    const usuario = currentUser.correo || currentUser.usuario || '';
-    if (!usuario) {
-      setError('Usuario no autenticado');
+      setError('Ese empleado ya tiene un registro en esa fecha (en alguna planilla).');
       return;
     }
 
     const ts = new Date().toISOString();
+    const currentUser = (() => {
+      try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch { return {}; }
+    })();
+
     const payload = {
-      usuario,
+      usuario: currentUser.correo || currentUser.usuario || '',
       quienIngreso: undefined,
       cuandoIngreso: ts,
       quienModifico: undefined,
@@ -219,7 +208,7 @@ export default function AgregarDetalle() {
       fecha: form.fecha && form.fecha.length === 10
         ? `${form.fecha}T00:00:00.000Z`
         : new Date(form.fecha).toISOString(),
-      salarioHora: Number(sh.toFixed(2)),
+      salarioHora: Number(Number(form.salarioHora).toFixed(2)),
       horasOrdinarias: so,
       horasExtras: se,
       horasDobles: sd,
@@ -227,17 +216,36 @@ export default function AgregarDetalle() {
     };
 
     const ok = await insertarPlanillaDetalle(payload);
-    if (ok) {
-      navigate(`/dashboard/planilla/${idPlanilla}`);
-    } else {
-      setError(saveError || 'Error al agregar detalle');
-    }
+    if (ok) navigate(`/dashboard/planilla/${idPlanilla}`);
+    else setError(saveError || 'Error al agregar detalle');
+  };
+
+  // estilos consistentes del react-select (sin depender de CSS externo)
+  const rsStyles = {
+    container: base => ({ ...base, width: '100%', margin: 0 }),
+    control: (base, state) => ({
+      ...base,
+      minHeight: 44,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderColor: state.isFocused ? '#667eea' : '#e5e7eb',
+      boxShadow: state.isFocused ? '0 0 0 3px rgba(102,126,234,.12)' : 'none',
+      '&:hover': { borderColor: state.isFocused ? '#667eea' : '#d1d5db' },
+    }),
+    valueContainer: base => ({ ...base, padding: '2px 10px' }),
+    indicatorsContainer: base => ({ ...base, paddingRight: 8 }),
+    menuPortal: base => ({ ...base, zIndex: 9999 }),
+    menu: base => ({ ...base, zIndex: 9999, borderRadius: 12, overflow: 'hidden' }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected ? '#6366f1' : state.isFocused ? '#eef2ff' : '#fff',
+      color: state.isSelected ? '#fff' : '#111827',
+    }),
+    placeholder: base => ({ ...base, color: '#6b7280' }),
   };
 
   const empleadoFechaBloqueado =
-    form.empleado &&
-    form.fecha &&
-    detallesIndex.has(`${form.empleado.value}|${dateOnly(form.fecha)}`);
+    form.empleado && form.fecha && detallesIndex.has(`${form.empleado.value}|${dateOnly(form.fecha)}`);
 
   return (
     <div className="empleados-page-modern form-planilla-modern">
@@ -264,12 +272,13 @@ export default function AgregarDetalle() {
             className="form-dashboard"
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}
           >
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            {/* Proyecto y Empleado en la MISMA FILA */}
+            <div className="form-group">
               <label className="field-label d-flex align-items-center gap-2">
                 <Building2 size={16} /> Proyecto
               </label>
               <Select
-                classNamePrefix="react-select"
+                classNamePrefix="rs"
                 options={projectsOpts}
                 value={form.proyecto}
                 onChange={val => handleSelectChange('proyecto', val)}
@@ -277,22 +286,17 @@ export default function AgregarDetalle() {
                 isDisabled={sending}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
-                menuShouldBlockScroll
-                styles={{
-                  menuPortal: base => ({ ...base, zIndex: 9999 }),
-                  menu: base => ({ ...base, zIndex: 9999 }),
-                  control: base => ({ ...base, minHeight: 44 }),
-                  valueContainer: base => ({ ...base, padding: '0 .5rem' })
-                }}
+                styles={rsStyles}
+                components={{ IndicatorSeparator: null }}
               />
             </div>
 
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <div className="form-group">
               <label className="field-label d-flex align-items-center gap-2">
                 <User size={16} /> Empleado
               </label>
               <Select
-                classNamePrefix="react-select"
+                classNamePrefix="rs"
                 options={employeesOpts}
                 value={form.empleado}
                 onChange={val => handleSelectChange('empleado', val)}
@@ -300,16 +304,12 @@ export default function AgregarDetalle() {
                 isDisabled={sending}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
-                menuShouldBlockScroll
-                styles={{
-                  menuPortal: base => ({ ...base, zIndex: 9999 }),
-                  menu: base => ({ ...base, zIndex: 9999 }),
-                  control: base => ({ ...base, minHeight: 44 }),
-                  valueContainer: base => ({ ...base, padding: '0 .5rem' })
-                }}
+                styles={rsStyles}
+                components={{ IndicatorSeparator: null }}
               />
             </div>
 
+            {/* FECHA y SALARIO (misma fila) */}
             <div className="form-group">
               <label className="field-label d-flex align-items-center gap-2">
                 <Calendar size={16} />
@@ -336,16 +336,16 @@ export default function AgregarDetalle() {
                 type="number"
                 name="salarioHora"
                 value={form.salarioHora}
-                readOnly
-                disabled // 👈 NO editable: siempre viene del empleado
+                onChange={handleChange}
                 min="0.01"
                 step="0.01"
+                disabled // no editable, viene del empleado
                 className="modern-input"
-                title="El salario por hora se toma automáticamente del empleado"
               />
               <small className="hint">Se toma automáticamente del empleado seleccionado.</small>
             </div>
 
+            {/* HORAS */}
             <div className="form-group">
               <label className="field-label d-flex align-items-center gap-2">
                 <Clock size={16} /> Horas ordinarias
@@ -394,31 +394,31 @@ export default function AgregarDetalle() {
               />
             </div>
 
+            {/* RESUMEN */}
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label">Resumen</label>
+              <div className="value" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <span>Ordinarias: <strong>{so || 0}</strong></span>
+                <span>Extras: <strong>{se || 0}</strong></span>
+                <span>Dobles: <strong>{sd || 0}</strong></span>
+                <span>Total ₡: <strong>{Number.isFinite(total) ? total.toFixed(2) : '0.00'}</strong></span>
+              </div>
+            </div>
+
             {(empleadoFechaBloqueado || error) && (
               <div className="alert alert-danger" style={{ gridColumn: '1 / -1' }}>
                 {empleadoFechaBloqueado
-                  ? 'Ese empleado ya tiene un registro en esa fecha (en otra planilla).'
+                  ? 'Ese empleado ya tiene un registro en esa fecha (en alguna planilla).'
                   : error}
               </div>
             )}
 
+            {/* BOTONES */}
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '.75rem' }}>
               <button type="button" onClick={() => navigate(-1)} className="btn-secondary-modern" disabled={sending}>
                 Cancelar
               </button>
-              <button
-                type="submit"
-                className="btn-primary-modern"
-                disabled={
-                  sending ||
-                  empleadoFechaBloqueado ||
-                  !form.empleado ||
-                  !form.proyecto ||
-                  !form.fecha ||
-                  !Number.isFinite(sh) ||
-                  sh <= 0
-                }
-              >
+              <button type="submit" className="btn-primary-modern" disabled={sending || empleadoFechaBloqueado}>
                 {sending ? 'Agregando…' : 'Agregar registro'}
               </button>
             </div>
