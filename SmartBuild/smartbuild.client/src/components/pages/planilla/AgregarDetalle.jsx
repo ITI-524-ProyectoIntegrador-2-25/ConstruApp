@@ -5,12 +5,14 @@ import { ChevronLeft, Plus, Calendar, User, Building2, Clock } from 'lucide-reac
 import Select from 'react-select';
 import './css/Planilla.css';
 
-// 🔧 RUTAS CORRECTAS (sube 3 niveles hasta src/hooks)
+// 🔧 Hooks (sube 3 niveles hasta src/hooks)
 import { usePlanillas, usePlanillaDetalles, useInsertarPlanillaDetalle } from '../../../hooks/Planilla';
 import { useEmpleados } from '../../../hooks/Empleados';
 import { usePresupuestos } from '../../../hooks/dashboard';
 
-// Fechas seguras (evita desfases por zona horaria)
+/* =========================
+   Helpers
+   ========================= */
 function dateOnly(v) {
   if (!v) return '';
   if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
@@ -19,6 +21,10 @@ function dateOnly(v) {
 }
 function isHalfStep(n) {
   return Number.isFinite(n) && Math.round(n * 2) === n * 2;
+}
+function toNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 export default function AgregarDetalle() {
@@ -46,8 +52,9 @@ export default function AgregarDetalle() {
 
   // ✅ Listados (hooks)
   const { Empleados } = useEmpleados();
-  const { presupuestos: Presupuestos } = usePresupuestos(); // 👈 alias a mayúscula para reutilizar tu código
-  const { Detalles } = usePlanillaDetalles(idPlanilla); // filtramos por planilla abajo
+  const { presupuestos: Presupuestos } = usePresupuestos();
+  // ⚠️ Trae TODOS los detalles (global) para validar duplicados por empleado+fecha
+  const { Detalles } = usePlanillaDetalles();
 
   // ✅ Opciones para selects
   const employeesOpts = useMemo(() => {
@@ -69,11 +76,17 @@ export default function AgregarDetalle() {
     }));
   }, [Presupuestos]);
 
-  // ✅ Detalles existentes de ESTA planilla (bloqueo empleado+fecha)
-  const detallesPlanilla = useMemo(() => {
+  // ✅ Índice de bloqueo GLOBAL (empleado + fecha)
+  const detallesIndex = useMemo(() => {
+    const idx = new Set();
     const all = Array.isArray(Detalles) ? Detalles : [];
-    return all.filter(d => Number(d.planillaID ?? d.PlanillaID) === Number(idPlanilla));
-  }, [Detalles, idPlanilla]);
+    for (const d of all) {
+      const empId = d.empleadoID ?? d.EmpleadoID;
+      const fecha = dateOnly(d.fecha || d.Fecha);
+      if (empId != null && fecha) idx.add(`${empId}|${fecha}`);
+    }
+    return idx;
+  }, [Detalles]);
 
   // ✅ Estado local del formulario
   const [error, setError] = useState('');
@@ -81,8 +94,7 @@ export default function AgregarDetalle() {
     proyecto: null,
     empleado: null,
     fecha: '',
-    salarioHora: '',
-    usarSalarioEmpleado: true, // toggle para permitir edición manual
+    salarioHora: '', // SIEMPRE viene del empleado (solo-lectura)
     horasOrdinarias: '',
     horasExtras: '',
     horasDobles: '',
@@ -95,33 +107,25 @@ export default function AgregarDetalle() {
     error: saveError,
   } = useInsertarPlanillaDetalle();
 
-  // ✅ Autorrelleno salario por empleado (solo si el toggle está activo)
+  // ✅ Al seleccionar empleado, tomar su salario automáticamente
   useEffect(() => {
-    if (!form.empleado || !form.usarSalarioEmpleado) return;
+    if (!form.empleado) {
+      setForm(f => ({ ...f, salarioHora: '' }));
+      return;
+    }
     const emp = (Empleados || []).find(e => e.idEmpleado === form.empleado.value);
     const salario = emp?.salarioHora;
     setForm(f => ({
       ...f,
-      salarioHora: salario != null && salario !== '' ? String(salario) : f.salarioHora,
+      salarioHora: salario != null && salario !== '' ? String(salario) : '',
     }));
-  }, [form.empleado, form.usarSalarioEmpleado, Empleados]);
-
-  // ✅ Índice de bloqueo (empleado + fecha)
-  const detallesIndex = useMemo(() => {
-    const idx = new Set();
-    for (const d of detallesPlanilla) {
-      const empId = d.empleadoID ?? d.EmpleadoID;
-      const fecha = dateOnly(d.fecha || d.Fecha);
-      if (empId != null && fecha) idx.add(`${empId}|${fecha}`);
-    }
-    return idx;
-  }, [detallesPlanilla]);
+  }, [form.empleado, Empleados]);
 
   // ✅ Totales live
-  const so = Number(form.horasOrdinarias || 0);
-  const se = Number(form.horasExtras || 0);
-  const sd = Number(form.horasDobles || 0);
-  const sh = Number(form.salarioHora || 0);
+  const so = toNum(form.horasOrdinarias);
+  const se = toNum(form.horasExtras);
+  const sd = toNum(form.horasDobles);
+  const sh = toNum(form.salarioHora);
   const total = useMemo(() => sh * so + sh * 1.5 * se + sh * 2 * sd, [sh, so, se, sd]);
 
   // ✅ Handlers
@@ -145,6 +149,13 @@ export default function AgregarDetalle() {
       return;
     }
 
+    // Salario del empleado debe existir y ser válido
+    if (!Number.isFinite(sh) || sh <= 0) {
+      setError('El empleado seleccionado no tiene un salario por hora válido.');
+      return;
+    }
+
+    // Fechas dentro del rango de la planilla
     const dStr = dateOnly(form.fecha);
     const dNum = Date.parse(dStr);
     const iniNum = Date.parse(rangoPlanilla.ini);
@@ -159,8 +170,9 @@ export default function AgregarDetalle() {
       return;
     }
 
-    if ([so, se, sd].some(v => v < 0) || sh <= 0) {
-      setError('Horas y salario deben ser ≥ 0; el salario mayor a 0');
+    // Validaciones cuantitativas de horas
+    if ([so, se, sd].some(v => v < 0)) {
+      setError('Las horas deben ser ≥ 0');
       return;
     }
     if (!isHalfStep(so) || !isHalfStep(se) || !isHalfStep(sd)) {
@@ -176,19 +188,26 @@ export default function AgregarDetalle() {
       return;
     }
 
+    // 🔒 Bloqueo GLOBAL: mismo empleado y misma fecha aunque sea otra planilla
     const key = `${form.empleado.value}|${dStr}`;
     if (detallesIndex.has(key)) {
-      setError('Ese empleado ya tiene un registro en esa fecha');
+      setError('Ese empleado ya tiene un registro en esa fecha (en otra planilla).');
+      return;
+    }
+
+    // Usuario actual
+    const currentUser = (() => {
+      try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch { return {}; }
+    })();
+    const usuario = currentUser.correo || currentUser.usuario || '';
+    if (!usuario) {
+      setError('Usuario no autenticado');
       return;
     }
 
     const ts = new Date().toISOString();
-    const currentUser = (() => {
-      try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch { return {}; }
-    })();
-
     const payload = {
-      usuario: currentUser.correo || currentUser.usuario || '',
+      usuario,
       quienIngreso: undefined,
       cuandoIngreso: ts,
       quienModifico: undefined,
@@ -197,7 +216,6 @@ export default function AgregarDetalle() {
       planillaID: Number(idPlanilla),
       empleadoID: form.empleado.value,
       presupuestoID: form.proyecto.value,
-      // Enviar fecha consistente (si viene yyyy-mm-dd la pasamos a Z)
       fecha: form.fecha && form.fecha.length === 10
         ? `${form.fecha}T00:00:00.000Z`
         : new Date(form.fecha).toISOString(),
@@ -251,13 +269,21 @@ export default function AgregarDetalle() {
                 <Building2 size={16} /> Proyecto
               </label>
               <Select
-                className="modern-select"
                 classNamePrefix="react-select"
                 options={projectsOpts}
                 value={form.proyecto}
                 onChange={val => handleSelectChange('proyecto', val)}
                 placeholder="Seleccionar proyecto…"
                 isDisabled={sending}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                menuShouldBlockScroll
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 }),
+                  menu: base => ({ ...base, zIndex: 9999 }),
+                  control: base => ({ ...base, minHeight: 44 }),
+                  valueContainer: base => ({ ...base, padding: '0 .5rem' })
+                }}
               />
             </div>
 
@@ -266,13 +292,21 @@ export default function AgregarDetalle() {
                 <User size={16} /> Empleado
               </label>
               <Select
-                className="modern-select"
                 classNamePrefix="react-select"
                 options={employeesOpts}
                 value={form.empleado}
                 onChange={val => handleSelectChange('empleado', val)}
                 placeholder="Seleccionar empleado…"
                 isDisabled={sending}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                menuShouldBlockScroll
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 }),
+                  menu: base => ({ ...base, zIndex: 9999 }),
+                  control: base => ({ ...base, minHeight: 44 }),
+                  valueContainer: base => ({ ...base, padding: '0 .5rem' })
+                }}
               />
             </div>
 
@@ -298,19 +332,18 @@ export default function AgregarDetalle() {
 
             <div className="form-group">
               <label className="field-label">Salario por hora</label>
- 
-          
-
               <input
                 type="number"
                 name="salarioHora"
                 value={form.salarioHora}
-                onChange={handleChange}
+                readOnly
+                disabled // 👈 NO editable: siempre viene del empleado
                 min="0.01"
                 step="0.01"
-                disabled={sending || form.usarSalarioEmpleado}
                 className="modern-input"
+                title="El salario por hora se toma automáticamente del empleado"
               />
+              <small className="hint">Se toma automáticamente del empleado seleccionado.</small>
             </div>
 
             <div className="form-group">
@@ -361,19 +394,11 @@ export default function AgregarDetalle() {
               />
             </div>
 
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="field-label">Resumen</label>
-              <div className="value" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <span>Ordinarias: <strong>{so || 0}</strong></span>
-                <span>Extras: <strong>{se || 0}</strong></span>
-                <span>Dobles: <strong>{sd || 0}</strong></span>
-                <span>Total ₡: <strong>{Number.isFinite(total) ? total.toFixed(2) : '0.00'}</strong></span>
-              </div>
-            </div>
-
             {(empleadoFechaBloqueado || error) && (
               <div className="alert alert-danger" style={{ gridColumn: '1 / -1' }}>
-                {empleadoFechaBloqueado ? 'Ese empleado ya tiene un registro en esa fecha' : error}
+                {empleadoFechaBloqueado
+                  ? 'Ese empleado ya tiene un registro en esa fecha (en otra planilla).'
+                  : error}
               </div>
             )}
 
@@ -381,7 +406,19 @@ export default function AgregarDetalle() {
               <button type="button" onClick={() => navigate(-1)} className="btn-secondary-modern" disabled={sending}>
                 Cancelar
               </button>
-              <button type="submit" className="btn-primary-modern" disabled={sending || empleadoFechaBloqueado}>
+              <button
+                type="submit"
+                className="btn-primary-modern"
+                disabled={
+                  sending ||
+                  empleadoFechaBloqueado ||
+                  !form.empleado ||
+                  !form.proyecto ||
+                  !form.fecha ||
+                  !Number.isFinite(sh) ||
+                  sh <= 0
+                }
+              >
                 {sending ? 'Agregando…' : 'Agregar registro'}
               </button>
             </div>
