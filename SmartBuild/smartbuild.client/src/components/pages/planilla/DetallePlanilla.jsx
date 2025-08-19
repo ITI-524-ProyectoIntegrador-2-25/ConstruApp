@@ -7,9 +7,12 @@ import {
 } from 'lucide-react';
 import Select from 'react-select';
 import * as XLSX from 'xlsx';
-import './Planilla.css';
-import { http } from '../../../api/baseAPI';
-import { getPlanilla, updatePlanilla } from '../../../api/Planilla';
+import './css/Planilla.css';
+
+// 🔧 Usa hooks (rutas correctas: subir 3 niveles)
+import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../hooks/Planilla';
+import { useEmpleados } from '../../../hooks/Empleados';
+import { usePresupuestos } from '../../../hooks/dashboard';
 
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];
 
@@ -54,108 +57,95 @@ export default function DetallePlanilla() {
   const { idPlanilla } = useParams();
   const navigate = useNavigate();
 
+  // 🔹 Carga con hooks
+  const { Planillas, loading: loadingPlanillas } = usePlanillas();
+  const { Detalles, loading: loadingDetalles } = usePlanillaDetalles(idPlanilla);
+  const { Empleados, loading: loadingEmpleados } = useEmpleados();
+  const { presupuestos, loading: loadingPres } = usePresupuestos();
+
+  // 🔹 Planilla actual (derivada de Planillas)
+  const planillaActual = useMemo(
+    () => (Array.isArray(Planillas) ? Planillas.find(p => String(p.idPlanilla) === String(idPlanilla)) : null),
+    [Planillas, idPlanilla]
+  );
+
+  // 🔹 Estado local: planilla editable y formulario
   const [planilla, setPlanilla] = useState(null);
-  const [todasPlanillas, setTodasPlanillas] = useState([]);
-  const [detalles, setDetalles] = useState([]);
-  const [empleadosIndex, setEmpleadosIndex] = useState(new Map()); // idEmpleado -> empleado completo
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({ nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] });
-
-  const [q, setQ] = useState('');
-  const [fDate, setFDate] = useState('');
-
-  // expandibles por empleado (Top empleados)
   const [expandedEmpleado, setExpandedEmpleado] = useState(null);
+  const [form, setForm] = useState({ nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] });
+  const [error, setError] = useState('');
 
-  const getUsuario = () => {
-    try {
-      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      return u.correo || u.usuario || '';
-    } catch {
-      return '';
-    }
-  };
+  // 🔹 Hook de actualización (PUT)
+  const { actualizarPlanilla, loading: sending, error: updateError } = useActualizarPlanilla();
 
+  // 🔹 Inicializa planilla y form cuando cambie la data
   useEffect(() => {
-    if (!idPlanilla) {
-      setError('No se proporcionó ID de planilla.');
-      setLoading(false);
-      return;
+    if (planillaActual) {
+      setPlanilla(planillaActual);
+      setForm({
+        nombre: planillaActual.nombre || '',
+        fechaInicio: toISODateOnly(planillaActual.fechaInicio),
+        fechaFin: toISODateOnly(planillaActual.fechaFin),
+        estado: planillaActual.estado || ESTADOS[0],
+      });
     }
-    const load = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const usuario = getUsuario();
-        if (!usuario) throw new Error('Usuario no autenticado');
+  }, [planillaActual]);
 
-        const [todas, detallesList, presupuestosData, empleadosData] = await Promise.all([
-          getPlanilla(usuario),
-          http.get('/PlanillaDetalleApi/GetPlanillaDetalle', { params: { usuario } }),
-          http.get('/PresupuestoApi/GetPresupuestos', { params: { usuario } }),
-          http.get('/EmpleadoApi/GetEmpleado', { params: { usuario } }),
-        ]);
+  // 🔹 Índices de apoyo
+  const empIndex = useMemo(() => {
+    const m = new Map();
+    (Array.isArray(Empleados) ? Empleados : []).forEach(e => m.set(e.idEmpleado, e));
+    return m;
+  }, [Empleados]);
 
-        const cab = Array.isArray(todas) ? todas.find(p => String(p.idPlanilla) === String(idPlanilla)) : null;
-        if (!cab) throw new Error(`Planilla ${idPlanilla} no encontrada`);
+  const presupuestoIndex = useMemo(() => {
+    const m = new Map();
+    (Array.isArray(presupuestos) ? presupuestos : []).forEach(p => m.set(p.idPresupuesto, p));
+    return m;
+  }, [presupuestos]);
 
-        const empIndex = new Map();
-        if (Array.isArray(empleadosData)) {
-          empleadosData.forEach(e => empIndex.set(e.idEmpleado, e));
-        }
-        setEmpleadosIndex(empIndex);
+  const empleadoNameToId = useMemo(() => {
+    const m = new Map();
+    (Array.isArray(Empleados) ? Empleados : []).forEach(e => {
+      const nombre = (e.nombreEmpleado || `${e.nombre || ''} ${e.apellido || ''}`).trim();
+      m.set(nombre, e.idEmpleado);
+    });
+    return m;
+  }, [Empleados]);
 
-        const filtrados = (Array.isArray(detallesList) ? detallesList : [])
-          .filter(d => d.planillaID === Number(idPlanilla))
-          .map(d => {
-            const emp = empIndex.get(d.empleadoID) || null;
-            const empNombre = emp?.nombreEmpleado || (emp ? `${emp.nombre || ''} ${emp.apellido || ''}`.trim() : d.empleadoID);
-            const presupuestoNombre = Array.isArray(presupuestosData)
-              ? (presupuestosData.find(p => p.idPresupuesto === d.presupuestoID)?.descripcion || d.presupuestoID)
-              : d.presupuestoID;
+  // 🔹 Enriquecer detalles con nombres, cálculos y ordenar por fecha
+  const detalles = useMemo(() => {
+    const base = Array.isArray(Detalles) ? Detalles : [];
+    return base
+      .map(d => {
+        const emp = empIndex.get(d.empleadoID) || null;
+        const empNombre = emp?.nombreEmpleado || (emp ? `${emp.nombre || ''} ${emp.apellido || ''}`.trim() : d.empleadoID);
+        const presupuestoNombre = presupuestoIndex.get(d.presupuestoID)?.descripcion ?? d.presupuestoID;
 
-            const sh = Number(d.salarioHora ?? emp?.salarioHora ?? 0);
-            const ho = Number(d.horasOrdinarias || 0);
-            const he = Number(d.horasExtras || 0);
-            const hd = Number(d.horasDobles || 0);
-            const bruto = +(sh * ho + sh * 1.5 * he + sh * 2 * hd).toFixed(2);
-            const seguro = +(bruto * 0.1067).toFixed(2);
-            const neto = +(bruto - seguro).toFixed(2);
+        const sh = Number(d.salarioHora ?? emp?.salarioHora ?? 0);
+        const ho = Number(d.horasOrdinarias || 0);
+        const he = Number(d.horasExtras || 0);
+        const hd = Number(d.horasDobles || 0);
+        const bruto = +(sh * ho + sh * 1.5 * he + sh * 2 * hd).toFixed(2);
+        const seguro = +(bruto * 0.1067).toFixed(2);
+        const neto = +(bruto - seguro).toFixed(2);
 
-            return {
-              ...d,
-              empleadoNombre: empNombre,
-              empleadoPuesto: emp?.puesto || '',
-              empleadoSalarioHora: sh,
-              presupuestoNombre,
-              bruto,
-              seguro,
-              neto,
-            };
-          })
-          .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        return {
+          ...d,
+          empleadoNombre: empNombre,
+          empleadoPuesto: emp?.puesto || '',
+          empleadoSalarioHora: sh,
+          presupuestoNombre,
+          bruto,
+          seguro,
+          neto,
+        };
+      })
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  }, [Detalles, empIndex, presupuestoIndex]);
 
-        setTodasPlanillas(Array.isArray(todas) ? todas : []);
-        setPlanilla(cab);
-        setDetalles(filtrados);
-        setForm({
-          nombre: cab.nombre || '',
-          fechaInicio: toISODateOnly(cab.fechaInicio),
-          fechaFin: toISODateOnly(cab.fechaFin),
-          estado: cab.estado || ESTADOS[0],
-        });
-      } catch (e) {
-        setError(e.message || 'Error al cargar');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [idPlanilla]);
-
+  // 🔹 KPIs y agrupaciones
   const resumen = useMemo(() => {
     return detalles.reduce(
       (acc, d) => {
@@ -214,6 +204,10 @@ export default function DetallePlanilla() {
       .sort((a, b) => b.horas - a.horas);
   }, [detalles]);
 
+  // 🔎 Filtros rápidos
+  const [q, setQ] = useState('');
+  const [fDate, setFDate] = useState('');
+
   const results = useMemo(() => {
     const qn = q.trim().toLowerCase();
     const fd = fDate.trim();
@@ -228,33 +222,32 @@ export default function DetallePlanilla() {
   }, [detalles, q, fDate]);
 
   const resultsByEmpleado = useMemo(() => {
-  const m = new Map();
-  results.forEach(r => {
-    const id = r.empleadoID;
-    if (!m.has(id)) {
-      m.set(id, {
-        empleadoID: id,
-        empleadoNombre: r.empleadoNombre,
-        items: [],
-        tot: { ho: 0, he: 0, hd: 0, bruto: 0, seguro: 0, neto: 0 },
-      });
-    }
-    const g = m.get(id);
-    g.items.push(r);
-    g.tot.ho    += Number(r.horasOrdinarias || 0);
-    g.tot.he    += Number(r.horasExtras || 0);
-    g.tot.hd    += Number(r.horasDobles || 0);
-    g.tot.bruto += Number(r.bruto || 0);
-    g.tot.seguro+= Number(r.seguro || 0);
-    g.tot.neto  += Number(r.neto || 0);
-  });
-  // orden por nombre de empleado
-  return [...m.values()].sort((a, b) =>
-    (a.empleadoNombre || '').localeCompare(b.empleadoNombre || '')
-  );
-}, [results]);
+    const m = new Map();
+    results.forEach(r => {
+      const id = r.empleadoID;
+      if (!m.has(id)) {
+        m.set(id, {
+          empleadoID: id,
+          empleadoNombre: String(r.empleadoNombre ?? ''),
+          items: [],
+          tot: { ho: 0, he: 0, hd: 0, bruto: 0, seguro: 0, neto: 0 },
+        });
+      }
+      const g = m.get(id);
+      g.items.push(r);
+      g.tot.ho    += Number(r.horasOrdinarias || 0);
+      g.tot.he    += Number(r.horasExtras || 0);
+      g.tot.hd    += Number(r.horasDobles || 0);
+      g.tot.bruto += Number(r.bruto || 0);
+      g.tot.seguro+= Number(r.seguro || 0);
+      g.tot.neto  += Number(r.neto || 0);
+    });
+    return [...m.values()].sort((a, b) =>
+      (a.empleadoNombre || '').localeCompare(b.empleadoNombre || '')
+    );
+  }, [results]);
 
-
+  // 🔧 Form handlers
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -264,6 +257,7 @@ export default function DetallePlanilla() {
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
+
     const diff = daysBetween(form.fechaInicio, form.fechaFin);
     if (diff == null || diff < 1) {
       setError('Rango de fechas inválido');
@@ -273,7 +267,9 @@ export default function DetallePlanilla() {
       setError('La planilla no puede exceder 15 días.');
       return;
     }
-    const dup = todasPlanillas.some(
+
+    // Duplicado de nombre en otras planillas
+    const dup = (Array.isArray(Planillas) ? Planillas : []).some(
       p =>
         String(p.idPlanilla) !== String(idPlanilla) &&
         String(p.nombre || '').trim().toLowerCase() ===
@@ -283,12 +279,13 @@ export default function DetallePlanilla() {
       setError('Ya existe una planilla con ese nombre.');
       return;
     }
+
     try {
-      setSending(true);
       const raw = localStorage.getItem('currentUser');
       if (!raw) throw new Error('Usuario no autenticado');
       const user = JSON.parse(raw);
       const ahora = new Date().toISOString();
+
       const payload = {
         usuario: user.correo || user.usuario,
         quienIngreso: planilla.quienIngreso || '',
@@ -301,17 +298,17 @@ export default function DetallePlanilla() {
         fechaFin: form.fechaFin,
         estado: form.estado,
       };
-      await updatePlanilla(payload);
+
+      const ok = await actualizarPlanilla(payload);
+      if (!ok) throw new Error(updateError || 'No se pudo actualizar la planilla');
       setPlanilla(p => ({ ...p, ...form }));
       setIsEditing(false);
     } catch (err) {
       setError(err.message || 'No se pudo actualizar la planilla');
-    } finally {
-      setSending(false);
     }
   };
 
-  // XLSX: RESUMEN HORIZONTAL (botón principal)
+  // 🔄 Exportaciones XLSX
   const exportarResumenXLSX = () => {
     const dur = daysBetween(planilla.fechaInicio, planilla.fechaFin);
     const aoa = [
@@ -346,7 +343,6 @@ export default function DetallePlanilla() {
     XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'resumen'}.xlsx`);
   };
 
-  // XLSX: REGISTROS (botón en filtros de la tabla)
   const exportarRegistrosXLSX = () => {
     const rows = detalles.map(d => ({
       Fecha: d.fecha ? new Date(d.fecha).toLocaleDateString() : '',
@@ -366,12 +362,13 @@ export default function DetallePlanilla() {
     XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'registros'}.xlsx`);
   };
 
+  // Estados derivados
+  const isLoading = loadingPlanillas || loadingDetalles || loadingEmpleados || loadingPres || !planilla;
   const dur = planilla ? daysBetween(planilla.fechaInicio, planilla.fechaFin) : null;
   const empleadosCount = resumen.empleados.size;
 
-  if (loading) return <p className="detalle-loading">Cargando detalles…</p>;
-  if (error && !planilla) return <p className="detalle-error">{error}</p>;
-  if (!planilla) return null;
+  if (isLoading) return <p className="detalle-loading">Cargando detalles…</p>;
+  if (!planilla) return <p className="detalle-error">Planilla no encontrada.</p>;
 
   return (
     <>
@@ -430,7 +427,7 @@ export default function DetallePlanilla() {
                 <div className="card shadow-sm">
                   <div className="card-body">
                     <h2 className="h5 mb-3">Editar planilla</h2>
-                    {error && <div className="alert alert-danger py-2">{error}</div>}
+                    {(error || updateError) && <div className="alert alert-danger py-2">{error || updateError}</div>}
                     <form onSubmit={handleSubmit} className="row g-3">
                       <div className="col-md-4">
                         <label className="form-label">Nombre</label>
@@ -621,9 +618,7 @@ export default function DetallePlanilla() {
                                   <td className="text-end">
                                     <button
                                       className="btn btn-outline-secondary btn-sm me-2 d-inline-flex align-items-center gap-1"
-                                      onClick={() =>
-                                        setExpandedEmpleado(isOpen ? null : t.empleado)
-                                      }
+                                      onClick={() => setExpandedEmpleado(isOpen ? null : t.empleado)}
                                     >
                                       {isOpen ? (
                                         <>
@@ -636,7 +631,7 @@ export default function DetallePlanilla() {
                                       )}
                                     </button>
                                     <Link
-                                      to={`/dashboard/productividad/empleados/${Array.from(empleadosIndex.values()).find(e => `${e.nombre} ${e.apellido}`.trim() === t.empleado)?.idEmpleado || ''}`}
+                                      to={`/dashboard/productividad/empleados/${empleadoNameToId.get(t.empleado) || ''}`}
                                       className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1"
                                       title="Ver perfil del empleado"
                                     >
@@ -743,7 +738,7 @@ export default function DetallePlanilla() {
               >
                 Limpiar
               </button>
-              {/* XLSX registros (de vuelta en su posición original) */}
+              {/* XLSX registros */}
               <button
                 className="btn btn-outline-primary w-50 d-flex align-items-center justify-content-center gap-2"
                 onClick={exportarRegistrosXLSX}
@@ -754,156 +749,143 @@ export default function DetallePlanilla() {
             </div>
           </div>
 
-{/* Tabla detalle agrupada por empleado */}
-<div className="card shadow-sm">
-  <div className="card-body">
-    <h2 className="h6 fw-semibold mb-3">Detalle de la planilla</h2>
-    <div className="table-responsive">
-      <table className="table table-hover table-striped align-middle">
-        <thead className="table-light">
-          <tr>
-            {Object.keys(COLUMN_LABELS).map(key => (
-              <th key={key}>{COLUMN_LABELS[key]}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {resultsByEmpleado.length === 0 ? (
-            <tr>
-              <td
-                colSpan={Object.keys(COLUMN_LABELS).length}
-                className="text-center text-muted py-4"
-              >
-                Sin registros
-              </td>
-            </tr>
-          ) : (
-            resultsByEmpleado.map(group => (
-              <React.Fragment key={group.empleadoID}>
-                {/* Fila separadora por empleado */}
-                <tr className="table-secondary">
-                  <td colSpan={Object.keys(COLUMN_LABELS).length} className="fw-semibold">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <span className="d-flex align-items-center gap-2">
-                        <User size={16} className="text-dark" />
-                        {group.empleadoNombre}
-                      </span>
-                      <span className="d-flex gap-3">
-                        <span>
-                          <strong>Horas:{' '}</strong>               
-                            {(group.tot.ho + group.tot.he + group.tot.hd).toFixed(2)}
-                        </span>
-                        <span>
-                          Neto:{' '}
-                          <strong className="text-success">{crc(group.tot.neto)}</strong>
-                        </span>
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+          {/* Tabla detalle agrupada por empleado */}
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h2 className="h6 fw-semibold mb-3">Detalle de la planilla</h2>
+              <div className="table-responsive">
+                <table className="table table-hover table-striped align-middle">
+                  <thead className="table-light">
+                    <tr>
+                      {Object.keys(COLUMN_LABELS).map(key => (
+                        <th key={key}>{COLUMN_LABELS[key]}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultsByEmpleado.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={Object.keys(COLUMN_LABELS).length}
+                          className="text-center text-muted py-4"
+                        >
+                          Sin registros
+                        </td>
+                      </tr>
+                    ) : (
+                      resultsByEmpleado.map(group => (
+                        <React.Fragment key={group.empleadoID}>
+                          {/* Fila separadora por empleado */}
+                          <tr className="table-secondary">
+                            <td colSpan={Object.keys(COLUMN_LABELS).length} className="fw-semibold">
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span className="d-flex align-items-center gap-2">
+                                  <User size={16} className="text-dark" />
+                                  {group.empleadoNombre}
+                                </span>
+                                <span className="d-flex gap-3">
+                                  <span>
+                                    <strong>Horas: </strong>
+                                    {(group.tot.ho + group.tot.he + group.tot.hd).toFixed(2)}
+                                  </span>
+                                  <span>
+                                    Neto:{' '}
+                                    <strong className="text-success">{crc(group.tot.neto)}</strong>
+                                  </span>
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
 
-                {/* Filas de registros del empleado */}
-                {group.items.map(item => (
-                  <tr
-                    key={item.idDetallePlanilla}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() =>
-                      navigate(
-                        `/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`
-                      )
-                    }
-                  >
-                    {Object.keys(COLUMN_LABELS).map((key, j) => {
-                      // Fecha con icono de calendario
-                      if (key === 'fecha') {
-                        return (
-                          <td key={j}>
-                            <span className="d-inline-flex align-items-center gap-2">
-                              <Calendar size={14} className="text-muted" />
-                              {item.fecha ? new Date(item.fecha).toLocaleDateString() : ''}
-                            </span>
-                          </td>
-                        );
-                      }
-
-                      // Proyecto con icono de edificio
-                      if (key === 'presupuestoNombre') {
-                        return (
-                          <td key={j}>
-                            <span className="d-inline-flex align-items-center gap-2">
-                              <Building2 size={14} className="text-muted" />
-                              {item.presupuestoNombre}
-                            </span>
-                          </td>
-                        );
-                      }
-
-                      // Empleado con icono de usuario (negro)
-                      if (key === 'empleadoNombre') {
-                        return (
-                          <td key={j}>
-                            <span className="d-inline-flex align-items-center gap-2">
-                              <User size={14} className="text-dark" />
-                              {item.empleadoNombre}
-                            </span>
-                          </td>
-                        );
-                      }
-
-                      // Salario/Hora formateado
-                      if (key === 'salarioHora') {
-                        return (
-                          <td key={j} className="text-end">
-                            {crc(item.salarioHora ?? item.empleadoSalarioHora)}
-                          </td>
-                        );
-                      }
-
-                      // Horas (Ord./Ext./Dobles) con icono reloj
-                      if (['horasOrdinarias', 'horasExtras', 'horasDobles'].includes(key)) {
-                        return (
-                          <td key={j} className="text-end">
-                            <span className="d-inline-flex align-items-center justify-content-end gap-1 w-100">
-                              <Clock size={13} className="text-muted" />
-                              {Number(item[key] || 0)}
-                            </span>
-                          </td>
-                        );
-                      }
-
-                      // Bruto / Seguro / Neto
-                      if (key === 'bruto')
-                        return (
-                          <td key={j} className="text-end">
-                            {crc(item.bruto)}
-                          </td>
-                        );
-                      if (key === 'seguro')
-                        return (
-                          <td key={j} className="text-end">
-                            {crc(item.seguro)}
-                          </td>
-                        );
-                      if (key === 'neto')
-                        return (
-                          <td key={j} className="text-end fw-semibold">
-                            {crc(item.neto)}
-                          </td>
-                        );
-
-                      // Fallback
-                      return <td key={j}>{item[key]}</td>;
-                    })}
-                  </tr>
-                ))}
-              </React.Fragment>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+                          {/* Filas de registros del empleado */}
+                          {group.items.map(item => (
+                            <tr
+                              key={item.idDetallePlanilla}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() =>
+                                navigate(
+                                  `/dashboard/planilla/${idPlanilla}/${item.idDetallePlanilla}/EditarDetalle`
+                                )
+                              }
+                            >
+                              {Object.keys(COLUMN_LABELS).map((key, j) => {
+                                if (key === 'fecha') {
+                                  return (
+                                    <td key={j}>
+                                      <span className="d-inline-flex align-items-center gap-2">
+                                        <Calendar size={14} className="text-muted" />
+                                        {item.fecha ? new Date(item.fecha).toLocaleDateString() : ''}
+                                      </span>
+                                    </td>
+                                  );
+                                }
+                                if (key === 'presupuestoNombre') {
+                                  return (
+                                    <td key={j}>
+                                      <span className="d-inline-flex align-items-center gap-2">
+                                        <Building2 size={14} className="text-muted" />
+                                        {item.presupuestoNombre}
+                                      </span>
+                                    </td>
+                                  );
+                                }
+                                if (key === 'empleadoNombre') {
+                                  return (
+                                    <td key={j}>
+                                      <span className="d-inline-flex align-items-center gap-2">
+                                        <User size={14} className="text-dark" />
+                                        {item.empleadoNombre}
+                                      </span>
+                                    </td>
+                                  );
+                                }
+                                if (key === 'salarioHora') {
+                                  return (
+                                    <td key={j} className="text-end">
+                                      {crc(item.salarioHora ?? item.empleadoSalarioHora)}
+                                    </td>
+                                  );
+                                }
+                                if (['horasOrdinarias', 'horasExtras', 'horasDobles'].includes(key)) {
+                                  return (
+                                    <td key={j} className="text-end">
+                                      <span className="d-inline-flex align-items-center justify-content-end gap-1 w-100">
+                                        <Clock size={13} className="text-muted" />
+                                        {Number(item[key] || 0)}
+                                      </span>
+                                    </td>
+                                  );
+                                }
+                                if (key === 'bruto')
+                                  return (
+                                    <td key={j} className="text-end">
+                                      {crc(item.bruto)}
+                                    </td>
+                                  );
+                                if (key === 'seguro')
+                                  return (
+                                    <td key={j} className="text-end">
+                                      {crc(item.seguro)}
+                                    </td>
+                                  );
+                                if (key === 'neto')
+                                  return (
+                                    <td key={j} className="text-end fw-semibold">
+                                      {crc(item.neto)}
+                                    </td>
+                                  );
+                                return <td key={j}>{item[key]}</td>;
+                              })}
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

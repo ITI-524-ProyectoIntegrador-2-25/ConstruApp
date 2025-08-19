@@ -1,4 +1,3 @@
-// src/api/client.js
 export const BASE_URL = 'https://smartbuild-001-site1.ktempurl.com';
 
 const joinURL = (base, path) => `${base.replace(/\/+$/,'')}/${String(path).replace(/^\/+/,'')}`;
