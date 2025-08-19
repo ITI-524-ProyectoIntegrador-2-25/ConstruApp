@@ -231,6 +231,7 @@
   display:inline-flex; align-items:center; gap:.5rem;
 }
 
+
 /* ====== Animaciones ====== */
 @keyframes pl-fade-in{
   from{ opacity:0; transform: translateY(10px); }
