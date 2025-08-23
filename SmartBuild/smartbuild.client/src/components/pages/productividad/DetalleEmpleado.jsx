@@ -31,9 +31,9 @@ export default function DetalleEmpleado() {
     if (EmpleadoDetalle.activo != null) {
       const valor = EmpleadoDetalle.activo
       if (valor === 1 || valor === '1' || valor === true || valor === 'true') {
-        activoStr = 'true'
+        activoStr = 1
       } else if (valor === 0 || valor === '0' || valor === false || valor === 'false') {
-        activoStr = 'false'
+        activoStr = 0
       }
     }
 
@@ -93,7 +93,7 @@ export default function DetalleEmpleado() {
       salarioHora: String(form.salarioHora), 
       fechaIngreso: new Date(form.fechaIngreso).toISOString(), 
       correo: form.correo,
-      activo: form.activo === 'true' ? 'True' : 'False'
+      activo: form.activo === 'true' ? true : false
     }
 
     try {

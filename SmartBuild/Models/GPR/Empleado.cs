@@ -11,6 +11,6 @@
         public string? FechaIngreso { get; set; }
         public string? Correo { get; set; }
 
-        public string? Activo { get; set; }
+        public bool? Activo { get; set; }
     }
 }
