@@ -17,7 +17,8 @@ export default function FormSubcontrato() {
   const [loading, setLoading] = useState(!!idSubcontrato)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [rawResponse, setRawResponse] = useState(null)
+
+  const [subcontratoData, setSubcontratoData] = useState(null)
 
   const [form, setForm] = useState({
     presupuesto: null,
@@ -66,34 +67,47 @@ export default function FormSubcontrato() {
     const { correo, usuario } = JSON.parse(usr)
     const usuarioParam = encodeURIComponent(correo || usuario)
 
-    fetch(`${API_BASE}/SubcontratoApi/GetSubcontratoByID?idSubcontrato=${idSubcontrato}&usuario=${usuarioParam}`)
+    fetch(`${API_BASE}/SubcontratoApi/GetSubcontratoByID?id=${idSubcontrato}&usuario=${usuarioParam}`)
       .then(async res => {
         if (!res.ok) throw new Error(`Error ${res.status}`)
         const data = await res.json()
-
-        setRawResponse(data)
-
-        const presupuestoSelected = presupuestosOpts.find(p => p.value === data.presupuestoID) || null
-
-        setForm({
-          presupuesto: presupuestoSelected,
-          nombreProveedor: data.nombreProveedor || '',
-          descripcionPresupuesto: data.descripcionPresupuesto || '',
-          descripcion: data.descripcion || '',
-          fechaInicioProyectada: data.fechaInicioProyectada ? data.fechaInicioProyectada.slice(0, 16) : '',
-          fechaFinProyectada: data.fechaFinProyectada ? data.fechaFinProyectada.slice(0, 16) : '',
-          fechaInicioReal: data.fechaInicioReal ? data.fechaInicioReal.slice(0, 16) : '',
-          fechaFinReal: data.fechaFinReal ? data.fechaFinReal.slice(0, 16) : '',
-          porcentajeAvance: data.porcentajeAvance?.toString() || '0',
-          montoCotizado: data.montoCotizado?.toString() || ''
-        })
+        setSubcontratoData(Array.isArray(data) ? data[0] : data)
       })
       .catch(err => {
         console.error(err)
         setError('Error cargando subcontrato para edición.')
       })
       .finally(() => setLoading(false))
-  }, [idSubcontrato, presupuestosOpts])
+  }, [idSubcontrato])
+
+  // Cuando ya hay presupuestos y data cargada, rellenar el formulario
+  useEffect(() => {
+    if (!subcontratoData || presupuestosOpts.length === 0) return
+
+    const presupuestoSelected =
+      presupuestosOpts.find(p => p.value === subcontratoData.presupuestoID) || null
+
+    setForm({
+      presupuesto: presupuestoSelected,
+      nombreProveedor: subcontratoData.nombreProveedor || '',
+      descripcionPresupuesto: subcontratoData.descripcionPresupuesto || '',
+      descripcion: subcontratoData.descripcion || '',
+      fechaInicioProyectada: subcontratoData.fechaInicioProyectada
+        ? subcontratoData.fechaInicioProyectada.slice(0, 16)
+        : '',
+      fechaFinProyectada: subcontratoData.fechaFinProyectada
+        ? subcontratoData.fechaFinProyectada.slice(0, 16)
+        : '',
+      fechaInicioReal: subcontratoData.fechaInicioReal
+        ? subcontratoData.fechaInicioReal.slice(0, 16)
+        : '',
+      fechaFinReal: subcontratoData.fechaFinReal
+        ? subcontratoData.fechaFinReal.slice(0, 16)
+        : '',
+      porcentajeAvance: subcontratoData.porcentajeAvance?.toString() || '0',
+      montoCotizado: subcontratoData.montoCotizado?.toString() || ''
+    })
+  }, [subcontratoData, presupuestosOpts])
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -128,7 +142,6 @@ export default function FormSubcontrato() {
       montoCotizado
     } = form
 
-    // Validaciones
     if (!presupuesto || !nombreProveedor.trim() || !descripcion.trim() || !fechaInicioProyectada || !fechaFinProyectada) {
       setError('Presupuesto, proveedor, descripción y fechas proyectadas son obligatorias')
       setSaving(false)
@@ -322,6 +335,7 @@ export default function FormSubcontrato() {
           </>
         )}
 
+        {/* Porcentaje de avance con progress bar */}
         <div className="form-group">
           <label>Porcentaje de avance (%)</label>
           <input
@@ -332,8 +346,24 @@ export default function FormSubcontrato() {
             step="0.1"
             value={form.porcentajeAvance}
             onChange={handleChange}
-            disabled={!idSubcontrato} // solo editable al editar
+            disabled={!idSubcontrato}
           />
+
+          {idSubcontrato && (
+            <>
+              <div className="progress-bar" style={{ marginTop: '8px' }}>
+                <div
+                  className="progress-bar-fill"
+                  style={{
+                    width: `${Math.min(form.porcentajeAvance || 0, 100)}%`
+                  }}
+                />
+              </div>
+              <span style={{ fontSize: '0.9rem', marginLeft: 4 }}>
+                {form.porcentajeAvance || 0}%
+              </span>
+            </>
+          )}
         </div>
 
         <div className="form-group">
@@ -351,15 +381,6 @@ export default function FormSubcontrato() {
         <button type="submit" className="btn-submit" disabled={saving}>
           {saving ? 'Guardando...' : idSubcontrato ? 'Actualizar Subcontrato' : 'Crear Subcontrato'}
         </button>
-
-        {idSubcontrato && (
-          <div className="form-group" style={{ marginTop: '20px' }}>
-            <label>Raw Response (API)</label>
-            <pre style={{ background: '#f4f4f4', padding: '10px', borderRadius: '5px', maxHeight: '300px', overflowY: 'auto' }}>
-              {rawResponse ? JSON.stringify(rawResponse, (key, value) => value ?? 'null', 2) : 'null'}
-            </pre>
-          </div>
-        )}
       </form>
     </div>
   )
