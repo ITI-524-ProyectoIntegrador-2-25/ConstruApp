@@ -6,12 +6,12 @@ import {
   User, Info, ChevronDown, ChevronUp, FileSpreadsheet, Building2, Clock
 } from 'lucide-react';
 import Select from 'react-select';
-import { COLUMN_LABELS } from '../../../constants/planilla';
-import './css/Planilla.css';
-import {  } from '../../../utils/date';
-import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../hooks/Planilla';
-import { useEmpleados } from '../../../hooks/Empleados';
-import { usePresupuestos } from '../../../hooks/dashboard';
+import { COLUMN_LABELS } from '../../../../constants/planilla';
+import '../css/Planilla.css';
+import {  } from '../../../../utils/date';
+import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../../hooks/Planilla';
+import { useEmpleados } from '../../../../hooks/Empleados';
+import { usePresupuestos } from '../../../../hooks/dashboard';
 
 const loadXLSX = () => import('xlsx');
 

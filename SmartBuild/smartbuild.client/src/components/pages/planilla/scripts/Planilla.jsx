@@ -15,10 +15,10 @@ import {
   XCircle,
   Eye
 } from 'lucide-react';
-import '../../../styles/Dashboard.css';
-import './css/Planilla.css';
-import { usePlanillas } from '../../../hooks/Planilla';
-import dashboardImg from '../../../assets/img/dashboard.png';
+import '../../../../styles/Dashboard.css';
+import '../css/Planilla.css';
+import { usePlanillas } from '../../../../hooks/Planilla';
+import dashboardImg from '../../../../assets/img/dashboard.png';
 
 function toISODateOnly(d) {
   const dt = d ? new Date(d) : null;

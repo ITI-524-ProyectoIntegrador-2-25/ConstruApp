@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react';
-import './css/Planilla.css';
-import { dateOnly, isHalfStep } from '../../../utils/date';
-import { getUsuarioOrThrow } from '../../../utils/user';
-
-// 🔧 Hooks (rutas: subir 3 niveles hasta src/hooks)
-import { usePlanilla, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../hooks/Planilla';
-import { useEmpleados } from '../../../hooks/Empleados';
+import '../css/Planilla.css';
+import { dateOnly, isHalfStep } from '../../../../utils/date';
+import { getUsuarioOrThrow } from '../../../../utils/user';
+import { usePlanilla, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../../hooks/Planilla';
+import { useEmpleados } from '../../../../hooks/Empleados';
 
 /* =========================
    Helpers
