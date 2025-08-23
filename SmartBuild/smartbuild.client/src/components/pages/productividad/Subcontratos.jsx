@@ -28,8 +28,8 @@ export default function Subcontratos() {
     avanceMax: '',
     montoMin: '',
     montoMax: '',
-    sinContactos: false,
-    sinPagos: false
+    contactos: 'todos', // 'todos', 'con', 'sin'
+    pagos: 'todos'      // 'todos', 'con', 'sin'
   })
 
   const [pagosPorSubcontrato, setPagosPorSubcontrato] = useState({})
@@ -39,7 +39,6 @@ export default function Subcontratos() {
   const [descExpandedId, setDescExpandedId] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  // Fetch subcontratos + todos pagos y contactos al montar
   useEffect(() => {
     const usrStr = localStorage.getItem('currentUser')
     if (!usrStr) {
@@ -65,7 +64,6 @@ export default function Subcontratos() {
 
         setSubcontratos(subData)
 
-        // Map pagos por subcontrato
         const pagosMap = {}
         pagosData.forEach(p => {
           if (!pagosMap[p.subcontratoID]) pagosMap[p.subcontratoID] = []
@@ -73,7 +71,6 @@ export default function Subcontratos() {
         })
         setPagosPorSubcontrato(pagosMap)
 
-        // Map contactos por subcontrato
         const contactosMap = {}
         contactosData.forEach(c => {
           if (!contactosMap[c.subcontratoID]) contactosMap[c.subcontratoID] = []
@@ -117,12 +114,12 @@ export default function Subcontratos() {
       avanceMax: '',
       montoMin: '',
       montoMax: '',
-      sinContactos: false,
-      sinPagos: false
+      contactos: 'todos',
+      pagos: 'todos'
     })
   }
 
-  const activeFiltersCount = Object.values(filtros).filter(val => val && val !== 'reales' && val !== false).length
+  const activeFiltersCount = Object.values(filtros).filter(val => val && val !== 'reales' && val !== 'todos').length
 
   const results = useMemo(() => {
     let arr = subcontratos
@@ -143,12 +140,16 @@ export default function Subcontratos() {
     if (filtros.montoMin) arr = arr.filter(s => s.montoCotizado >= Number(filtros.montoMin))
     if (filtros.montoMax) arr = arr.filter(s => s.montoCotizado <= Number(filtros.montoMax))
 
-    if (filtros.sinContactos) {
+    if (filtros.contactos === 'sin') {
       arr = arr.filter(s => !contactosPorSubcontrato[s.idSubcontrato] || contactosPorSubcontrato[s.idSubcontrato].length === 0)
+    } else if (filtros.contactos === 'con') {
+      arr = arr.filter(s => contactosPorSubcontrato[s.idSubcontrato]?.length > 0)
     }
 
-    if (filtros.sinPagos) {
+    if (filtros.pagos === 'sin') {
       arr = arr.filter(s => !pagosPorSubcontrato[s.idSubcontrato] || pagosPorSubcontrato[s.idSubcontrato].length === 0)
+    } else if (filtros.pagos === 'con') {
+      arr = arr.filter(s => pagosPorSubcontrato[s.idSubcontrato]?.length > 0)
     }
 
     return arr
@@ -164,7 +165,6 @@ export default function Subcontratos() {
 
   return (
     <div className="dashboard-page">
-      {/* HEADER MODERNO */}
       <header className="actividades-header">
         <div className="header-container">
           <div className="header-content">
@@ -193,7 +193,6 @@ export default function Subcontratos() {
         </div>
       </header>
 
-      {/* FILTERS DROPDOWN */}
       <div className="filters-dropdown-wrapper">
         <button
           className="btn-action"
@@ -260,22 +259,24 @@ export default function Subcontratos() {
             </div>
 
             <div className="filters-row">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={filtros.sinContactos}
-                  onChange={e => handleFilterChange('sinContactos')(e.target.checked)}
-                />
-                Sin contactos
-              </label>
-              <label style={{ marginLeft: '1rem' }}>
-                <input
-                  type="checkbox"
-                  checked={filtros.sinPagos}
-                  onChange={e => handleFilterChange('sinPagos')(e.target.checked)}
-                />
-                Sin pagos
-              </label>
+              <select
+                value={filtros.contactos}
+                onChange={e => handleFilterChange('contactos')(e.target.value)}
+              >
+                <option value="todos">Todos contactos</option>
+                <option value="con">Con contactos</option>
+                <option value="sin">Sin contactos</option>
+              </select>
+
+              <select
+                value={filtros.pagos}
+                onChange={e => handleFilterChange('pagos')(e.target.value)}
+                style={{ marginLeft: '1rem' }}
+              >
+                <option value="todos">Todos pagos</option>
+                <option value="con">Con pagos</option>
+                <option value="sin">Sin pagos</option>
+              </select>
             </div>
 
             {(activeFiltersCount > 0) && (
@@ -287,7 +288,6 @@ export default function Subcontratos() {
         )}
       </div>
 
-      {/* TABLA */}
       <div className="projects-table-wrapper">
         {results.length > 0 ? (
           <table className="projects-table">
@@ -328,7 +328,8 @@ export default function Subcontratos() {
                       </td>
                       <td>{fechaInicio.toLocaleDateString()}</td>
                       <td>{fechaFin.toLocaleDateString()}</td>
-                      <td>
+
+                      <td> 
                         <div className="progress-bar" title={`${s.porcentajeAvance}%`}>
                           <div
                             className="progress-bar-fill"
@@ -337,6 +338,7 @@ export default function Subcontratos() {
                         </div>
                         <span style={{ marginLeft: 8 }}>{s.porcentajeAvance}%</span>
                       </td>
+
                       <td>{s.montoCotizado.toLocaleString('es-CR')}</td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -426,19 +428,26 @@ export default function Subcontratos() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {contactosPorSubcontrato[s.idSubcontrato].map(contacto => (
-                                  <tr key={contacto.idContacto}>
-                                    <td>{contacto.nombreCompleto}</td>
-                                    <td>{contacto.telefono}</td>
-                                    <td>{contacto.correoElectronico}</td>
-                                    <td>{contacto.esPrincipal ? 'Sí' : 'No'}</td>
-                                  </tr>
-                                ))}
+                                {contactosPorSubcontrato[s.idSubcontrato]
+                                  .slice()
+                                  .sort((a, b) => b.esPrincipal - a.esPrincipal)
+                                  .map(contacto => (
+                                    <tr
+                                      key={contacto.idContacto}
+                                      style={{
+                                        backgroundColor: contacto.esPrincipal ? '#e6f7ff' : 'transparent'
+                                      }}
+                                    >
+                                      <td>{contacto.nombreCompleto}</td>
+                                      <td>{contacto.telefono}</td>
+                                      <td>{contacto.correoElectronico}</td>
+                                      <td>{contacto.esPrincipal ? 'Sí' : 'No'}</td>
+                                    </tr>
+                                  ))}
                               </tbody>
                             </table>
                           )}
 
-                          {/* Botón siempre visible */}
                           <Link
                             to={`/dashboard/productividad/subcontratos/contactos/nuevo?subcontratoId=${s.idSubcontrato}`}
                             className="btn-add"
