@@ -1,358 +1,282 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react';
+import { ChevronLeft, Save, Calendar, User, Building2, Clock, XCircle, CheckCircle2 } from 'lucide-react';
+import Select from 'react-select';
+
+import { useForm, Controller } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
 import '../css/Planilla.css';
+import { usePlanillas, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../../hooks/Planilla';
+import { useEmpleados } from '../../../../hooks/Empleados';
+import { usePresupuestos } from '../../../../hooks/dashboard';
 import { dateOnly, isHalfStep } from '../../../../utils/date';
 import { getUsuarioOrThrow } from '../../../../utils/user';
-import { usePlanilla, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../../hooks/Planilla';
-import { useEmpleados } from '../../../../hooks/Empleados';
 
-/* =========================
-   Helpers
-   ========================= */
-function toNum(v, fallback = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
+const half = (v) => Number.isFinite(Number(v)) && Math.round(Number(v) * 2) === Number(v) * 2;
+
+const mapEmpleadoOptions = (arr) =>
+  (Array.isArray(arr) ? arr : [])
+    .map((e) => {
+      const id = e.idEmpleado ?? e.IdEmpleado ?? e.empleadoID ?? e.EmpleadoID;
+      const label = e.nombre ?? e.Nombre ?? e.empleadoNombre ?? e.EmpleadoNombre ?? `Empleado ${id ?? ''}`;
+      const n = Number(id);
+      return Number.isFinite(n) ? { value: n, label } : null;
+    }).filter(Boolean);
+
+const mapPresupuestoOptions = (arr) =>
+  (Array.isArray(arr) ? arr : [])
+    .map((p) => {
+      const id = p.idPresupuesto ?? p.IdPresupuesto ?? p.presupuestoID ?? p.PresupuestoID;
+      const label = p.nombre ?? p.Nombre ?? p.descripcion ?? p.Descripcion ?? `Presupuesto ${id ?? ''}`;
+      const n = Number(id);
+      return Number.isFinite(n) ? { value: n, label } : null;
+    }).filter(Boolean);
 
 export default function EditarDetalle() {
-  const { idPlanilla, idDetallePlanilla } = useParams();
+  const { idPlanilla, idPlanillaDetalle, idDetallePlanilla } = useParams();
+  const idPlan = Number(idPlanilla);
+  const idDetalle = Number(idPlanillaDetalle ?? idDetallePlanilla); // soporta ambas rutas
   const navigate = useNavigate();
+  const alertRef = useRef(null);
 
-  // 🔹 Hooks de datos
-  const { PlanillaDetalle: planillaCab, loading: loadingPlanilla, error: errorPlanilla } = usePlanilla(idPlanilla);
-  // ⚠️ Trae TODOS los detalles para validar contra cualquier planilla
-  const { Detalles, loading: loadingDetalles, error: errorDetalles } = usePlanillaDetalles();
-  const { Empleados, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados();
-
-  // 🔹 Buscar el registro a editar dentro de los detalles ya cargados
-  const detalle = useMemo(() => {
-    const list = Array.isArray(Detalles) ? Detalles : [];
-    const idNum = Number(idDetallePlanilla);
-    return list.find(d =>
-      Number(d.idDetallePlanilla ?? d.IdDetallePlanilla ?? d.idPlanillaDetalle) === idNum
-    ) || null;
-  }, [Detalles, idDetallePlanilla]);
-
-  // 🔹 Rango de la planilla (ini/fin) desde el hook de planilla
-  const rangoPlanilla = useMemo(() => {
-    if (!planillaCab) return { ini: '', fin: '' };
-    return {
-      ini: dateOnly(planillaCab.fechaInicio || planillaCab.FechaInicio),
-      fin: dateOnly(planillaCab.fechaFin || planillaCab.FechaFin),
-    };
-  }, [planillaCab]);
-
-  // 🔹 Salario del empleado (si existe) — bloquea input de salario
-  const empleadoSalario = useMemo(() => {
-    if (!detalle) return null;
-    const emp = (Array.isArray(Empleados) ? Empleados : []).find(
-      e => e.idEmpleado === (detalle.empleadoID ?? detalle.EmpleadoID)
-    );
-    return emp?.salarioHora != null ? Number(emp.salarioHora) : null;
-  }, [Empleados, detalle]);
-
-  // 🔹 Estado del formulario
-  const [form, setForm] = useState({
-    fecha: '',
-    salarioHora: '',
-    horasOrdinarias: '',
-    horasExtras: '',
-    horasDobles: ''
-  });
-  const [error, setError] = useState('');
-
-  // 🔹 Inicializar form cuando llega el detalle
-  useEffect(() => {
-    if (!detalle) return;
-    setForm({
-      fecha: detalle.fecha ? String(detalle.fecha).slice(0, 10) : '',
-      salarioHora: detalle.salarioHora ?? '',
-      horasOrdinarias: detalle.horasOrdinarias ?? '',
-      horasExtras: detalle.horasExtras ?? '',
-      horasDobles: detalle.horasDobles ?? ''
-    });
-  }, [detalle]);
-
-  // 🔹 Si hay salario del empleado, usarlo (y bloquear edición)
-  useEffect(() => {
-    if (empleadoSalario != null) {
-      setForm(prev => ({ ...prev, salarioHora: empleadoSalario }));
-    }
-  }, [empleadoSalario]);
-
-  // 🔹 Hook para actualizar (PUT)
+  const { Planillas } = usePlanillas();
+  const { Detalles, loading: loadingDetalles } = usePlanillaDetalles(idPlan);
   const { actualizarPlanillaDetalle, loading: sendingApi, error: saveError } = useActualizarPlanillaDetalle();
-  const [sending, setSending] = useState(false);
+  const { Empleados } = useEmpleados();
+  const { Presupuestos } = usePresupuestos();
 
-  const getUsuario = () => getUsuarioOrThrow();
+  const plan = useMemo(
+    () => (Array.isArray(Planillas) ? Planillas.find(p => Number(p?.idPlanilla ?? p?.IdPlanilla) === idPlan) : null),
+    [Planillas, idPlan]
+  );
+  const rango = useMemo(() => ({
+    ini: plan?.fechaInicio ? dateOnly(plan.fechaInicio) : '',
+    fin: plan?.fechaFin ? dateOnly(plan.fechaFin) : '',
+  }), [plan]);
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    setError('');
-  };
+  const current = useMemo(() => (
+    Array.isArray(Detalles)
+      ? Detalles.find(d => Number(d?.idPlanillaDetalle ?? d?.IdPlanillaDetalle ?? d?.idDetallePlanilla) === idDetalle)
+      : null
+  ), [Detalles, idDetalle]);
 
-  // 🔒 Duplicado GLOBAL empleado+fecha (excluye el propio registro)
-  const empleadoFechaDuplicado = useMemo(() => {
-    if (!detalle || !form.fecha) return false;
+  const otros = useMemo(() => (
+    Array.isArray(Detalles)
+      ? Detalles.filter(d => Number(d?.idPlanillaDetalle ?? d?.IdPlanillaDetalle ?? d?.idDetallePlanilla) !== idDetalle)
+      : []
+  ), [Detalles, idDetalle]);
 
-    const myId =
-      Number(detalle.idDetallePlanilla ?? detalle.IdDetallePlanilla ?? detalle.idPlanillaDetalle);
-    const empId = Number(detalle.empleadoID ?? detalle.EmpleadoID);
-    const fechaNueva = dateOnly(form.fecha);
+  const schema = useMemo(() => z.object({
+    fecha: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/, 'Fecha inválida')
+      .refine(v => !!rango.ini && !!rango.fin && v >= rango.ini && v <= rango.fin, `La fecha debe estar entre ${rango.ini} y ${rango.fin}`),
+    empleado: z.object({ value: z.number(), label: z.string() }, { required_error: 'Colaborador requerido' }),
+    presupuesto: z.object({ value: z.number(), label: z.string() }, { required_error: 'Presupuesto requerido' }),
+    salarioHora: z.preprocess(v => Number(v), z.number().positive('Salario debe ser > 0')),
+    horasOrdinarias: z.preprocess(v => Number(v), z.number().refine(half, 'Debe ser múltiplo de 0.5').min(0.5).max(24)),
+    horasExtras: z.preprocess(v => Number(v), z.number().refine(half, 'Debe ser múltiplo de 0.5').min(0).max(24)).default(0),
+    horasDobles: z.preprocess(v => Number(v), z.number().refine(half, 'Debe ser múltiplo de 0.5').min(0).max(24)).default(0),
+  }).superRefine((val, ctx) => {
+    const total = Number(val.horasOrdinarias || 0) + Number(val.horasExtras || 0) + Number(val.horasDobles || 0);
+    if (total > 24) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La suma de horas no puede exceder 24', path: ['horasOrdinarias'] });
+    const lista = Array.isArray(otros) ? otros : [];
+    const found = lista.some(d =>
+      dateOnly(d?.fecha) === val.fecha && Number(d?.idEmpleado ?? d?.IdEmpleado) === val.empleado.value
+    );
+    if (found) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ya existe un registro de este empleado en esa fecha', path: ['empleado'] });
+  }), [otros, rango.ini, rango.fin]);
 
-    const list = Array.isArray(Detalles) ? Detalles : [];
-    return list.some(d => {
-      const did =
-        Number(d.idDetallePlanilla ?? d.IdDetallePlanilla ?? d.idPlanillaDetalle);
-      const demp = Number(d.empleadoID ?? d.EmpleadoID);
-      const dfecha = dateOnly(d.fecha ?? d.Fecha);
-      return did !== myId && demp === empId && dfecha === fechaNueva;
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
+    if (!current) return;
+    reset({
+      fecha: dateOnly(current.fecha),
+      empleado: {
+        value: Number(current.idEmpleado ?? current.IdEmpleado),
+        label: current.empleadoNombre ?? current.EmpleadoNombre
+      },
+      presupuesto: {
+        value: Number(current.idPresupuesto ?? current.IdPresupuesto),
+        label: current.presupuestoNombre ?? current.PresupuestoNombre
+      },
+      salarioHora: Number(current.salarioHora) || '',
+      horasOrdinarias: Number(current.horasOrdinarias) || 8,
+      horasExtras: Number(current.horasExtras) || 0,
+      horasDobles: Number(current.horasDobles) || 0,
     });
-  }, [Detalles, detalle, form.fecha]);
+  }, [current, reset]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  const empleadoOptions = useMemo(() => mapEmpleadoOptions(Empleados), [Empleados]);
+  const presupuestoOptions = useMemo(() => mapPresupuestoOptions(Presupuestos), [Presupuestos]);
 
-    const usuario = getUsuario();
-    if (!usuario) {
-      setError('Usuario no autenticado');
-      return;
-    }
-
-    if (empleadoFechaDuplicado) {
-      setError('Ese empleado ya tiene un registro en esa fecha (en otra planilla).');
-      return;
-    }
-
-    const so = toNum(form.horasOrdinarias);
-    const se = toNum(form.horasExtras);
-    const sd = toNum(form.horasDobles);
-    const sh = toNum(empleadoSalario != null ? empleadoSalario : form.salarioHora);
-
-    const dStr = dateOnly(form.fecha);
-    const dNum = Date.parse(dStr);
-    const iniNum = Date.parse(rangoPlanilla.ini);
-    const finNum = Date.parse(rangoPlanilla.fin);
-
-    if (!form.fecha || Number.isNaN(dNum)) {
-      setError('Fecha inválida');
-      return;
-    }
-    if (Number.isFinite(iniNum) && dNum < iniNum) {
-      setError(`La fecha no puede ser anterior al inicio de la planilla (${rangoPlanilla.ini})`);
-      return;
-    }
-    if (Number.isFinite(finNum) && dNum > finNum) {
-      setError(`La fecha no puede ser posterior al fin de la planilla (${rangoPlanilla.fin})`);
-      return;
-    }
-    if ([so, se, sd].some(v => v < 0) || sh <= 0) {
-      setError('Horas y salario deben ser ≥ 0; el salario mayor a 0');
-      return;
-    }
-    if (!isHalfStep(so) || !isHalfStep(se) || !isHalfStep(sd)) {
-      setError('Las horas deben ingresarse en incrementos de 0.5');
-      return;
-    }
-    if (so + se + sd < 0.5) {
-      setError('Debe registrar al menos 0.5 hora en alguna categoría');
-      return;
-    }
-    if (so + se + sd > 24) {
-      setError('La suma de horas no puede superar 24 en un día');
-      return;
-    }
-
+  const onSubmit = async (values) => {
+    const usuario = getUsuarioOrThrow();
     const ts = new Date().toISOString();
+
     const payload = {
+      idPlanillaDetalle: idDetalle, IdDetallePlanilla: idDetalle,
+      PlanillaID: idPlan, idPlanilla: idPlan,
+      Fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
+      fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
+      IdEmpleado: values.empleado.value,  idEmpleado: values.empleado.value,
+      EmpleadoNombre: values.empleado.label, empleadoNombre: values.empleado.label,
+      IdPresupuesto: values.presupuesto.value, idPresupuesto: values.presupuesto.value,
+      PresupuestoNombre: values.presupuesto.label, presupuestoNombre: values.presupuesto.label,
+      SalarioHora: Number(values.salarioHora), salarioHora: Number(values.salarioHora),
+      HorasOrdinarias: Number(values.horasOrdinarias), horasOrdinarias: Number(values.horasOrdinarias),
+      HorasExtras: Number(values.horasExtras), horasExtras: Number(values.horasExtras),
+      HorasDobles: Number(values.horasDobles), horasDobles: Number(values.horasDobles),
       usuario,
-      quienIngreso: detalle?.quienIngreso ?? usuario,
-      cuandoIngreso: detalle?.cuandoIngreso ?? ts,
+      quienIngreso: current?.quienIngreso ?? usuario,
+      cuandoIngreso: current?.cuandoIngreso ?? ts,
       quienModifico: usuario,
       cuandoModifico: ts,
-
-      idDetallePlanilla: Number(idDetallePlanilla),
-      planillaID: detalle?.planillaID ?? Number(idPlanilla) ?? null,
-      empleadoID: detalle?.empleadoID ?? null,
-      presupuestoID: detalle?.presupuestoID ?? null,
-
-      fecha: form.fecha ? new Date(form.fecha).toISOString() : null,
-      salarioHora: Number(sh.toFixed(2)),
-      horasOrdinarias: so,
-      horasExtras: se,
-      horasDobles: sd,
-      detalle: detalle?.detalle ?? ''
     };
 
-    try {
-      setSending(true);
-      const ok = await actualizarPlanillaDetalle(payload);
-      if (ok) {
-        idPlanilla ? navigate(`/dashboard/planilla/${idPlanilla}`) : navigate(-1);
-      } else {
-        setError(saveError || 'Error al actualizar');
-      }
-    } catch (err) {
-      setError(err.message || 'Error al actualizar');
-    } finally {
-      setSending(false);
-    }
+    const ok = await actualizarPlanillaDetalle(payload);
+    if (ok) navigate(-1);
+    else alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const cargando = loadingPlanilla || loadingDetalles || loadingEmpleados;
-  const errorGlobal = error || errorPlanilla || errorDetalles || errorEmpleados;
+  if (loadingDetalles) {
+    return (
+      <div className="page-content">
+        <div className="empty-state"><p>Cargando detalle…</p></div>
+      </div>
+    );
+  }
 
-  if (cargando) return <p>Cargando...</p>;
-  if (!detalle) return <p className="detalle-error">Detalle no encontrado</p>;
+  if (!current) {
+    return (
+      <div className="page-content">
+        <div className="empty-state">
+          <p>No se encontró el detalle solicitado.</p>
+          <button className="btn-secondary-modern" onClick={() => navigate(-1)}>Volver</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="empleados-page-modern form-planilla-modern">
-      {/* HEADER MODERNO */}
+    <div className="page-content">
       <div className="page-header">
         <div className="header-left">
-          <button className="btn-back-modern" onClick={() => navigate(-1)} title="Volver">
-            <ChevronLeft size={20} />
-          </button>
-          <div className="title-section">
-            <h1 className="page-title">
-              <Edit size={28} /> Editar detalle
-            </h1>
-            <p className="page-subtitle">Actualiza las horas del registro dentro del rango de la planilla</p>
-          </div>
+          <button className="btn-back-modern" onClick={() => navigate(-1)} aria-label="Volver"><ChevronLeft size={20} /></button>
+          <div className="title-section"><h1 className="page-title"><Save size={20}/> Editar detalle</h1></div>
+        </div>
+        <div className="header-actions">
+          <button type="submit" form="form-editar-detalle" className="btn-primary-modern" disabled={sendingApi || isSubmitting}><Save size={16}/> Guardar</button>
         </div>
       </div>
 
-      {/* PANEL / FORM */}
       <div className="filters-panel">
         <div className="filters-content">
-          {(errorGlobal || empleadoFechaDuplicado) && (
-            <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>
-              {empleadoFechaDuplicado ? 'Ese empleado ya tiene un registro en esa fecha (en otra planilla).' : String(errorGlobal)}
+          {saveError && (
+            <div ref={alertRef} className="alert" role="alert" style={{ background:'#fee2e2', border:'1px solid #fecaca', color:'#991b1b',
+              padding:'0.75rem 1rem', borderRadius:12, display:'flex', alignItems:'center', gap:8, marginBottom:'1rem' }}>
+              <XCircle size={18} /><span>{saveError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="form-dashboard"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="field-label d-flex align-items-center gap-2">
-                <Calendar size={16} />
-                Fecha {rangoPlanilla.ini && rangoPlanilla.fin ? `(${rangoPlanilla.ini} → ${rangoPlanilla.fin})` : ''}
-              </label>
-              <input
-                type="date"
-                name="fecha"
-                value={form.fecha}
-                onChange={handleChange}
-                disabled={sending || sendingApi}
-                min={rangoPlanilla.ini || undefined}
-                max={rangoPlanilla.fin || undefined}
-                className="modern-input"
-              />
+          <form id="form-editar-detalle" onSubmit={handleSubmit(onSubmit)}>
+            <div className="filter-row">
+              <div className="filter-field">
+                <label>Fecha</label>
+                <div className="input-with-icon">
+                  <Calendar size={16} className="input-icon" />
+                  <input className="modern-input" type="date" aria-invalid={!!errors.fecha} {...register('fecha')} />
+                </div>
+                {errors.fecha && <small className="hint" style={{ color:'#b91c1c' }}>{errors.fecha.message}</small>}
+                {rango.ini && rango.fin && <small className="hint">Rango permitido: {rango.ini} – {rango.fin}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Colaborador</label>
+                <div className="input-with-icon">
+                  <User size={16} className="input-icon" />
+                  <Controller control={control} name="empleado"
+                    render={({ field }) => (
+                      <Select {...field}
+                        options={empleadoOptions}
+                        placeholder="Selecciona colaborador"
+                        menuPortalTarget={document.body}
+                        classNamePrefix="react-select"
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.empleado && <small className="hint" style={{ color:'#b91c1c' }}>{errors.empleado.message}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Presupuesto</label>
+                <div className="input-with-icon">
+                  <Building2 size={16} className="input-icon" />
+                  <Controller control={control} name="presupuesto"
+                    render={({ field }) => (
+                      <Select {...field}
+                        options={presupuestoOptions}
+                        placeholder="Selecciona presupuesto"
+                        menuPortalTarget={document.body}
+                        classNamePrefix="react-select"
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.presupuesto && <small className="hint" style={{ color:'#b91c1c' }}>{errors.presupuesto.message}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Salario/Hora</label>
+                <div className="input-with-icon">
+                  <Clock size={16} className="input-icon" />
+                  <input className="modern-input" type="number" step="0.01" min="0" aria-invalid={!!errors.salarioHora} {...register('salarioHora')} />
+                </div>
+                {errors.salarioHora && <small className="hint" style={{ color:'#b91c1c' }}>{errors.salarioHora.message}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Horas Ordinarias</label>
+                <input className="modern-input" type="number" step="0.5" min="0.5" max="24" aria-invalid={!!errors.horasOrdinarias} {...register('horasOrdinarias')} />
+                {errors.horasOrdinarias && <small className="hint" style={{ color:'#b91c1c' }}>{errors.horasOrdinarias.message}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Horas Extras</label>
+                <input className="modern-input" type="number" step="0.5" min="0" max="24" aria-invalid={!!errors.horasExtras} {...register('horasExtras')} />
+                {errors.horasExtras && <small className="hint" style={{ color:'#b91c1c' }}>{errors.horasExtras.message}</small>}
+              </div>
+
+              <div className="filter-field">
+                <label>Horas Dobles</label>
+                <input className="modern-input" type="number" step="0.5" min="0" max="24" aria-invalid={!!errors.horasDobles} {...register('horasDobles')} />
+                {errors.horasDobles && <small className="hint" style={{ color:'#b91c1c' }}>{errors.horasDobles.message}</small>}
+              </div>
             </div>
 
-            <div className="form-group">
-              <label className="field-label">Salario/Hora</label>
-              <input
-                type="number"
-                name="salarioHora"
-                value={form.salarioHora}
-                onChange={handleChange}
-                disabled={sending || sendingApi || empleadoSalario != null}
-                min="0.01"
-                step="0.01"
-                className="modern-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="field-label d-flex align-items-center gap-2">
-                <Clock size={16} /> Horas Ordinarias
-              </label>
-              <input
-                type="number"
-                name="horasOrdinarias"
-                value={form.horasOrdinarias}
-                onChange={handleChange}
-                required
-                disabled={sending}
-                min="0"
-                step="0.5"
-                className="modern-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="field-label d-flex align-items-center gap-2">
-                <Clock size={16} /> Horas Extras
-              </label>
-              <input
-                type="number"
-                name="horasExtras"
-                value={form.horasExtras}
-                onChange={handleChange}
-                required
-                disabled={sending}
-                min="0"
-                step="0.5"
-                className="modern-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="field-label d-flex align-items-center gap-2">
-                <Clock size={16} /> Horas Dobles
-              </label>
-              <input
-                type="number"
-                name="horasDobles"
-                value={form.horasDobles}
-                onChange={handleChange}
-                required
-                disabled={sending}
-                min="0"
-                step="0.5"
-                className="modern-input"
-              />
-            </div>
-
-            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '.75rem' }}>
-              <button
-                type="button"
-                className="btn-secondary-modern"
-                onClick={() => (idPlanilla ? navigate(`/dashboard/planilla/${idPlanilla}`) : navigate(-1))}
-                disabled={sending}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn-primary-modern" disabled={sending || sendingApi || empleadoFechaDuplicado}>
-                {(sending || sendingApi) ? 'Guardando…' : 'Guardar cambios'}
-              </button>
+            <div className="filter-actions" style={{ marginTop: 8 }}>
+              <div className="results-count" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {Object.keys(errors).length ? (<><XCircle size={16} style={{ color:'#dc2626' }} /><span>Revisá los campos</span></>)
+                  : (<><CheckCircle2 size={16} style={{ color:'#16a34a' }} /><span>Listo para guardar</span></>)}
+              </div>
             </div>
           </form>
         </div>
       </div>
 
-      {/* Tarjetas de apoyo visual */}
       <div className="stats-cards">
         <div className="stat-card">
-          <div className="stat-icon"><Calendar size={18} /></div>
+          <div className="stat-icon"><Calendar size={20} /></div>
           <div className="stat-content">
-            <span className="stat-number">
-              {rangoPlanilla.ini ? `${rangoPlanilla.ini} → ${rangoPlanilla.fin}` : '—'}
-            </span>
-            <span className="stat-label">Rango planilla</span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon"><Clock size={18} /></div>
-          <div className="stat-content">
-            <span className="stat-number">
-              {(toNum(form.horasOrdinarias) + toNum(form.horasExtras) + toNum(form.horasDobles)) || 0}
-            </span>
-            <span className="stat-label">Horas totales</span>
+            <span className="stat-number" style={{ fontSize:'1.25rem' }}>{rango.ini} → {rango.fin}</span>
+            <span className="stat-label">Rango permitido</span>
           </div>
         </div>
       </div>

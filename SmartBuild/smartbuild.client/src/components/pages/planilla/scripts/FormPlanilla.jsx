@@ -1,13 +1,11 @@
-
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ChevronLeft, Calendar, Hash, ClipboardList, Save,
-  AlertTriangle, CheckCircle2, XCircle, FileSpreadsheet
-} from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { ChevronLeft, Calendar, Hash, ClipboardList, Save, AlertTriangle, CheckCircle2, XCircle, FileSpreadsheet } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import Select from 'react-select';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+
 import '../../../../styles/Dashboard.css';
 import '../css/Planilla.css';
 import '../css/FormPlanilla.css';
@@ -15,35 +13,17 @@ import '../css/FormPlanilla.css';
 import { sanitizeName } from '../../../../utils/strings';
 import { getUsuarioOrThrow } from '../../../../utils/user';
 import { usePlanillas, useInsertarPlanilla } from '../../../../hooks/Planilla';
+import { addDaysYMD, parseYMD } from '../../../../utils/date';
 
-const ESTADOS = ['Abierta', 'Revisión', 'Cerrada'];
-const RANGO_DIAS = 15;
+const ESTADOS = ['Abierta', 'Pendiente', 'En revisión', 'Cerrada'];
+const ESTADO_OPTS = ESTADOS.map(e => ({ value: e, label: e }));
+const RANGO_DIAS = 14;
 
-function toYYYYMMDD(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(date.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-function parseYYYYMMDD(ymd) {
-  if (!ymd || typeof ymd !== 'string') return null;
-  const [y, m, d] = ymd.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  const dt = new Date(Date.UTC(y, m - 1, d, 12));
-  return Number.isNaN(dt.getTime()) ? null : dt;
-}
-function addDaysYYYYMMDD(ymd, days) {
-  const base = parseYYYYMMDD(ymd);
-  if (!base) return '';
-  base.setUTCDate(base.getUTCDate() + days);
-  return toYYYYMMDD(base);
-}
 function humanRange(ini, fin) {
   if (!ini || !fin) return '—';
   try {
-    const i = new Date(`${ini}T00:00:00`);
-    const f = new Date(`${fin}T00:00:00`);
+    const i = new Date(`${ini}T00:00:00Z`);
+    const f = new Date(`${fin}T00:00:00Z`);
     const fmt = (dt) => dt.toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
     return `${fmt(i)} – ${fmt(f)}`;
   } catch { return '—'; }
@@ -61,23 +41,28 @@ export default function FormPlanilla() {
     [Planillas]
   );
 
+  // ✅ No muestra errores hasta que el usuario elige fechaInicio (evita "Fecha inválida" al abrir)
   const schema = useMemo(() => z.object({
     nombre: z.string().trim().min(3, 'Mínimo 3 caracteres').max(80, 'Máximo 80 caracteres')
       .refine(v => !existingNames.includes(sanitizeName(v)), 'Ya existe una planilla con este nombre'),
-    fechaInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida'),
-    fechaFin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida'),
+    fechaInicio: z.string().optional().or(z.literal('')),
+    fechaFin: z.string().optional().or(z.literal('')),
     estado: z.enum(ESTADOS, { errorMap: () => ({ message: 'Estado inválido' }) }),
   }).superRefine((val, ctx) => {
-    const finEsperada = addDaysYYYYMMDD(val.fechaInicio, RANGO_DIAS);
+    if (!val.fechaInicio) return; // aún vacío, no validar
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(val.fechaInicio)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Fecha inválida', path: ['fechaInicio'] });
+      return;
+    }
+    const finEsperada = addDaysYMD(val.fechaInicio, RANGO_DIAS);
     if (val.fechaFin !== finEsperada) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: `La fecha fin debe ser inicio + ${RANGO_DIAS} días`, path: ['fechaFin'] });
     }
   }), [existingNames]);
 
-  const {
-    register, handleSubmit, setValue, watch, formState: { errors, isSubmitting }
-  } = useForm({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
+    mode: 'onChange',
     defaultValues: { nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] }
   });
 
@@ -85,27 +70,23 @@ export default function FormPlanilla() {
   const fechaFin = watch('fechaFin');
 
   useEffect(() => {
-    if (fechaInicio) setValue('fechaFin', addDaysYYYYMMDD(fechaInicio, RANGO_DIAS), { shouldValidate: true });
+    if (fechaInicio) setValue('fechaFin', addDaysYMD(fechaInicio, RANGO_DIAS), { shouldValidate: true });
     else setValue('fechaFin', '', { shouldValidate: true });
   }, [fechaInicio, setValue]);
 
   const onSubmit = async (data) => {
     const usuario = getUsuarioOrThrow();
     const ts = new Date().toISOString();
-
     const payload = {
       usuario,
-      quienIngreso: usuario,
-      cuandoIngreso: ts,
-      quienModifico: usuario,
-      cuandoModifico: ts,
+      quienIngreso: usuario, cuandoIngreso: ts,
+      quienModifico: usuario, cuandoModifico: ts,
       idPlanilla: 0,
       nombre: data.nombre.trim(),
-      fechaInicio: new Date(`${data.fechaInicio}T00:00:00`).toISOString(),
-      fechaFin: new Date(`${data.fechaFin}T23:59:59`).toISOString(),
+      fechaInicio: data.fechaInicio ? new Date(`${data.fechaInicio}T00:00:00Z`).toISOString() : null,
+      fechaFin: data.fechaFin ? new Date(`${data.fechaFin}T23:59:59Z`).toISOString() : null,
       estado: data.estado,
     };
-
     const ok = await insertarPlanilla(payload);
     if (ok) navigate(-1);
     else alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -114,8 +95,8 @@ export default function FormPlanilla() {
   const disableSubmit = sendingApi || isSubmitting;
 
   const diasPeriodo = useMemo(() => {
-    const i = parseYYYYMMDD(fechaInicio);
-    const f = parseYYYYMMDD(fechaFin);
+    const i = parseYMD(fechaInicio);
+    const f = parseYMD(fechaFin);
     if (!i || !f) return '—';
     return Math.round((f.getTime() - i.getTime()) / 86400000);
   }, [fechaInicio, fechaFin]);
@@ -141,7 +122,7 @@ export default function FormPlanilla() {
 
       <div className="filters-panel" style={{ borderRadius: '0 0 20px 20px' }}>
         <div className="filters-content">
-          {(saveError) && (
+          {saveError && (
             <div ref={alertRef} className="alert" role="alert" style={{ background:'#fee2e2', border:'1px solid #fecaca', color:'#991b1b',
               padding:'0.75rem 1rem', borderRadius:12, display:'flex', alignItems:'center', gap:8, marginBottom:'1rem' }}>
               <XCircle size={18} /><span>{saveError}</span>
@@ -183,9 +164,22 @@ export default function FormPlanilla() {
                 <label>Estado</label>
                 <div className="input-with-icon">
                   <ClipboardList size={16} className="input-icon" />
-                  <select className="modern-select" {...register('estado')}>
-                    {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
+                  <Controller
+                    name="estado"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        inputId="estado"
+                        options={ESTADO_OPTS}
+                        value={ESTADO_OPTS.find(o => o.value === field.value) || null}
+                        onChange={(opt) => field.onChange(opt?.value || ESTADOS[0])}
+                        placeholder="Selecciona estado"
+                        menuPortalTarget={document.body}
+                        classNamePrefix="react-select"
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      />
+                    )}
+                  />
                 </div>
               </div>
             </div>
@@ -193,7 +187,9 @@ export default function FormPlanilla() {
             <div className="filter-actions" style={{ marginTop: 8 }}>
               <button type="button" className="btn-secondary-modern"
                 onClick={() => {
-                  ['nombre','fechaInicio','fechaFin','estado'].forEach(k => setValue(k, '', { shouldValidate:true }));
+                  setValue('nombre','', { shouldValidate:true });
+                  setValue('fechaInicio','', { shouldValidate:true });
+                  setValue('fechaFin','', { shouldValidate:true });
                   setValue('estado', ESTADOS[0], { shouldValidate:true });
                 }}>
                 <AlertTriangle size={16} /> Limpiar
@@ -222,7 +218,7 @@ export default function FormPlanilla() {
         </div>
         <div className="stat-card">
           <div className="stat-icon"><ClipboardList size={20} /></div>
-          <div className="stat-content"><span className="stat-number" style={{ fontSize:'1.25rem' }}>{/* estado se ve en el select */}</span>
+          <div className="stat-content"><span className="stat-number" style={{ fontSize:'1.25rem' }}>{/* estado en el select */}</span>
             <span className="stat-label">Estado seleccionado</span></div>
         </div>
       </div>

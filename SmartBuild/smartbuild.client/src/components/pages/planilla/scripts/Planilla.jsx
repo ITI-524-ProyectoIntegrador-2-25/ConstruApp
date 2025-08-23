@@ -19,6 +19,7 @@ import '../../../../styles/Dashboard.css';
 import '../css/Planilla.css';
 import { usePlanillas } from '../../../../hooks/Planilla';
 import dashboardImg from '../../../../assets/img/dashboard.png';
+import useGlobalPagination from '../../../layout/pagination/useGlobalPagination';
 
 function toISODateOnly(d) {
   const dt = d ? new Date(d) : null;

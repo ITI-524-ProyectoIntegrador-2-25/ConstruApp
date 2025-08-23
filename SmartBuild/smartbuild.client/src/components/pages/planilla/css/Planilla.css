@@ -232,6 +232,32 @@
 }
 
 
+/* src/components/pages/planilla/css/Planilla.css */
+/* Fix: evita que los <select> nativos y menús se recorten dentro de paneles redondeados */
+.filters-panel, .filters-content { overflow: visible !important; }
+
+/* También asegura que los portales (react-select) se muestren arriba */
+.react-select-portal { z-index: 9999; }
+
+.modern-input, .modern-select {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+}
+.input-with-icon { position: relative; }
+.input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .6;}
+.modern-input { padding-left: 30px; }
+/* src/components/pages/planilla/css/Planilla.css */
+.filters-panel, .filters-content, .page-content, .main, .app { overflow: visible !important; }
+.react-select-portal { z-index: 9999; }
+.modern-input, .modern-select { height: 38px; border-radius: 8px; border: 1px solid #e5e7eb; padding: 6px 10px; }
+.input-with-icon { position: relative; }
+.input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .6; }
+.modern-input { padding-left: 30px; }
+.pagination-global { position: sticky; bottom: 64px; z-index: 5; background: transparent; }
+
+
 /* ====== Animaciones ====== */
 @keyframes pl-fade-in{
   from{ opacity:0; transform: translateY(10px); }
