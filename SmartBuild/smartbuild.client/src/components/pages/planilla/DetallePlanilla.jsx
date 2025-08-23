@@ -6,28 +6,20 @@ import {
   User, Info, ChevronDown, ChevronUp, FileSpreadsheet, Building2, Clock
 } from 'lucide-react';
 import Select from 'react-select';
-import * as XLSX from 'xlsx';
+import { COLUMN_LABELS } from '../../../constants/planilla';
 import './css/Planilla.css';
-
-// 🔧 Usa hooks (rutas correctas: subir 3 niveles)
+import {  } from '../../../utils/date';
 import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../hooks/Planilla';
 import { useEmpleados } from '../../../hooks/Empleados';
 import { usePresupuestos } from '../../../hooks/dashboard';
 
+const loadXLSX = () => import('xlsx');
+
+// 🔧 Usa hooks (rutas correctas: subir 3 niveles)
+
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];
 
-const COLUMN_LABELS = {
-  fecha: 'Fecha',
-  presupuestoNombre: 'Presupuesto',
-  empleadoNombre: 'Empleado',
-  salarioHora: 'Salario',
-  horasOrdinarias: 'Horas Ordinarias',
-  horasExtras: 'Horas Extras',
-  horasDobles: 'Horas Dobles',
-  bruto: 'Salario bruto',
-  seguro: 'Seguro',
-  neto: 'Salario neto',
-};
+/* usando COLUMN_LABELS centralizado */
 
 const estadoOptions = ESTADOS.map(e => ({ value: e, label: e }));
 
@@ -309,7 +301,9 @@ export default function DetallePlanilla() {
   };
 
   // 🔄 Exportaciones XLSX
-  const exportarResumenXLSX = () => {
+  const exportarResumenXLSX = async () => {
+    const mod = await loadXLSX();
+    const XLSX = mod.default ?? mod;
     const dur = daysBetween(planilla.fechaInicio, planilla.fechaFin);
     const aoa = [
       [
@@ -343,7 +337,9 @@ export default function DetallePlanilla() {
     XLSX.writeFile(wb, `planilla_${planilla?.idPlanilla || 'resumen'}.xlsx`);
   };
 
-  const exportarRegistrosXLSX = () => {
+  const exportarRegistrosXLSX = async () => {
+    const mod = await loadXLSX();
+    const XLSX = mod.default ?? mod;
     const rows = detalles.map(d => ({
       Fecha: d.fecha ? new Date(d.fecha).toLocaleDateString() : '',
       Proyecto: d.presupuestoNombre,

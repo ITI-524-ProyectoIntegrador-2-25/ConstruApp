@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Calendar, User, Building2, Clock } from 'lucide-react';
 import Select from 'react-select';
 import './css/Planilla.css';
+import { dateOnly, isHalfStep } from '../../../utils/date';
 
 // Hooks
 import { usePlanillas, usePlanillaDetalles, useInsertarPlanillaDetalle } from '../../../hooks/Planilla';
@@ -11,15 +12,6 @@ import { useEmpleados } from '../../../hooks/Empleados';
 import { usePresupuestos } from '../../../hooks/dashboard';
 
 // ===== utils =====
-function dateOnly(v) {
-  if (!v) return '';
-  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
-}
-function isHalfStep(n) {
-  return Number.isFinite(n) && Math.round(n * 2) === n * 2;
-}
 function isActiveFlag(v) {
   const s = String(v).toLowerCase();
   return v === 1 || v === true || s === '1' || s === 'true';

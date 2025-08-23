@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react';
 import './css/Planilla.css';
+import { dateOnly, isHalfStep } from '../../../utils/date';
+import { getUsuarioOrThrow } from '../../../utils/user';
 
 // 🔧 Hooks (rutas: subir 3 niveles hasta src/hooks)
 import { usePlanilla, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../hooks/Planilla';
@@ -10,15 +12,6 @@ import { useEmpleados } from '../../../hooks/Empleados';
 /* =========================
    Helpers
    ========================= */
-function dateOnly(v) {
-  if (!v) return '';
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toISOString().slice(0, 10);
-}
-function isHalfStep(n) {
-  return Number.isFinite(n) && Math.round(n * 2) === n * 2;
-}
 function toNum(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -94,14 +87,7 @@ export default function EditarDetalle() {
   const { actualizarPlanillaDetalle, loading: sendingApi, error: saveError } = useActualizarPlanillaDetalle();
   const [sending, setSending] = useState(false);
 
-  const getUsuario = () => {
-    try {
-      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      return u.correo || u.usuario || '';
-    } catch {
-      return '';
-    }
-  };
+  const getUsuario = () => getUsuarioOrThrow();
 
   const handleChange = e => {
     const { name, value } = e.target;
