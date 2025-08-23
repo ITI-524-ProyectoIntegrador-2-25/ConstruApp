@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Calendar,
-  Filter,
   ChevronLeft,
   DollarSign,
   TrendingUp,
@@ -21,12 +20,26 @@ export default function Subcontratos() {
   const [subcontratos, setSubcontratos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filtros, setFiltros] = useState({ fecha: '', tipoFecha: 'reales' }) // 'reales' o 'proyectadas'
+  const [filtros, setFiltros] = useState({
+    fecha: '',
+    tipoFecha: 'reales',
+    proveedor: '',
+    avanceMin: '',
+    avanceMax: '',
+    montoMin: '',
+    montoMax: '',
+    sinContactos: false,
+    sinPagos: false
+  })
 
   const [pagosPorSubcontrato, setPagosPorSubcontrato] = useState({})
+  const [contactosPorSubcontrato, setContactosPorSubcontrato] = useState({})
   const [expandedId, setExpandedId] = useState(null)
+  const [expandedContactsId, setExpandedContactsId] = useState(null)
   const [descExpandedId, setDescExpandedId] = useState(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
+  // Fetch subcontratos + todos pagos y contactos al montar
   useEffect(() => {
     const usrStr = localStorage.getItem('currentUser')
     if (!usrStr) {
@@ -37,46 +50,54 @@ export default function Subcontratos() {
     const user = JSON.parse(usrStr)
     const correo = encodeURIComponent(user.correo || user.usuario)
 
-    fetch(`${API_BASE}/SubcontratoApi/GetSubcontratos?usuario=${correo}`)
-      .then(async res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        const data = await res.json()
-        setSubcontratos(data)
-      })
-      .catch(err => {
+    const fetchData = async () => {
+      try {
+        const [subRes, pagosRes, contactosRes] = await Promise.all([
+          fetch(`${API_BASE}/SubcontratoApi/GetSubcontratos?usuario=${correo}`),
+          fetch(`${API_BASE}/PagoSubcontratoApi/GetPagosSubcontrato?usuario=${correo}`),
+          fetch(`${API_BASE}/ContactApi/GetContacts?usuario=${correo}`)
+        ])
+        if (!subRes.ok || !pagosRes.ok || !contactosRes.ok) throw new Error('Error en API')
+
+        const subData = await subRes.json()
+        const pagosData = await pagosRes.json()
+        const contactosData = await contactosRes.json()
+
+        setSubcontratos(subData)
+
+        // Map pagos por subcontrato
+        const pagosMap = {}
+        pagosData.forEach(p => {
+          if (!pagosMap[p.subcontratoID]) pagosMap[p.subcontratoID] = []
+          pagosMap[p.subcontratoID].push(p)
+        })
+        setPagosPorSubcontrato(pagosMap)
+
+        // Map contactos por subcontrato
+        const contactosMap = {}
+        contactosData.forEach(c => {
+          if (!contactosMap[c.subcontratoID]) contactosMap[c.subcontratoID] = []
+          contactosMap[c.subcontratoID].push(c)
+        })
+        setContactosPorSubcontrato(contactosMap)
+
+      } catch (err) {
         console.error(err)
-        setError('Error cargando subcontratos.')
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  const fetchPagos = async (idSubcontrato) => {
-    const usrStr = localStorage.getItem('currentUser')
-    if (!usrStr) return
-    const user = JSON.parse(usrStr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-
-    try {
-      const res = await fetch(`${API_BASE}/PagoSubcontratoApi/GetPagosSubcontrato?usuario=${correo}`)
-      if (!res.ok) throw new Error(`Status ${res.status}`)
-      const data = await res.json()
-      const pagosFiltrados = data.filter(p => p.subcontratoID === idSubcontrato)
-      setPagosPorSubcontrato(prev => ({ ...prev, [idSubcontrato]: pagosFiltrados }))
-    } catch (err) {
-      console.error('Error cargando pagos:', err)
-      setPagosPorSubcontrato(prev => ({ ...prev, [idSubcontrato]: [] }))
-    }
-  }
-
-  const toggleExpand = (idSubcontrato) => {
-    if (expandedId === idSubcontrato) {
-      setExpandedId(null)
-    } else {
-      setExpandedId(idSubcontrato)
-      if (!pagosPorSubcontrato[idSubcontrato]) {
-        fetchPagos(idSubcontrato)
+        setError('Error cargando datos.')
+      } finally {
+        setLoading(false)
       }
     }
+
+    fetchData()
+  }, [])
+
+  const toggleExpand = (idSubcontrato) => {
+    setExpandedId(prev => prev === idSubcontrato ? null : idSubcontrato)
+  }
+
+  const toggleExpandContacts = (idSubcontrato) => {
+    setExpandedContactsId(prev => prev === idSubcontrato ? null : idSubcontrato)
   }
 
   const toggleDescExpand = (idSubcontrato) => {
@@ -88,70 +109,185 @@ export default function Subcontratos() {
   }
 
   const clearFilters = () => {
-    setFiltros({ fecha: '', tipoFecha: 'reales' })
+    setFiltros({
+      fecha: '',
+      tipoFecha: 'reales',
+      proveedor: '',
+      avanceMin: '',
+      avanceMax: '',
+      montoMin: '',
+      montoMax: '',
+      sinContactos: false,
+      sinPagos: false
+    })
   }
+
+  const activeFiltersCount = Object.values(filtros).filter(val => val && val !== 'reales' && val !== false).length
 
   const results = useMemo(() => {
     let arr = subcontratos
+
     if (filtros.fecha) {
       arr = arr.filter(s => {
         const inicio = filtros.tipoFecha === 'reales' ? s.fechaInicioReal : s.fechaInicioProyectada
         return new Date(inicio).toISOString().slice(0, 10) === filtros.fecha
       })
     }
+    if (filtros.proveedor) {
+      arr = arr.filter(s =>
+        s.nombreProveedor?.toLowerCase().includes(filtros.proveedor.toLowerCase())
+      )
+    }
+    if (filtros.avanceMin) arr = arr.filter(s => s.porcentajeAvance >= Number(filtros.avanceMin))
+    if (filtros.avanceMax) arr = arr.filter(s => s.porcentajeAvance <= Number(filtros.avanceMax))
+    if (filtros.montoMin) arr = arr.filter(s => s.montoCotizado >= Number(filtros.montoMin))
+    if (filtros.montoMax) arr = arr.filter(s => s.montoCotizado <= Number(filtros.montoMax))
+
+    if (filtros.sinContactos) {
+      arr = arr.filter(s => !contactosPorSubcontrato[s.idSubcontrato] || contactosPorSubcontrato[s.idSubcontrato].length === 0)
+    }
+
+    if (filtros.sinPagos) {
+      arr = arr.filter(s => !pagosPorSubcontrato[s.idSubcontrato] || pagosPorSubcontrato[s.idSubcontrato].length === 0)
+    }
+
     return arr
-  }, [subcontratos, filtros.fecha, filtros.tipoFecha])
+  }, [
+    subcontratos,
+    filtros,
+    pagosPorSubcontrato,
+    contactosPorSubcontrato
+  ])
 
   if (loading) return <p>Cargando…</p>
   if (error) return <p className="dashboard-error">{error}</p>
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="title-group">
-          <button className="back-btn" onClick={() => navigate(-1)} title="Volver">
-            <ChevronLeft size={20} />
-          </button>
-          <h1 className="dashboard-title">📑 Subcontratos</h1>
-        </div>
+      {/* HEADER MODERNO */}
+      <header className="actividades-header">
+        <div className="header-container">
+          <div className="header-content">
+            <div className="header-left">
+              <button 
+                onClick={() => navigate(-1)} 
+                className="back-btn-modern"
+                title="Volver"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="header-title-group">
+                <div className="title-with-icon">
+                  <FileText size={28} />
+                  <h1 className="main-title">Subcontratos</h1>
+                </div>
+                <p className="header-subtitle">Gestiona tus subcontratos y pagos</p>
+              </div>
+            </div>
 
-        <Link to="nuevo" className="btn-add">+ Nuevo subcontrato</Link>
+            <div className="header-buttons">
+              <Link to="nuevo" className="btn-add">+ Nuevo subcontrato</Link>
+              <Link to="pagos/nuevo" className="btn-add" style={{ marginLeft: '0.5rem' }}>Pagos</Link>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="dashboard-filters">
-        <div className="filter-group">
-          <Calendar className="filter-icon" />
+      {/* FILTERS DROPDOWN */}
+      <div className="filters-dropdown-wrapper">
+        <button
+          className="btn-action"
+          onClick={() => setDropdownOpen(prev => !prev)}
+        >
+          Filtros {activeFiltersCount > 0 && <span className="filters-badge">+{activeFiltersCount}</span>}
+        </button>
 
-          <select
-            value={filtros.tipoFecha}
-            onChange={e => handleFilterChange('tipoFecha')(e.target.value)}
-            style={{ marginRight: '0.5rem' }}
-          >
-            <option value="reales">Fechas reales</option>
-            <option value="proyectadas">Fechas proyectadas</option>
-          </select>
+        {dropdownOpen && (
+          <div className="filters-dropdown-card">
+            <div className="filters-row">
+              <Calendar className="filter-icon" />
+              <select
+                value={filtros.tipoFecha}
+                onChange={e => handleFilterChange('tipoFecha')(e.target.value)}
+              >
+                <option value="reales">Fechas reales</option>
+                <option value="proyectadas">Fechas proyectadas</option>
+              </select>
 
-          <input
-            type="date"
-            value={filtros.fecha}
-            onChange={e => handleFilterChange('fecha')(e.target.value)}
-          />
-        </div>
+              <input
+                type="date"
+                value={filtros.fecha}
+                onChange={e => handleFilterChange('fecha')(e.target.value)}
+              />
 
-        {filtros.fecha && (
-          <button className="btn btn-outline-primary btn-sm" onClick={clearFilters} title="Limpiar filtros">
-            Limpiar
-          </button>
+              <input
+                type="text"
+                placeholder="Proveedor"
+                value={filtros.proveedor}
+                onChange={e => handleFilterChange('proveedor')(e.target.value)}
+              />
+            </div>
+
+            <div className="filters-row">
+              <input
+                type="number"
+                placeholder="Min %"
+                value={filtros.avanceMin}
+                onChange={e => handleFilterChange('avanceMin')(e.target.value)}
+                min={0} max={100}
+              />
+              <input
+                type="number"
+                placeholder="Max %"
+                value={filtros.avanceMax}
+                onChange={e => handleFilterChange('avanceMax')(e.target.value)}
+                min={0} max={100}
+              />
+              <input
+                type="number"
+                placeholder="Min ₡"
+                value={filtros.montoMin}
+                onChange={e => handleFilterChange('montoMin')(e.target.value)}
+                min={0}
+              />
+              <input
+                type="number"
+                placeholder="Max ₡"
+                value={filtros.montoMax}
+                onChange={e => handleFilterChange('montoMax')(e.target.value)}
+                min={0}
+              />
+            </div>
+
+            <div className="filters-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={filtros.sinContactos}
+                  onChange={e => handleFilterChange('sinContactos')(e.target.checked)}
+                />
+                Sin contactos
+              </label>
+              <label style={{ marginLeft: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={filtros.sinPagos}
+                  onChange={e => handleFilterChange('sinPagos')(e.target.checked)}
+                />
+                Sin pagos
+              </label>
+            </div>
+
+            {(activeFiltersCount > 0) && (
+              <button className="btn btn-outline-primary btn-sm" onClick={clearFilters}>
+                Limpiar filtros
+              </button>
+            )}
+          </div>
         )}
-
-        <button className="btn-icon" title="Filtros avanzados"><Filter /></button>
-
-        <Link to="pagos/nuevo" className="btn btn-outline-primary btn-sm" title="Registrar pagos">
-          <DollarSign size={16} style={{ marginRight: 4 }} />
-          Pagos
-        </Link>
       </div>
 
+      {/* TABLA */}
       <div className="projects-table-wrapper">
         {results.length > 0 ? (
           <table className="projects-table">
@@ -172,7 +308,6 @@ export default function Subcontratos() {
                 const fin = filtros.tipoFecha === 'reales' ? s.fechaFinReal : s.fechaFinProyectada
                 const fechaInicio = new Date(inicio)
                 const fechaFin = new Date(fin)
-
                 const isExpanded = expandedId === s.idSubcontrato
                 const isDescExpanded = descExpandedId === s.idSubcontrato
 
@@ -204,24 +339,40 @@ export default function Subcontratos() {
                       </td>
                       <td>{s.montoCotizado.toLocaleString('es-CR')}</td>
                       <td>
-                        <Link
-                          to="#"
-                          onClick={e => {
-                            e.preventDefault()
-                            toggleExpand(s.idSubcontrato)
-                          }}
-                          className="btn-link"
-                          style={{ marginRight: '1rem' }}
-                        >
-                          <Banknote size={14} style={{ marginRight: 4 }} />
-                          {isExpanded ? 'Ocultar pagos' : 'Ver pagos'}
-                        </Link>
-                        <Link to={`editar/${s.idSubcontrato}`} className="btn-link">
-                          <Edit3 size={14} style={{ marginRight: 4 }} />
-                          Editar
-                        </Link>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <Link
+                            to="#"
+                            onClick={e => {
+                              e.preventDefault()
+                              toggleExpand(s.idSubcontrato)
+                            }}
+                            className="btn-link"
+                          >
+                            <Banknote size={14} style={{ marginRight: 4 }} />
+                            {isExpanded ? 'Ocultar pagos' : 'Ver pagos'}
+                          </Link>
+
+                          <Link
+                            to="#"
+                            onClick={e => {
+                              e.preventDefault()
+                              toggleExpandContacts(s.idSubcontrato)
+                            }}
+                            className="btn-link"
+                          >
+                            <User size={14} style={{ marginRight: 4 }} />
+                            {expandedContactsId === s.idSubcontrato ? 'Ocultar contactos' : 'Ver contactos'}
+                          </Link>
+
+                          <Link to={`editar/${s.idSubcontrato}`} className="btn-link">
+                            <Edit3 size={14} style={{ marginRight: 4 }} />
+                            Editar
+                          </Link>
+                        </div>
                       </td>
                     </tr>
+
+                    {/* Pagos */}
                     {isExpanded && (
                       <tr className="payments-row">
                         <td colSpan={7}>
@@ -242,17 +393,15 @@ export default function Subcontratos() {
                                     <td>{new Date(pago.fechaPago).toLocaleDateString()}</td>
                                   </tr>
                                 ))}
-                                {/* Fila de total */}
-<tr className="total-row" style={{ backgroundColor: '#f0f0f0' }}>
-  <td style={{ fontWeight: 'bold' }}>Total</td>
-  <td style={{ fontWeight: 'bold' }}>
-    {pagosPorSubcontrato[s.idSubcontrato]
-      .reduce((sum, pago) => sum + pago.montoPagado, 0)
-      .toLocaleString('es-CR')}
-  </td>
-  <td></td>
-</tr>
-
+                                <tr className="total-row" style={{ backgroundColor: '#f0f0f0' }}>
+                                  <td style={{ fontWeight: 'bold' }}>Total</td>
+                                  <td style={{ fontWeight: 'bold' }}>
+                                    {pagosPorSubcontrato[s.idSubcontrato]
+                                      .reduce((sum, pago) => sum + pago.montoPagado, 0)
+                                      .toLocaleString('es-CR')}
+                                  </td>
+                                  <td></td>
+                                </tr>
                               </tbody>
                             </table>
                           ) : (
@@ -261,6 +410,46 @@ export default function Subcontratos() {
                         </td>
                       </tr>
                     )}
+
+                    {/* Contactos */}
+                    {expandedContactsId === s.idSubcontrato && (
+                      <tr className="contacts-row">
+                        <td colSpan={7}>
+                          {contactosPorSubcontrato[s.idSubcontrato]?.length > 0 && (
+                            <table className="payments-table">
+                              <thead>
+                                <tr>
+                                  <th>Nombre</th>
+                                  <th>Teléfono</th>
+                                  <th>Correo Electrónico</th>
+                                  <th>Principal</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {contactosPorSubcontrato[s.idSubcontrato].map(contacto => (
+                                  <tr key={contacto.idContacto}>
+                                    <td>{contacto.nombreCompleto}</td>
+                                    <td>{contacto.telefono}</td>
+                                    <td>{contacto.correoElectronico}</td>
+                                    <td>{contacto.esPrincipal ? 'Sí' : 'No'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {/* Botón siempre visible */}
+                          <Link
+                            to={`/dashboard/productividad/subcontratos/contactos/nuevo?subcontratoId=${s.idSubcontrato}`}
+                            className="btn-add"
+                            style={{ marginTop: '0.5rem', display: 'inline-block' }}
+                          >
+                            Añadir contactos
+                          </Link>
+                        </td>
+                      </tr>
+                    )}
+
                   </React.Fragment>
                 )
               })}
@@ -268,8 +457,8 @@ export default function Subcontratos() {
           </table>
         ) : (
           <p className="no-results">
-            {filtros.fecha
-              ? 'No se encontraron subcontratos con esa fecha'
+            {activeFiltersCount > 0
+              ? 'No se encontraron subcontratos con esos filtros'
               : 'No se encontraron subcontratos'}
           </p>
         )}
