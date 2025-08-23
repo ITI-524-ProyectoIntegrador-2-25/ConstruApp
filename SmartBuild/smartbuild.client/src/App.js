@@ -34,6 +34,8 @@ import FormSubcontrato   from './components/pages/productividad/FormSubcontrato'
 import FormPagoSubcontrato from './components/pages/productividad/FormPagoSubcontrato'
 import UserProfile from './components/pages/usuario/UserProfile'
 
+import FormContactoSubcontrato from './components/pages/productividad/FormContactoSubcontrato'
+
 export default function App() {
   const ProtectedRoute = ({ children }) => {
     const usrStr = localStorage.getItem('currentUser');
