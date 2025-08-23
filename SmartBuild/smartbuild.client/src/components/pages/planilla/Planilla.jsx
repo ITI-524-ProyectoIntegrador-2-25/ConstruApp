@@ -16,7 +16,7 @@ import {
   Eye
 } from 'lucide-react';
 import '../../../styles/Dashboard.css';
-import './Planilla.css';
+import './css/Planilla.css';
 import { usePlanillas } from '../../../hooks/Planilla';
 import dashboardImg from '../../../assets/img/dashboard.png';
 
@@ -67,7 +67,10 @@ export default function Planillas() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showFilters, setShowFilters] = useState(false);
 
-  const data = Array.isArray(Planillas) ? Planillas : [];
+const data = useMemo(
+  () => (Array.isArray(Planillas) ? Planillas : []),
+  [Planillas]
+);
 
   const estados = useMemo(() => {
     const s = new Set(data.map(p => p?.estado).filter(Boolean));

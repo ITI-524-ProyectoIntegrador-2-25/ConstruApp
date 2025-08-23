@@ -4,6 +4,7 @@
     {
         public int? IDActividad { get; set; }
         public int? ActividadID { get; set; }
+        public int? EmpleadoID { get; set; }
         public int? PresupuestoID { get; set; }
         public string? Descripcion { get; set; }
         public DateTime? FechaInicioProyectada { get; set; }

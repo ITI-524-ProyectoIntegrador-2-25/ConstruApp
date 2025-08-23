@@ -6,14 +6,16 @@ import {
   CheckCircle2, XCircle, FileSpreadsheet
 } from 'lucide-react';
 import '../../../styles/Dashboard.css';
-import './Planilla.css';        // ⬅️ Reutilizamos el estilo moderno
-import './FormPlanilla.css';               // (opcional) tus retoques locales
-import { insertPlanilla, getPlanilla } from '../../../api/Planilla';
+import './css/Planilla.css';
+import './css/FormPlanilla.css';
+
+// ✅ Hooks (sin llamadas directas al API)
+import { usePlanillas, useInsertarPlanilla } from '../../../hooks/Planilla';
 
 const ESTADOS = ['Abierta', 'Revisión', 'Cerrada'];
 const RANGO_DIAS = 15;
 
-// ====== Utilidades de fecha (en UTC, robustas) ======
+/* ====== Utilidades de fecha (en UTC, robustas) ====== */
 function toYYYYMMDD(date) {
   if (!(date instanceof Date) || isNaN(date)) return '';
   const y = date.getUTCFullYear();
@@ -39,20 +41,23 @@ function humanRange(ini, fin) {
   try {
     const i = new Date(`${ini}T00:00:00`);
     const f = new Date(`${fin}T00:00:00`);
-    const fmt = (dt) =>
-      dt.toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const fmt = dt => dt.toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
     return `${fmt(i)} – ${fmt(f)}`;
   } catch {
     return '';
   }
 }
-const sanitizeName = (s) => (s || '').trim().toLowerCase();
+const sanitizeName = s => (s || '').trim().toLowerCase();
 
 export default function FormPlanilla() {
   const navigate = useNavigate();
   const alertRef = useRef(null);
-  const [sending, setSending] = useState(false);
 
+  // 🔹 Hooks de datos
+  const { Planillas } = usePlanillas();
+  const { insertarPlanilla, loading: sendingApi, error: saveError } = useInsertarPlanilla();
+
+  // 🔹 Form state
   const [form, setForm] = useState({
     nombre: '',
     fechaInicio: '',
@@ -60,37 +65,23 @@ export default function FormPlanilla() {
     estado: ESTADOS[0],
   });
   const [error, setError] = useState('');
-  const [allNames, setAllNames] = useState([]);
 
-  // ====== Usuario ======
-  const getUsuario = () => {
-    try {
-      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      return u.correo || u.usuario || '';
-    } catch {
-      return '';
-    }
-  };
+  // 🔹 Nombres existentes (de hooks)
+  const allNames = useMemo(
+    () =>
+      Array.isArray(Planillas)
+        ? Planillas.map(p => sanitizeName(p?.nombre)).filter(Boolean)
+        : [],
+    [Planillas]
+  );
 
-  // ====== Nombres existentes ======
-  useEffect(() => {
-    const usuario = getUsuario();
-    if (!usuario) return;
-    getPlanilla(usuario)
-      .then((list) => {
-        const names = Array.isArray(list) ? list.map((p) => sanitizeName(p?.nombre)) : [];
-        setAllNames(names.filter(Boolean));
-      })
-      .catch(() => {});
-  }, []);
-
-  // ====== Autocalcular fecha fin (inicio + 15) ======
+  // Autocalcular fecha fin (inicio + 15)
   useEffect(() => {
     if (form.fechaInicio) {
       const fin = addDaysYYYYMMDD(form.fechaInicio, RANGO_DIAS);
-      setForm((f) => ({ ...f, fechaFin: fin }));
+      setForm(f => ({ ...f, fechaFin: fin }));
     } else {
-      setForm((f) => ({ ...f, fechaFin: '' }));
+      setForm(f => ({ ...f, fechaFin: '' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.fechaInicio]);
@@ -113,7 +104,7 @@ export default function FormPlanilla() {
     form.fechaFin !== addDaysYYYYMMDD(form.fechaInicio, RANGO_DIAS);
 
   const disableSubmit =
-    sending ||
+    sendingApi ||
     !form.nombre.trim() ||
     !fechaIniValida ||
     !fechaFinValida ||
@@ -126,8 +117,17 @@ export default function FormPlanilla() {
   // ====== Handlers ======
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    setForm(f => ({ ...f, [name]: value }));
     setError('');
+  };
+
+  const getUsuario = () => {
+    try {
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      return u.correo || u.usuario || '';
+    } catch {
+      return '';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -163,15 +163,12 @@ export default function FormPlanilla() {
       estado: form.estado,
     };
 
-    try {
-      setSending(true);
-      await insertPlanilla(payload);
+    const ok = await insertarPlanilla(payload);
+    if (ok) {
       navigate(-1);
-    } catch (err) {
-      setError(err.message || 'No se pudo guardar la planilla.');
+    } else {
+      setError(saveError || 'No se pudo guardar la planilla.');
       alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } finally {
-      setSending(false);
     }
   };
 
@@ -217,15 +214,15 @@ export default function FormPlanilla() {
             title="Guardar planilla"
           >
             <Save size={16} />
-            {sending ? 'Guardando…' : 'Guardar planilla'}
+            {sendingApi ? 'Guardando…' : 'Guardar planilla'}
           </button>
         </div>
       </div>
 
-      {/* Panel/formulario con estética moderna */}
+      {/* Panel/formulario */}
       <div className="filters-panel" style={{ borderRadius: '0 0 20px 20px' }}>
         <div className="filters-content">
-          {error && (
+          {(error || saveError) && (
             <div
               ref={alertRef}
               className="alert"
@@ -243,7 +240,7 @@ export default function FormPlanilla() {
               }}
             >
               <XCircle size={18} />
-              <span>{error}</span>
+              <span>{error || saveError}</span>
             </div>
           )}
 
@@ -262,7 +259,7 @@ export default function FormPlanilla() {
                     value={form.nombre}
                     onChange={handleChange}
                     required
-                    disabled={sending}
+                    disabled={sendingApi}
                     maxLength={80}
                     placeholder="Ej. Planilla 1ra quincena agosto"
                     aria-invalid={Boolean(nombreDuplicado || nombreCorto || nombreMuyLargo)}
@@ -294,7 +291,7 @@ export default function FormPlanilla() {
                     value={form.fechaInicio}
                     onChange={handleChange}
                     required
-                    disabled={sending}
+                    disabled={sendingApi}
                     aria-invalid={!fechaIniValida}
                   />
                 </div>
@@ -345,9 +342,9 @@ export default function FormPlanilla() {
                     name="estado"
                     value={form.estado}
                     onChange={handleChange}
-                    disabled={sending}
+                    disabled={sendingApi}
                   >
-                    {ESTADOS.map((e) => (
+                    {ESTADOS.map(e => (
                       <option key={e} value={e}>
                         {e}
                       </option>
@@ -365,7 +362,7 @@ export default function FormPlanilla() {
                 onClick={() =>
                   setForm({ nombre: '', fechaInicio: '', fechaFin: '', estado: ESTADOS[0] })
                 }
-                disabled={sending}
+                disabled={sendingApi}
                 title="Limpiar formulario"
               >
                 <AlertTriangle size={16} />
@@ -390,7 +387,7 @@ export default function FormPlanilla() {
         </div>
       </div>
 
-      {/* Tarjetas de preview (consistencia visual con Empleado) */}
+      {/* Tarjetas de preview */}
       <div className="stats-cards">
         <div className="stat-card">
           <div className="stat-icon">

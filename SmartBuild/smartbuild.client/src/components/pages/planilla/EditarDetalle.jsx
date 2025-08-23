@@ -1,177 +1,228 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react'
-import './Planilla.css'
-import { http } from '../../../api/baseAPI'
-import { getPlanillaDetalleByInfo, updatePlanillaDetalle } from '../../../api/PlanillaDetalle'
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Edit, Calendar, Clock } from 'lucide-react';
+import './css/Planilla.css';
 
+// 🔧 Hooks (rutas: subir 3 niveles hasta src/hooks)
+import { usePlanilla, usePlanillaDetalles, useActualizarPlanillaDetalle } from '../../../hooks/Planilla';
+import { useEmpleados } from '../../../hooks/Empleados';
+
+/* =========================
+   Helpers
+   ========================= */
 function dateOnly(v) {
-  if (!v) return ''
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toISOString().slice(0, 10)
+  if (!v) return '';
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
 }
 function isHalfStep(n) {
-  return Number.isFinite(n) && Math.round(n * 2) === n * 2
+  return Number.isFinite(n) && Math.round(n * 2) === n * 2;
+}
+function toNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 export default function EditarDetalle() {
-  const { idPlanilla, idDetallePlanilla } = useParams()
-  const navigate = useNavigate()
+  const { idPlanilla, idDetallePlanilla } = useParams();
+  const navigate = useNavigate();
 
-  const [detalle, setDetalle] = useState(null)
-  const [empleadoSalario, setEmpleadoSalario] = useState(null)
-  const [form, setForm] = useState({ fecha: '', salarioHora: '', horasOrdinarias: '', horasExtras: '', horasDobles: '' })
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState('')
-  const [rangoPlanilla, setRangoPlanilla] = useState({ ini: '', fin: '' })
+  // 🔹 Hooks de datos
+  const { PlanillaDetalle: planillaCab, loading: loadingPlanilla, error: errorPlanilla } = usePlanilla(idPlanilla);
+  // ⚠️ Trae TODOS los detalles para validar contra cualquier planilla
+  const { Detalles, loading: loadingDetalles, error: errorDetalles } = usePlanillaDetalles();
+  const { Empleados, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados();
+
+  // 🔹 Buscar el registro a editar dentro de los detalles ya cargados
+  const detalle = useMemo(() => {
+    const list = Array.isArray(Detalles) ? Detalles : [];
+    const idNum = Number(idDetallePlanilla);
+    return list.find(d =>
+      Number(d.idDetallePlanilla ?? d.IdDetallePlanilla ?? d.idPlanillaDetalle) === idNum
+    ) || null;
+  }, [Detalles, idDetallePlanilla]);
+
+  // 🔹 Rango de la planilla (ini/fin) desde el hook de planilla
+  const rangoPlanilla = useMemo(() => {
+    if (!planillaCab) return { ini: '', fin: '' };
+    return {
+      ini: dateOnly(planillaCab.fechaInicio || planillaCab.FechaInicio),
+      fin: dateOnly(planillaCab.fechaFin || planillaCab.FechaFin),
+    };
+  }, [planillaCab]);
+
+  // 🔹 Salario del empleado (si existe) — bloquea input de salario
+  const empleadoSalario = useMemo(() => {
+    if (!detalle) return null;
+    const emp = (Array.isArray(Empleados) ? Empleados : []).find(
+      e => e.idEmpleado === (detalle.empleadoID ?? detalle.EmpleadoID)
+    );
+    return emp?.salarioHora != null ? Number(emp.salarioHora) : null;
+  }, [Empleados, detalle]);
+
+  // 🔹 Estado del formulario
+  const [form, setForm] = useState({
+    fecha: '',
+    salarioHora: '',
+    horasOrdinarias: '',
+    horasExtras: '',
+    horasDobles: ''
+  });
+  const [error, setError] = useState('');
+
+  // 🔹 Inicializar form cuando llega el detalle
+  useEffect(() => {
+    if (!detalle) return;
+    setForm({
+      fecha: detalle.fecha ? String(detalle.fecha).slice(0, 10) : '',
+      salarioHora: detalle.salarioHora ?? '',
+      horasOrdinarias: detalle.horasOrdinarias ?? '',
+      horasExtras: detalle.horasExtras ?? '',
+      horasDobles: detalle.horasDobles ?? ''
+    });
+  }, [detalle]);
+
+  // 🔹 Si hay salario del empleado, usarlo (y bloquear edición)
+  useEffect(() => {
+    if (empleadoSalario != null) {
+      setForm(prev => ({ ...prev, salarioHora: empleadoSalario }));
+    }
+  }, [empleadoSalario]);
+
+  // 🔹 Hook para actualizar (PUT)
+  const { actualizarPlanillaDetalle, loading: sendingApi, error: saveError } = useActualizarPlanillaDetalle();
+  const [sending, setSending] = useState(false);
 
   const getUsuario = () => {
     try {
-      const u = JSON.parse(localStorage.getItem('currentUser') || '{}')
-      return u.correo || u.usuario || ''
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      return u.correo || u.usuario || '';
     } catch {
-      return ''
+      return '';
     }
-  }
-
-  useEffect(() => {
-    const detalleId = Number(idDetallePlanilla)
-    if (!Number.isFinite(detalleId)) {
-      setError('ID de detalle de planilla no válido')
-      setLoading(false)
-      return
-    }
-    ;(async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const usuario = getUsuario()
-        if (!usuario) throw new Error('Usuario no autenticado')
-
-        const d = await getPlanillaDetalleByInfo(detalleId, usuario)
-        if (!d) throw new Error('Detalle no encontrado')
-        setDetalle(d)
-
-        const empleados = await http.get('/EmpleadoApi/GetEmpleado', { params: { usuario } })
-        const emp = Array.isArray(empleados) ? empleados.find(e => e.idEmpleado === d.empleadoID) : null
-        if (emp?.salarioHora != null) setEmpleadoSalario(Number(emp.salarioHora))
-
-        setForm({
-          fecha: d.fecha ? String(d.fecha).slice(0, 10) : '',
-          salarioHora: d.salarioHora ?? '',
-          horasOrdinarias: d.horasOrdinarias ?? '',
-          horasExtras: d.horasExtras ?? '',
-          horasDobles: d.horasDobles ?? ''
-        })
-
-        let cab = await http.get('/PlanillaApi/GetPlanillabyInfo', { params: { idPlanilla: Number(d.planillaID || idPlanilla), Usuario: usuario } })
-        cab = Array.isArray(cab) ? cab[0] : cab
-        if (!cab || (!cab.fechaInicio && !cab.fechaFin)) {
-          const todas = await http.get('/PlanillaApi/GetPlanilla', { params: { usuario } })
-          cab = (Array.isArray(todas) ? todas : []).find(p => p.idPlanilla === Number(d.planillaID || idPlanilla))
-        }
-        const ini = dateOnly(cab?.fechaInicio || cab?.FechaInicio)
-        const fin = dateOnly(cab?.fechaFin || cab?.FechaFin)
-        setRangoPlanilla({ ini, fin })
-      } catch (e) {
-        setError(e.message || 'Error al cargar')
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [idDetallePlanilla, idPlanilla])
-
-  useEffect(() => {
-    if (empleadoSalario != null) setForm(prev => ({ ...prev, salarioHora: empleadoSalario }))
-  }, [empleadoSalario])
+  };
 
   const handleChange = e => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-    setError('')
-  }
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setError('');
+  };
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-    setError('')
+  // 🔒 Duplicado GLOBAL empleado+fecha (excluye el propio registro)
+  const empleadoFechaDuplicado = useMemo(() => {
+    if (!detalle || !form.fecha) return false;
 
-    const usuario = getUsuario()
+    const myId =
+      Number(detalle.idDetallePlanilla ?? detalle.IdDetallePlanilla ?? detalle.idPlanillaDetalle);
+    const empId = Number(detalle.empleadoID ?? detalle.EmpleadoID);
+    const fechaNueva = dateOnly(form.fecha);
+
+    const list = Array.isArray(Detalles) ? Detalles : [];
+    return list.some(d => {
+      const did =
+        Number(d.idDetallePlanilla ?? d.IdDetallePlanilla ?? d.idPlanillaDetalle);
+      const demp = Number(d.empleadoID ?? d.EmpleadoID);
+      const dfecha = dateOnly(d.fecha ?? d.Fecha);
+      return did !== myId && demp === empId && dfecha === fechaNueva;
+    });
+  }, [Detalles, detalle, form.fecha]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const usuario = getUsuario();
     if (!usuario) {
-      setError('Usuario no autenticado')
-      return
+      setError('Usuario no autenticado');
+      return;
     }
 
-    const so = Number(form.horasOrdinarias || 0)
-    const se = Number(form.horasExtras || 0)
-    const sd = Number(form.horasDobles || 0)
-    const sh = Number(empleadoSalario != null ? empleadoSalario : (form.salarioHora || 0))
+    if (empleadoFechaDuplicado) {
+      setError('Ese empleado ya tiene un registro en esa fecha (en otra planilla).');
+      return;
+    }
 
-    const dStr = dateOnly(form.fecha)
-    const dNum = Date.parse(dStr)
-    const iniNum = Date.parse(rangoPlanilla.ini)
-    const finNum = Date.parse(rangoPlanilla.fin)
+    const so = toNum(form.horasOrdinarias);
+    const se = toNum(form.horasExtras);
+    const sd = toNum(form.horasDobles);
+    const sh = toNum(empleadoSalario != null ? empleadoSalario : form.salarioHora);
 
+    const dStr = dateOnly(form.fecha);
+    const dNum = Date.parse(dStr);
+    const iniNum = Date.parse(rangoPlanilla.ini);
+    const finNum = Date.parse(rangoPlanilla.fin);
+
+    if (!form.fecha || Number.isNaN(dNum)) {
+      setError('Fecha inválida');
+      return;
+    }
     if (Number.isFinite(iniNum) && dNum < iniNum) {
-      setError(`La fecha no puede ser anterior al inicio de la planilla (${rangoPlanilla.ini})`)
-      return
+      setError(`La fecha no puede ser anterior al inicio de la planilla (${rangoPlanilla.ini})`);
+      return;
     }
     if (Number.isFinite(finNum) && dNum > finNum) {
-      setError(`La fecha no puede ser posterior al fin de la planilla (${rangoPlanilla.fin})`)
-      return
+      setError(`La fecha no puede ser posterior al fin de la planilla (${rangoPlanilla.fin})`);
+      return;
     }
     if ([so, se, sd].some(v => v < 0) || sh <= 0) {
-      setError('Horas y salario deben ser mayores o iguales a 0; el salario mayor a 0')
-      return
+      setError('Horas y salario deben ser ≥ 0; el salario mayor a 0');
+      return;
     }
     if (!isHalfStep(so) || !isHalfStep(se) || !isHalfStep(sd)) {
-      setError('Las horas deben ingresarse en incrementos de 0.5')
-      return
+      setError('Las horas deben ingresarse en incrementos de 0.5');
+      return;
     }
     if (so + se + sd < 0.5) {
-      setError('Debe registrar al menos 0.5 hora en alguna categoría')
-      return
+      setError('Debe registrar al menos 0.5 hora en alguna categoría');
+      return;
     }
     if (so + se + sd > 24) {
-      setError('La suma de horas no puede superar 24 en un día')
-      return
+      setError('La suma de horas no puede superar 24 en un día');
+      return;
     }
 
-    const ts = new Date().toISOString()
+    const ts = new Date().toISOString();
     const payload = {
       usuario,
       quienIngreso: detalle?.quienIngreso ?? usuario,
       cuandoIngreso: detalle?.cuandoIngreso ?? ts,
       quienModifico: usuario,
       cuandoModifico: ts,
+
       idDetallePlanilla: Number(idDetallePlanilla),
-      planillaID: detalle?.planillaID ?? null,
+      planillaID: detalle?.planillaID ?? Number(idPlanilla) ?? null,
       empleadoID: detalle?.empleadoID ?? null,
       presupuestoID: detalle?.presupuestoID ?? null,
+
       fecha: form.fecha ? new Date(form.fecha).toISOString() : null,
       salarioHora: Number(sh.toFixed(2)),
       horasOrdinarias: so,
       horasExtras: se,
       horasDobles: sd,
       detalle: detalle?.detalle ?? ''
-    }
+    };
 
     try {
-      setSending(true)
-      await updatePlanillaDetalle(payload)
-      if (idPlanilla) navigate(`/dashboard/planilla/${idPlanilla}`)
-      else navigate(-1)
-    } catch (e) {
-      setError(e.message || 'Error al actualizar')
+      setSending(true);
+      const ok = await actualizarPlanillaDetalle(payload);
+      if (ok) {
+        idPlanilla ? navigate(`/dashboard/planilla/${idPlanilla}`) : navigate(-1);
+      } else {
+        setError(saveError || 'Error al actualizar');
+      }
+    } catch (err) {
+      setError(err.message || 'Error al actualizar');
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }
+  };
 
-  if (loading) return <p>Cargando...</p>
-  if (error && !detalle) return <p className="detalle-error">{error}</p>
-  if (!detalle) return null
+  const cargando = loadingPlanilla || loadingDetalles || loadingEmpleados;
+  const errorGlobal = error || errorPlanilla || errorDetalles || errorEmpleados;
+
+  if (cargando) return <p>Cargando...</p>;
+  if (!detalle) return <p className="detalle-error">Detalle no encontrado</p>;
 
   return (
     <div className="empleados-page-modern form-planilla-modern">
@@ -193,7 +244,11 @@ export default function EditarDetalle() {
       {/* PANEL / FORM */}
       <div className="filters-panel">
         <div className="filters-content">
-          {error && <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>{error}</div>}
+          {(errorGlobal || empleadoFechaDuplicado) && (
+            <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>
+              {empleadoFechaDuplicado ? 'Ese empleado ya tiene un registro en esa fecha (en otra planilla).' : String(errorGlobal)}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="form-dashboard"
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -207,8 +262,7 @@ export default function EditarDetalle() {
                 name="fecha"
                 value={form.fecha}
                 onChange={handleChange}
-                required
-                disabled={sending}
+                disabled={sending || sendingApi}
                 min={rangoPlanilla.ini || undefined}
                 max={rangoPlanilla.fin || undefined}
                 className="modern-input"
@@ -222,7 +276,7 @@ export default function EditarDetalle() {
                 name="salarioHora"
                 value={form.salarioHora}
                 onChange={handleChange}
-                disabled={sending || empleadoSalario != null}
+                disabled={sending || sendingApi || empleadoSalario != null}
                 min="0.01"
                 step="0.01"
                 className="modern-input"
@@ -289,8 +343,8 @@ export default function EditarDetalle() {
               >
                 Cancelar
               </button>
-              <button type="submit" className="btn-primary-modern" disabled={sending}>
-                {sending ? 'Guardando…' : 'Guardar cambios'}
+              <button type="submit" className="btn-primary-modern" disabled={sending || sendingApi || empleadoFechaDuplicado}>
+                {(sending || sendingApi) ? 'Guardando…' : 'Guardar cambios'}
               </button>
             </div>
           </form>
@@ -312,12 +366,12 @@ export default function EditarDetalle() {
           <div className="stat-icon"><Clock size={18} /></div>
           <div className="stat-content">
             <span className="stat-number">
-              {(Number(form.horasOrdinarias || 0) + Number(form.horasExtras || 0) + Number(form.horasDobles || 0)) || 0}
+              {(toNum(form.horasOrdinarias) + toNum(form.horasExtras) + toNum(form.horasDobles)) || 0}
             </span>
             <span className="stat-label">Horas totales</span>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

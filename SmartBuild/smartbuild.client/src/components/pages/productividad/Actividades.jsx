@@ -74,7 +74,7 @@ export default function Actividades() {
   const getEstadoColor = (estado) => {
     switch(estado) {
       case 'completada': return '#059669';
-      case 'en-progreso': return '#d97706';
+      case 'enprogreso': return '#d97706';
       case 'pendiente': return '#dc2626';
       default: return '#6b7280';
     }

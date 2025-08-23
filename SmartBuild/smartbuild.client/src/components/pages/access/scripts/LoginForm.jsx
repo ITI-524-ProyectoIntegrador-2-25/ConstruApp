@@ -1,54 +1,81 @@
 // src/components/pages/access/scripts/LoginForm.jsx
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
-import { FaGoogle, FaFacebookF } from 'react-icons/fa'
-import '../styles/LoginForm.css'
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import { FaGoogle, FaFacebookF } from 'react-icons/fa';
+import '../styles/LoginForm.css';
 
-const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
+const API_BASE = 'https://smartbuild-001-site1.ktempurl.com';
 
 export default function LoginForm() {
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPwd, setShowPwd]   = useState(false)
-  const [error, setError]       = useState('')
-  const navigate                = useNavigate()
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [showPwd, setShowPwd]   = useState(false);
+  const [remember, setRemember] = useState(() => localStorage.getItem('rememberMe') === '1'); // ⬅️ estado recordarme
+  const [error, setError]       = useState('');
+  const navigate                = useNavigate();
+
+  // ⬅️ Si ya hay sesión y el usuario eligió "Recordarme", saltamos directo al dashboard
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('currentUser');
+      const remembered = localStorage.getItem('rememberMe') === '1';
+      if (savedUser && remembered) {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [navigate]);
 
   const handleSubmit = async e => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     try {
       const res = await fetch(
         `${API_BASE}/UsuarioApi/LoginUsuario?correo=${encodeURIComponent(email)}&contrasena=${encodeURIComponent(password)}`,
-        { method: 'GET', headers: { 'Accept': 'application/json' } }
-      )
-      if (!res.ok) throw new Error(`Status ${res.status}`)
-      const data = await res.json()
+        { method: 'GET', headers: { Accept: 'application/json' } }
+      );
+      if (!res.ok) throw new Error(`Status ${res.status}`);
 
-      // data puede venir como array o directo objeto
-      const usuarioObj = Array.isArray(data) ? data[0] : data
-      const msg = usuarioObj.msg || ''.toLowerCase()
+      const data = await res.json();
+      const usuarioObj = Array.isArray(data) ? data[0] : data;
 
-      if (msg.includes('Autorizado') || msg.includes('Ingreso')) {
+      // 🔧 corrección de paréntesis
+      const msg = (usuarioObj?.msg || '').toLowerCase();
+
+      if (msg.includes('autorizado') || msg.includes('ingreso')) {
         const userToStore = {
           ...usuarioObj,
-          correo: email,         // o la variable donde tengas el valor del input
-          usuario: email         // opcional, si tu código más abajo busca user.usuario
-        }
-        localStorage.setItem('currentUser', JSON.stringify(userToStore))
+          correo: email,
+          usuario: email, // por compatibilidad con otras partes del código
+        };
 
-          navigate('/dashboard')
+        // Persistimos usuario (como ya hacía tu código)
+        localStorage.setItem('currentUser', JSON.stringify(userToStore));
+
+        // ⬅️ persistimos preferencia de "recordarme"
+        if (remember) {
+          localStorage.setItem('rememberMe', '1');
+          // (opcional) guardar correo para autofill futuro
+          localStorage.setItem('rememberEmail', email);
+        } else {
+          localStorage.setItem('rememberMe', '0');
+          localStorage.removeItem('rememberEmail');
+        }
+
+        navigate('/dashboard');
       } else if (msg.includes('activo')) {
-        setError('Su usuario no se encuentra activo')
+        setError('Su usuario no se encuentra activo');
       } else {
-        setError('Usuario o contraseña inválidos')
+        setError('Usuario o contraseña inválidos');
       }
     } catch (err) {
-      console.error('Login error:', err)
-      setError('Ocurrió un error al iniciar sesión. Intenta más tarde.')
+      console.error('Login error:', err);
+      setError('Ocurrió un error al iniciar sesión. Intenta más tarde.');
     }
-  }
+  };
 
   return (
     <div className="login-card">
@@ -59,9 +86,14 @@ export default function LoginForm() {
         <div className="form-group">
           <label htmlFor="email">Escribe tu correo electrónico</label>
           <input
-            id="email" type="email" placeholder="Correo electrónico"
-            className="input" value={email}
-            onChange={e => setEmail(e.target.value)} required
+            id="email"
+            type="email"
+            placeholder="Correo electrónico"
+            className="input"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            autoComplete="username"
           />
         </div>
 
@@ -76,6 +108,7 @@ export default function LoginForm() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
             <button
               type="button"
@@ -83,7 +116,7 @@ export default function LoginForm() {
               onClick={() => setShowPwd(v => !v)}
               aria-label={showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
-              {showPwd ? <EyeOff size={20}/> : <Eye size={20}/>}
+              {showPwd ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
           {error && (
@@ -94,10 +127,18 @@ export default function LoginForm() {
         </div>
 
         <div className="options-row">
-          <label className="checkbox-label">
-            <input type="checkbox" /> Recordarme
+          <label className="checkbox-label" htmlFor="rememberMe">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+            />{' '}
+            Recordarme
           </label>
-          <Link to="/forgot-password" className="forgot-link">Olvidé mi contraseña</Link>
+          <Link to="/forgot-password" className="forgot-link">
+            Olvidé mi contraseña
+          </Link>
         </div>
 
         <button type="submit" className="submit-btn">Iniciar sesión</button>
@@ -113,5 +154,5 @@ export default function LoginForm() {
         ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
       </div>
     </div>
-  )
+  );
 }
