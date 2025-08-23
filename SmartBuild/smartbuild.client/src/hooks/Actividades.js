@@ -1,8 +1,6 @@
-import { useEffect , useState } from 'react';
+import { useEffect , useState, useCallback } from 'react';
 
 // API
-import { getPresupuestos } from '../api/dashboard'
-import { getEmpleados } from '../api/Empleados'
 import { getActividades, getActividad, updateActividad, insertActividad } from '../api/Actividades';
 
 export const useActividades = () => {
@@ -26,7 +24,6 @@ export const useActividades = () => {
         const data = await getActividades(correo);
         setActividades(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
         setError('No se pudieron cargar las Actividades.');
       } finally {
         setLoading(false);
@@ -44,53 +41,51 @@ export const useActividad = (idActividad) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser');
+  const refetch = useCallback(async () => {
+    const usuarioStr = localStorage.getItem('currentUser')
     if (!usuarioStr) {
-      setError('Usuario no autenticado');
-      setLoading(false);
-      return;
+      setError('Usuario no autenticado')
+      setLoading(false)
+      return
     }
 
-    const user = JSON.parse(usuarioStr);
-    const correo = encodeURIComponent(user.correo || user.usuario);
+    const user = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+    
+    setLoading(true)
+    setError('')
 
-    const fetchActividadDetalle = async () => {
-      try {
-        const data = await getActividad(correo, idActividad);
-        console.log('data')
-        console.dir(data)
-        if (Array.isArray(data)) {
-            if (data.length === 0) throw new Error('Actividad no encontrada')
-            setDetalle(data[0])
-        } else if (typeof data === 'object' && data.idActividad) {
-            setDetalle(data)
-        } else {
-            throw new Error('Formato inesperado del API')
-        }
-      } catch (err) {
-        console.error(err);
-        setError('No se pudieron cargar las Actividades.');
-      } finally {
-        setLoading(false);
+    try {
+      const data = await getActividad(correo, idActividad)
+      
+      if (Array.isArray(data)) {
+        if (data.length === 0) throw new Error('Actividad no encontrada')
+        setDetalle(data[0])
+      } else if (typeof data === 'object' && data.idActividad) {
+        setDetalle(data)
+      } else {
+        throw new Error('Formato inesperado del API')
       }
-    };
+    } catch (err) {
+      setError('No se pudieron cargar las Actividades.')
+    } finally {
+      setLoading(false)
+    }
+  }, [idActividad])
 
-    fetchActividadDetalle();
-  }, [idActividad]);
+  useEffect(() => {
+    refetch()
+  }, [refetch])
 
-  return { ActividadDetalle, loading, error };
-
-
-  
-};
+  return { ActividadDetalle, loading, error, refetch }
+}
 
 export const useInsertarActualizarActividades = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  // CAMBIO: esta función ya no comienza con "use"
+
   const guardarActividad = async (actividad) => {
     setLoading(true)
     setError('')
@@ -104,7 +99,6 @@ export const useInsertarActualizarActividades = () => {
       setSuccess(true)
       return true
     } catch (err) {
-      console.error(err)
       setError(err.message || 'Error al guardar la actividad')
       return false
     } finally {
@@ -113,87 +107,4 @@ export const useInsertarActualizarActividades = () => {
   }
 
   return { guardarActividad, loading, error, success }
-}
-
-
-
-export const useActividadCompleta = (idActividad) => {
-  const [ActividadDetalle, setActividadDetalle] = useState(null)
-  const [presupuestosOptions, setPresupuestosOptions] = useState([])
-  const [empleadosOptions, setEmpleadosOptions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [notFound, setNotFound] = useState(false)
-
-  useEffect(() => {
-    const usuarioStr = localStorage.getItem('currentUser')
-    if (!usuarioStr) {
-      setError('Usuario no autenticado')
-      setLoading(false)
-      return
-    }
-
-    const user = JSON.parse(usuarioStr)
-    const correo = encodeURIComponent(user.correo || user.usuario)
-
-    const fetchData = async () => {
-      try {
-        const [actData, presData, empData] = await Promise.all([
-          getActividad(correo, idActividad),
-          getPresupuestos(correo),
-          getEmpleados(correo),
-        ])
-
-        // Procesar Actividad
-        let actividad = null
-        if (Array.isArray(actData)) {
-          if (actData.length === 0) {
-            setNotFound(true)
-          } else {
-            actividad = actData[0]
-          }
-        } else if (typeof actData === 'object' && actData.idActividad) {
-          actividad = actData
-        } else {
-          setNotFound(true)
-        }
-
-        setActividadDetalle(actividad)
-
-        // Procesar Presupuestos
-        const presupuestosList = Array.isArray(presData) ? presData : []
-        setPresupuestosOptions(
-          presupuestosList.map(p => ({
-            idPresupuesto: p.idPresupuesto,
-            label: p.descripcion,
-          }))
-        )
-
-        // Procesar Empleados
-        const empleadosList = Array.isArray(empData) ? empData : []
-        setEmpleadosOptions(
-          empleadosList.map(e => ({
-            idEmpleado: e.idEmpleado,
-            label: e.nombreCompleto,
-          }))
-        )
-      } catch (err) {
-        console.error(err)
-        setError('No se pudieron cargar los datos.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [idActividad])
-
-  return {
-    ActividadDetalle,
-    presupuestosOptions,
-    empleadosOptions,
-    loading,
-    error,
-    notFound,
-  }
 }

@@ -1,4 +1,4 @@
-// DetalleEmpleado.jsx - Versión Mejorada con corrección de estado activo
+// DetalleEmpleado.jsx - Versión corregida para sincronización
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Edit2, Save, X, User, Mail, IdCard, Briefcase, BadgeCent, Calendar, CheckCircle, XCircle } from 'lucide-react'
@@ -13,15 +13,21 @@ export default function DetalleEmpleado() {
   const { idEmpleado } = useParams()
   const navigate = useNavigate()
 
-  // 🔹 IMPORTANTE: Obtenemos setEmpleadoDetalle del hook
-  const { EmpleadoDetalle, setEmpleadoDetalle, loading, error } = useEmpleado(idEmpleado)
+  // 🔹 Agregamos refetch para recargar datos después de actualizar
+  const { EmpleadoDetalle, loading, error, refetch } = useEmpleado(idEmpleado)
   const { guardarEmpleado } = useInsertarActualizarEmpleados()
 
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false) 
   const [form, setForm] = useState({
     nombre: '', apellido: '', identificacion: '', correo: '',
     puesto: '', salarioHora: '', activo: 'true', fechaIngreso: ''
   })
+
+
+  const normalizeActivoForDB = (activo) => {
+    return activo === 'true' ? true : false
+  }
 
   // Inicializa form cuando llega el EmpleadoDetalle
   React.useEffect(() => {
@@ -42,10 +48,7 @@ export default function DetalleEmpleado() {
       try {
         const fechaObj = new Date(fecha)
         if (!isNaN(fechaObj.getTime())) {
-          const año = fechaObj.getFullYear()
-          const mes = String(fechaObj.getMonth() + 1).padStart(2, '0')
-          const dia = String(fechaObj.getDate()).padStart(2, '0')
-          return `${año}-${mes}-${dia}`
+          return fechaObj.toISOString().split('T')[0]
         }
         return ''
       } catch {
@@ -65,7 +68,7 @@ export default function DetalleEmpleado() {
       salarioHora:    EmpleadoDetalle.salarioHora != null
                          ? String(EmpleadoDetalle.salarioHora)
                          : '',
-      activo:         activoStr,
+      activo:         normalizeActivoForDB(EmpleadoDetalle.activo),
       fechaIngreso:   defaultFecha
     })
   }, [EmpleadoDetalle])
@@ -76,77 +79,83 @@ export default function DetalleEmpleado() {
   }
 
   const handleSubmit = async e => {
-    e.preventDefault()
-    if (!form.nombre.trim() || !form.identificacion.trim()) {
-      alert('Nombre e identificación son obligatorios')
-      return
+  e.preventDefault()
+  
+  if (!form.nombre.trim() || !form.identificacion.trim()) {
+    return
+  }
+  
+  const usr = localStorage.getItem('currentUser')
+  if (!usr) return
+
+  setIsSaving(true)
+
+  try {
+    // Parsear usuario actual
+    let usuarioActual;
+    try {
+      const userObj = JSON.parse(usr);
+      usuarioActual = userObj.correo || userObj.usuario || usr;
+    } catch {
+      usuarioActual = usr;
     }
-    const usr = localStorage.getItem('currentUser')
-    if (!usr) return alert('Usuario no autenticado')
+
+    // Preparar fecha en formato ISO
+    let fechaISO = ''
+    if (form.fechaIngreso) {
+      try {
+        const fechaLocal = new Date(form.fechaIngreso + 'T12:00:00')
+        fechaISO = fechaLocal.toISOString()
+      } catch {
+        fechaISO = new Date().toISOString()
+      }
+    }
 
     const payload = {
+      // Campos de auditoría obligatorios
+      usuario: usuarioActual,
+      quienIngreso: EmpleadoDetalle?.quienIngreso || usuarioActual,
+      cuandoIngreso: EmpleadoDetalle?.cuandoIngreso || new Date().toISOString(),
+      quienModifico: usuarioActual,
+      cuandoModifico: new Date().toISOString(),
+      
+      // Datos del empleado
       idEmpleado: Number(idEmpleado),
-      nombre: form.nombre,
-      apellido: form.apellido,
-      identificacion: form.identificacion,
-      puesto: form.puesto,
-      salarioHora: String(form.salarioHora), 
-      fechaIngreso: new Date(form.fechaIngreso).toISOString(), 
-      correo: form.correo,
-      activo: form.activo === 'true' ? true : false
+      nombre: form.nombre.trim(),
+      apellido: form.apellido.trim(),
+      identificacion: form.identificacion.trim(),
+      puesto: form.puesto.trim(),
+      salarioHora: String(form.salarioHora || '0'),
+      fechaIngreso: fechaISO,
+      correo: form.correo.trim(),
+      activo: form.activo === 'true' ? 'True' : 'False'
     }
 
-    try {
-      const success = await guardarEmpleado(payload)
-      if (success) {
-        
-        // 🔹 SOLUCIÓN: Actualizar el estado local con los nuevos datos
-        const empleadoActualizado = {
-          ...EmpleadoDetalle,
-          nombre: form.nombre,
-          apellido: form.apellido,
-          identificacion: form.identificacion,
-          puesto: form.puesto,
-          salarioHora: form.salarioHora,
-          correo: form.correo,
-          activo: form.activo === 'true' ? 1 : 0, 
-        }
-        
-        setEmpleadoDetalle(empleadoActualizado)
-        
-        setIsEditing(false) // salir de edición
-      } else {
-        alert('Error al guardar los cambios')
-      }
-    } catch (error) {
-      console.error('Error en handleSubmit:', error)
-      alert('Error al guardar: ' + (error.message || 'Desconocido'))
+    const success = await guardarEmpleado(payload)
+    
+    if (success) {
+      await refetch()
+      setIsEditing(false)
+    } else {
+      throw new Error('La operación de guardado falló')
     }
+    
+  } catch (error) {
+    await refetch()
+  } finally {
+    setIsSaving(false)
   }
+}
 
   const handleCancelEdit = () => {
     setIsEditing(false)
-    // Restaurar form con los datos originales
     if (EmpleadoDetalle) {
-      let activoStr = 'true'
-      if (EmpleadoDetalle.activo != null) {
-        const valor = EmpleadoDetalle.activo
-        if (valor === 1 || valor === '1' || valor === true || valor === 'true') {
-          activoStr = 'true'
-        } else if (valor === 0 || valor === '0' || valor === false || valor === 'false') {
-          activoStr = 'false'
-        }
-      }
-
       const formatearFechaParaInput = (fecha) => {
         if (!fecha) return ''
         try {
           const fechaObj = new Date(fecha)
           if (!isNaN(fechaObj.getTime())) {
-            const año = fechaObj.getFullYear()
-            const mes = String(fechaObj.getMonth() + 1).padStart(2, '0')
-            const dia = String(fechaObj.getDate()).padStart(2, '0')
-            return `${año}-${mes}-${dia}`
+            return fechaObj.toISOString().split('T')[0]
           }
           return ''
         } catch {
@@ -166,14 +175,14 @@ export default function DetalleEmpleado() {
         salarioHora:    EmpleadoDetalle.salarioHora != null
                            ? String(EmpleadoDetalle.salarioHora)
                            : '',
-        activo:         activoStr,
+        activo:         normalizeActivoForDB(EmpleadoDetalle.activo),
         fechaIngreso:   defaultFecha
       })
     }
   }
 
   const isEmployeeActive = (activo) => {
-    return activo === 1 || activo === '1' || activo === true || activo === 'true'
+    return activo === 1 || activo === '1' || activo === true || activo === 'true' || activo === 'True'
   }
 
   const fieldsConfig = {
@@ -229,7 +238,6 @@ export default function DetalleEmpleado() {
             </div>
             <div>
               <h1>
-                {/* 🔹 Mostrar datos actualizados del EmpleadoDetalle */}
                 {EmpleadoDetalle.nombre} {EmpleadoDetalle.apellido}
               </h1>
               <p className="employee-id">ID: #{EmpleadoDetalle.idEmpleado}</p>
@@ -239,7 +247,6 @@ export default function DetalleEmpleado() {
         
         <div className="header-right">
           <div className={`status-badge ${isEmployeeActive(EmpleadoDetalle.activo) ? 'active' : 'inactive'}`}>
-            {/* 🔹 Mostrar el estado actual del EmpleadoDetalle */}
             {isEmployeeActive(EmpleadoDetalle.activo) ? (
               <>
                 <CheckCircle size={16} />
@@ -260,14 +267,29 @@ export default function DetalleEmpleado() {
             </button>
           ) : (
             <div className="edit-actions">
-              <button type="submit" form="employee-form" className="btn-primary">
-                <Save size={16} />
-                <span>Guardar</span>
+              <button 
+                type="submit" 
+                form="employee-form" 
+                className="btn-primary"
+                disabled={isSaving} 
+              >
+                {isSaving ? (
+                  <>
+                    <div className="loading-spinner-small"></div>
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    <span>Guardar</span>
+                  </>
+                )}
               </button>
               <button 
                 type="button" 
                 className="btn-secondary" 
-                onClick={handleCancelEdit} 
+                onClick={handleCancelEdit}
+                disabled={isSaving} 
               >
                 <X size={16} />
                 <span>Cancelar</span>
@@ -306,6 +328,7 @@ export default function DetalleEmpleado() {
                         onChange={handleChange}
                         className="field-input"
                         required
+                        disabled={isSaving} 
                         step={key === 'salarioHora' ? '0.01' : undefined}
                         min={key === 'salarioHora' ? '0' : undefined}
                       />
@@ -331,6 +354,7 @@ export default function DetalleEmpleado() {
                     value={form.activo} 
                     onChange={handleChange}
                     className="field-select"
+                    disabled={isSaving} 
                   >
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>
@@ -348,6 +372,7 @@ export default function DetalleEmpleado() {
                     value={form.fechaIngreso} 
                     onChange={handleChange}
                     className="field-input"
+                    disabled={isSaving} // 🔹 Deshabilitar mientras guarda
                     required 
                   />
                 </div>
@@ -364,7 +389,7 @@ export default function DetalleEmpleado() {
               <div className="details-grid">
                 {Object.entries(fieldsConfig).map(([key, config]) => {
                   const Icon = config.icon
-                  let displayValue = EmpleadoDetalle[key] // 🔹 Usar EmpleadoDetalle actualizado
+                  let displayValue = EmpleadoDetalle[key]
                   if (key === 'salarioHora' && displayValue) {
                     displayValue = `₡${parseFloat(displayValue).toLocaleString('es-CR', { 
                       minimumFractionDigits: 2,

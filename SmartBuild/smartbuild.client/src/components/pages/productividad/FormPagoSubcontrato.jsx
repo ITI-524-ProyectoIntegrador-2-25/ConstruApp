@@ -20,7 +20,7 @@ export default function FormPagoSubcontrato() {
   })
   const [error, setError] = useState('')
 
-  // Cargar lista de subcontratos
+
   useEffect(() => {
     const usr = localStorage.getItem('currentUser')
     if (!usr) return
@@ -33,7 +33,8 @@ export default function FormPagoSubcontrato() {
         setSubcontratosOpts(
           data.map(s => ({
             value: s.idSubcontrato,
-            label: `${s.idSubcontrato} - ${s.nombreProveedor || 'Sin proveedor'}`
+            label: `${s.idSubcontrato} - ${s.nombreProveedor || 'Sin proveedor'}`,
+            montoCotizado: s.montoCotizado || 0
           }))
         )
       })
@@ -67,6 +68,35 @@ export default function FormPagoSubcontrato() {
       const quien = correo || usuario
       const ahora = new Date().toISOString()
 
+
+      const pagosRes = await fetch(
+        `${API_BASE}/PagoSubcontratoApi/GetPagosSubcontrato?subcontratoID=${subcontrato.value}`
+      )
+      let pagosData = await pagosRes.json()
+
+
+      if (!Array.isArray(pagosData)) {
+        if (pagosData) {
+          pagosData = [pagosData]
+        } else {
+          pagosData = []
+        }
+      }
+
+      const sumaPagos = pagosData.reduce((acc, p) => acc + (p.montoPagado || 0), 0)
+
+      const montoNuevo = parseFloat(montoPagado)
+      const montoCotizado = subcontrato.montoCotizado
+
+
+      if (sumaPagos + montoNuevo > montoCotizado) {
+        setError(
+          `No se puede registrar el pago. La cantidad ingresada excede el monto cotizado (${montoCotizado}).`
+        )
+        return
+      }
+
+    
       const pagoPayload = {
         usuario: quien,
         quienIngreso: quien,
@@ -75,7 +105,7 @@ export default function FormPagoSubcontrato() {
         cuandoModifico: ahora,
         idPago: 0,
         subcontratoID: subcontrato.value,
-        montoPagado: parseFloat(montoPagado),
+        montoPagado: montoNuevo,
         fechaPago: new Date(fechaPago).toISOString()
       }
 
