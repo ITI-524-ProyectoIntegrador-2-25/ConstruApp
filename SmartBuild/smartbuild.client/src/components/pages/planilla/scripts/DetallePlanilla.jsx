@@ -17,7 +17,8 @@ import { usePresupuestos } from '../../../../hooks/dashboard';
 // Paginación (ruta correcta desde /scripts/)
 import useGlobalPagination from '../../../layout/pagination/useGlobalPagination';
 import GlobalPagination from '../../../layout/pagination/GlobalPagination';
-import { PaginationProvider } from '../../../layout/pagination/PaginationProvider';
+import PaginationProvider from '../../../layout/pagination/PaginationProvider';
+
 
 // ===== Constantes / helpers fuera del componente =====
 const ESTADOS = ['Pendiente', 'En proceso', 'Cerrada'];

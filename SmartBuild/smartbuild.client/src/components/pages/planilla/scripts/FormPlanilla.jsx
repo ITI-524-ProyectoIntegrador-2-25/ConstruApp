@@ -105,7 +105,7 @@ export default function FormPlanilla() {
 
   const {
     register, handleSubmit, setValue, watch, control,
-    formState: { errors, isSubmitting, isValid, dirtyFields }
+    formState: { errors, isSubmitting, isValid }
   } = useForm({
     resolver: zodResolver(schema),
     mode: 'onChange',

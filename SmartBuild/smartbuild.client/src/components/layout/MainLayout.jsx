@@ -1,5 +1,5 @@
 // src/components/layout/MainLayout.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Home, BarChart2, Grid, User } from 'lucide-react';
@@ -7,20 +7,27 @@ import Sidebar from './Sidebar';
 import Navbar  from './Navbar';
 import '../../styles/Layout.css';
 
-// 👇 nuevos
 import { PaginationProvider } from './pagination/PaginationProvider';
 import GlobalPagination from './pagination/GlobalPagination';
+import useGlobalPagination from './pagination/useGlobalPagination';
+
+function PaginationSync({ routeKey }) {
+  const { reset, setLoading } = useGlobalPagination();
+  useEffect(() => { reset(); setLoading(false); }, [routeKey, reset, setLoading]);
+  return null;
+}
 
 export default function MainLayout() {
   const location = useLocation();
   const [showProdMenu, setShowProdMenu] = useState(false);
-  const toggleProdMenu = () => setShowProdMenu(v => !v);
 
-  const pageVariants = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
+  const pageVariants   = { initial:{opacity:0,y:10}, animate:{opacity:1,y:0}, exit:{opacity:0,y:-10} };
   const pageTransition = { duration: 0.4, ease: 'easeInOut' };
 
   return (
     <PaginationProvider>
+      <PaginationSync routeKey={location.pathname} />
+
       <div className="app">
         <Sidebar />
         <div className="main">
@@ -34,16 +41,16 @@ export default function MainLayout() {
               animate="animate"
               exit="exit"
               transition={pageTransition}
-              style={{ position: 'relative' }}
+              style={{ position:'relative', paddingBottom:'120px' }}
             >
               <Outlet />
             </motion.div>
           </AnimatePresence>
 
-          {/* 👇 Barra de paginación global, aparece solo si la página se registró */}
-          <GlobalPagination />
+          {/* 👇 Mostrar SIEMPRE la barra (aunque total sea 0) */}
+          <GlobalPagination forceVisible />
 
-          {/* Bottom navigation for mobile */}
+          {/* Bottom nav (mobile) */}
           <nav className="bottom-nav">
             <NavLink to="/dashboard" className={({isActive}) => isActive ? 'active' : ''}>
               <Home /><span>Dashboard</span>
@@ -51,7 +58,7 @@ export default function MainLayout() {
             <NavLink to="/dashboard/planilla" className={({isActive}) => isActive ? 'active' : ''}>
               <BarChart2 /><span>Planilla</span>
             </NavLink>
-            <div className={`prod-link${showProdMenu ? ' active' : ''}`} onClick={toggleProdMenu}>
+            <div className={`prod-link${showProdMenu ? ' active' : ''}`} onClick={() => setShowProdMenu(v=>!v)}>
               <Grid /><span>Productividad</span>
               {showProdMenu && (
                 <ul className="bottom-submenu">
