@@ -15,7 +15,7 @@ export default function GlobalPagination() {
   const {
     page = 1,
     totalPages = 1,
-    pageSize = 10,
+    pageSize = 12,
     from = 0,
     to = 0,
     total = 0,
@@ -54,7 +54,7 @@ export default function GlobalPagination() {
 
       {/* Lado izquierdo: rango mostrado */}
       <div className="global-pagination__left" aria-live="polite">
-        Mostrando <strong>{from}</strong>–<strong>{to}</strong> de <strong>{total}</strong> {labelText}
+        Mostrando <strong>{from}</strong> – <strong>{to}</strong> de <strong>{total}</strong> {labelText}
       </div>
 
       {/* Lado derecho: controles */}
@@ -70,9 +70,9 @@ export default function GlobalPagination() {
           }}
           aria-label="Tamaño de página"
         >
-          <option value={10}>10 por página</option>
-          <option value={50}>50 por página</option>
-          <option value={100}>100 por página</option>
+          <option value={12}>12 por página</option>
+          <option value={48}>48 por página</option>
+          <option value={96}>96 por página</option>
           <option value="ALL">Todas</option>
         </select>
 

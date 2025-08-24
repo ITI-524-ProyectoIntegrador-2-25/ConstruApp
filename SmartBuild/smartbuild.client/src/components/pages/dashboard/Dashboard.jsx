@@ -1,10 +1,11 @@
 // Dashboard.jsx
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { Calendar, Filter, ChevronLeft, ClipboardList, Grid3X3, List, Plus, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 // Hook
 import { usePresupuestos } from '../../../hooks/dashboard';
+import { useGlobalPagination } from '../../layout/pagination';
 
 function getInitials(nombre = '') {
   const parts = String(nombre).split(' ');
@@ -76,14 +77,6 @@ export default function Dashboard() {
     fecha: ''
   })
 
-  // Handler unificado para todos los filtros
-  const handleFilterChange = (field) => (e) => {
-    setFiltros(current => ({
-      ...current,
-      [field]: e.target.value
-    }))
-  }
-
   // Funcion para filtado en tiempo real con usememo
   const results = useMemo(() => {
     let arr = presupuestos
@@ -104,6 +97,24 @@ export default function Dashboard() {
 
     return arr
   }, [presupuestos, filtros.descripcion, filtros.fecha])
+
+  // Paginación global: publica el total y etiqueta, y obtiene el "slice" paginado
+  const { slice, setTotal, setLabel } = useGlobalPagination({ total: results.length, label: 'proyectos' });
+
+  useEffect(() => {
+    setTotal(results.length);
+    setLabel('proyectos');
+  }, [results.length, setTotal, setLabel]);
+
+  const pagedResults = useMemo(() => slice(results), [results, slice]);
+
+  // Handler unificado para todos los filtros
+  const handleFilterChange = (field) => (e) => {
+    setFiltros(current => ({
+      ...current,
+      [field]: e.target.value
+    }))
+  }
 
   const hasActiveFilters = filtros.descripcion || filtros.fecha
 
@@ -267,7 +278,7 @@ export default function Dashboard() {
           {results.length > 0 ? (
             viewMode === 'grid' ? (
               <div className="projects-grid">
-                {results.map(p => (
+                {pagedResults.map(p => (
                   <NavLink
                     key={p.idPresupuesto}
                     to={`proyectos/${p.idPresupuesto}`}
@@ -298,7 +309,7 @@ export default function Dashboard() {
                   <div className="table-cell">Estado</div>
                 </div>
 
-                {results.map(p => {
+                {pagedResults.map(p => {
                   const duration = dateDuration(p.fechaFin, p.fechaInicio)
 
                   return (
