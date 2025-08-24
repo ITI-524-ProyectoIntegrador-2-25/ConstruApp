@@ -55,14 +55,37 @@ export const usePresupuestoDetalle = (idPresupuesto) => {
 
     const fetchPresupuestoDetalle = async () => {
       try {
-        const data = await getPresupuestoDetalle(correo, idPresupuesto);
-        if (Array.isArray(data)) {
-            if (data.length === 0) throw new Error('Presupuesto no encontrado')
-            setDetalle(data[0])
-        } else if (typeof data === 'object' && data.idPresupuesto) {
-            setDetalle(data)
+        if (idPresupuesto && idPresupuesto > 0) {
+          const data = await getPresupuestoDetalle(correo, idPresupuesto);
+          if (Array.isArray(data)) {
+              if (data.length === 0) throw new Error('Presupuesto no encontrado')
+              setDetalle(data[0])
+          } else if (typeof data === 'object' && data.idPresupuesto) {
+              setDetalle(data)
+          } else {
+              throw new Error('Formato inesperado del API')
+          }
         } else {
-            throw new Error('Formato inesperado del API')
+          var data = {
+            cliente: { },
+            fechaInicio: '',
+            fechaFin: '',
+            fechaFinReal: '',
+            penalizacion: false,
+            montoPenalizacion: 0,
+            descripcion: '',
+            materiaPrimaCotizada: 0,
+            manoObraCotizada: 0,
+            materiaPrimaCostoReal: 0,
+            manoObraCostoReal: 0,
+            subContratoCostoReal: 0,
+            subContratoCotizado: 0,
+            otrosGastos: 0,
+            estado: '', 
+            montoProyecto: 0
+          }
+
+          setDetalle(data)
         }
       } catch (err) {
         console.error(err);
@@ -84,17 +107,29 @@ export const useInsertarActualizarPresupuesto = () => {
   const [success, setSuccess] = useState(false)
 
   const insertarActualizarPresupuesto = async (presupuesto) => {
+    const usuarioStr = localStorage.getItem('currentUser');
+    if (!usuarioStr) {
+      setError('Usuario no autenticado');
+      setLoading(false);
+      return;
+    }
+
+    const user = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
+    presupuesto.usuario = correo;
+
     setLoading(true)
     setError('')
     setSuccess(false)
 
     try {
-      presupuesto.idPresupuesto
+      var res = presupuesto.idPresupuesto && presupuesto.idPresupuesto > 0
         ? await updatePresupuesto(presupuesto)
         : await insertPresupuesto(presupuesto)
-
+      
       setSuccess(true)
-      return true; 
+      return { res, success: true }; 
     } catch (err) {
       console.error(err)
       setError(err.message || 'Error al guardar el presupuesto')

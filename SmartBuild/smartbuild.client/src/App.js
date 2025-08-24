@@ -62,7 +62,7 @@ export default function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="proyectos/nuevo" element={<FormDashboard />} />
+          <Route path="proyectos/editar/:idPresupuesto" element={<FormDashboard />} />
           <Route path="proyectos/:idPresupuesto" element={<DetalleDashboard />} />
 
           {/* ✅ PLANILLA ANIDADO */}

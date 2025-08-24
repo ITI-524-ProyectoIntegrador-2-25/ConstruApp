@@ -33,6 +33,16 @@ export default function DetalleEmpleado() {
   React.useEffect(() => {
     if (!EmpleadoDetalle) return
 
+    let activoStr = 'true'
+    if (EmpleadoDetalle.activo != null) {
+      const valor = EmpleadoDetalle.activo
+      if (valor === 1 || valor === '1' || valor === true || valor === 'true') {
+        activoStr = 1
+      } else if (valor === 0 || valor === '0' || valor === false || valor === 'false') {
+        activoStr = 0
+      }
+    }
+
     const formatearFechaParaInput = (fecha) => {
       if (!fecha) return ''
       try {

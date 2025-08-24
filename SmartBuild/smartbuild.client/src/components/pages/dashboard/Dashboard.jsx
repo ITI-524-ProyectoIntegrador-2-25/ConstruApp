@@ -1,15 +1,74 @@
 // Dashboard.jsx
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { Calendar, Filter, ChevronLeft } from 'lucide-react'
+import { Calendar, Filter, ChevronLeft, ClipboardList, Grid3X3, List, Plus, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { useState, useMemo } from 'react';
 
 // Hook
 import { usePresupuestos } from '../../../hooks/dashboard';
 
+function getInitials(nombre = '') {
+  const parts = String(nombre).split(' ');
+  const a = (parts[0] || '').charAt(0).toUpperCase();
+  const b = (parts[1] || '').charAt(0).toUpperCase();
+  return (a + b) || 'PL';
+}
+
+function formatShort(d) {
+  if (!d) return '—';
+  try {
+    return new Date(d).toLocaleDateString('es-CR', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
+function getStatusBadgeClass(status) {
+  switch (status.toLowerCase()) {
+    case 'completado':
+    case 'terminado':
+    case 'pagado':
+      return 'bg-success';
+    case 'en progreso':
+    case 'pendiente':
+      return 'bg-warning';
+    case 'cancelado':
+    case 'retrasado':
+      return 'bg-danger';
+    default:
+      return 'bg-primary';
+  }
+};
+
+function dateDuration(fecha1, fecha2) {
+  const f1 = new Date(fecha1);
+  const f2 = new Date(fecha2);
+
+  // Calcula meses
+  let meses = (f2.getFullYear() - f1.getFullYear()) * 12;
+  meses += f2.getMonth() - f1.getMonth();
+
+  // Ajuste si los días del mes afectan la diferencia
+  if (f2.getDate() < f1.getDate()) {
+    meses--;
+  }
+
+  // Si es menos de un mes, calculamos días
+  if (meses < 1) {
+    const diffTime = Math.abs(f2 - f1);
+    const dias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return `${dias} día${dias !== 1 ? 's' : ''}`;
+  }
+
+  return `${meses} mes${meses !== 1 ? 'es' : ''}`;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
 
   const { presupuestos, loading, error } = usePresupuestos();
+
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [showFilters, setShowFilters] = useState(false);
 
   // Estado unificado para filtros
   const [filtros, setFiltros] = useState({
@@ -46,6 +105,8 @@ export default function Dashboard() {
     return arr
   }, [presupuestos, filtros.descripcion, filtros.fecha])
 
+  const hasActiveFilters = filtros.descripcion || filtros.fecha
+
   // Función para limpiar filtros
   const clearFilters = () => {
     setFiltros({
@@ -59,91 +120,233 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="title-group">
-          <button
-            className="back-btn"
-            onClick={() => navigate(-1)}
-            title="Volver"
-          >
+      {/* Encabezado */}
+      <div className="page-header">
+        <div className="header-left">
+          <button className="btn-back-modern" onClick={() => navigate(-1)} title="Volver">
             <ChevronLeft size={20} />
           </button>
-          <h1 className="dashboard-title">Proyectos</h1>
+          <div className="title-section">
+            <h1 className="page-title">
+              <ClipboardList size={28} />
+              Proyectos
+            </h1>
+            <p className="page-subtitle">Gestiona los presupuestos de los proyectos</p>
+          </div>
         </div>
-      </header>
 
-      <div className="dashboard-filters">
-        <div className="filter-group">
-          <input
-            type="text"
-            placeholder="Buscar descripción"
-            value={filtros.descripcion}
-            onChange={handleFilterChange('descripcion')}
-          />
-        </div>
-        <div className="filter-group">
-          <Calendar className="filter-icon" />
-          <input
-            type="date"
-            value={filtros.fecha}
-            onChange={handleFilterChange('fecha')}
-          />
-        </div>
-        
-        {/* Botón para limpiar filtros  */}
-        {(filtros.descripcion || filtros.fecha) && (
-          <button className="btn btn-outline-primary btn-sm" onClick={clearFilters} title="Limpiar filtros">
-            Limpiar
+        <div className="header-actions">
+          <button
+            className="btn-secondary-modern"
+            onClick={() => setShowFilters(v => !v)}
+            title="Filtros"
+          >
+            <Filter size={16} />
+            Filtros
+            {hasActiveFilters && <span className="filter-badge"></span>}
           </button>
-        )}
-        
-        <button className="btn-icon" title="Filtros avanzados">
-          <Filter />
-        </button>
-        <Link to="proyectos/nuevo" className="btn-add">
-          + Agregar proyecto
-        </Link>
-      </div>
 
-      <div className="projects-grid">
-        {results.length > 0 ? (
-          results.map(p => (
-            <NavLink
-              key={p.idPresupuesto}
-              to={`proyectos/${p.idPresupuesto}`}
-              className="project-card"
+          <div className="view-toggle">
+            <button
+              className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Vista en cuadrícula"
             >
-              <div className="card-image">
-                <img
-                  src={require('../../../assets/img/dashboard.png')}
-                  alt={p.descripcion}
-                />
-              </div>
-              <div className="card-info">
-                <h3>{p.descripcion}</h3>
-                <p>
-                  <Calendar size={14} />{' '}
-                  {new Date(p.fechaInicio).toLocaleDateString()}
-                </p>
-              </div>
-            </NavLink>
-          ))
-        ) : (
-          <p className="no-results">
-            {filtros.descripcion || filtros.fecha
-              ? 'No se encontraron proyectos con los filtros aplicados'
-              : 'No se encontraron proyectos'
-            }
-          </p>
-        )}
+              <Grid3X3 size={16} />
+            </button>
+            <button
+              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="Vista en lista"
+            >
+              <List size={16} />
+            </button>
+          </div>
+
+          <Link to="/dashboard/proyectos/editar/0" className="btn-primary-modern">
+            <Plus size={16} />
+            Agregar proyecto
+          </Link>
+        </div>
       </div>
 
-      {/* Contador de resultados */}
-      {Array.isArray(presupuestos) && presupuestos.length > 0 && (
-        <div className="results-footer">
-          Mostrando {results.length} de {presupuestos.length} proyecto{presupuestos.length !== 1 ? 's' : ''}
+      {showFilters && (
+        <div className="filters-panel">
+          <div className="filters-content">
+            <div className="filter-row">
+              <div className="filter-field">
+                <label>Buscar proyecto</label>
+                <div className="input-with-icon">
+                  <Search size={16} className="input-icon" />
+                  <input
+                    type="text"
+                    placeholder="Nombre..."
+                    value={filtros.descripcion}
+                    onChange={handleFilterChange('descripcion')}
+                    className="modern-input"
+                  />
+                </div>
+              </div>
+
+              <div className="filter-field">
+                <label>Fecha de inicio</label>
+                <div className="input-with-icon">
+                  <Calendar size={16} className="input-icon" />
+                  <input
+                    type="date"
+                    value={filtros.fecha}
+                    onChange={handleFilterChange('fecha')}
+                    className="modern-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <div className="filter-actions">
+                <button onClick={clearFilters} className="btn-clear">
+                  Limpiar filtros
+                </button>
+                <span className="results-count">
+                  {results.length} de {presupuestos.length} proyectos
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* Tarjetas de estadísticas rápidas */}
+      <div className="stats-cards">
+        <div className="stat-card">
+          <div className="stat-icon">
+            <ClipboardList size={20} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-number">{presupuestos.length}</span>
+            <span className="stat-label">Total proyectos</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon active">
+            <CheckCircle size={20} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-number">
+              {presupuestos.filter(p => String(p?.estado || '').toLowerCase().includes('cerr')).length}
+            </span>
+            <span className="stat-label">Cerrados</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon inactive">
+            <XCircle size={20} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-number">
+              {presupuestos.filter(p => !String(p?.estado || '').toLowerCase().includes('abie')).length}
+            </span>
+            <span className="stat-label">Abiertos</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">
+            <Eye size={20} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-number">{presupuestos.length}</span>
+            <span className="stat-label">Mostrando</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={`projects-container ${viewMode}`}>
+          {results.length > 0 ? (
+            viewMode === 'grid' ? (
+              <div className="projects-grid">
+                {results.map(p => (
+                  <NavLink
+                    key={p.idPresupuesto}
+                    to={`proyectos/${p.idPresupuesto}`}
+                    className="project-card"
+                  >
+                    <div className="card-image">
+                      <img
+                        src={require('../../../assets/img/dashboard.png')}
+                        alt={p.descripcion}
+                      />
+                    </div>
+                    <div className="card-info">
+                      <h3>{p.descripcion}</h3>
+                      <p>
+                        <Calendar size={14} />{' '}
+                        {new Date(p.fechaInicio).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </NavLink>
+                ))}
+              </div>
+            ) : (
+              <div className="empleados-table">
+                <div className="table-header">
+                  <div className="table-cell">Proyecto</div>
+                  <div className="table-cell">Fechas</div>
+                  <div className="table-cell">Duración</div>
+                  <div className="table-cell">Estado</div>
+                </div>
+
+                {results.map(p => {
+                  const duration = dateDuration(p.fechaFin, p.fechaInicio)
+
+                  return (
+                    <NavLink
+                      key={p.idPresupuesto}
+                      to={`proyectos/${p.idPresupuesto}`}
+                      className="project-table table-row"
+                    >
+                      <div className="table-cell employee-info">
+                        <div className="employee-avatar small me-3">
+                          <span className="avatar-text">{getInitials(p?.descripcion || '')}</span>
+                        </div>
+                        <div className="employee-text">
+                          <span className="name">{p?.descripcion || `Presupuesto #${p.idPresupuesto}`}</span>
+                          <span className="email">#{p.idPresupuesto}</span>
+                        </div>
+                      </div>
+                      <div className="table-cell">
+                        <span className="date">
+                          <Calendar size={14} /> {formatShort(p?.fechaInicio)} — {formatShort(p?.fechaFin)}
+                        </span>
+                      </div>
+                      <div className="table-cell">
+                      <span className="position-tag">
+                        {duration}
+                      </span>
+                    </div>
+                      <div className="table-cell">
+                        <span
+                          style={{ position: 'relative', padding: 'inherit', fontSize: '1rem' }} 
+                          className={`${getStatusBadgeClass(p.estado)} badge rounded-pill`}>
+                            { p.estado }
+                          </span>
+                      </div>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            <p className="no-results">
+              {filtros.descripcion || filtros.fecha
+                ? 'No se encontraron proyectos con los filtros aplicados'
+                : 'No se encontraron proyectos'
+              }
+            </p>
+          )}
+      </div>
     </div>
   )
 }
