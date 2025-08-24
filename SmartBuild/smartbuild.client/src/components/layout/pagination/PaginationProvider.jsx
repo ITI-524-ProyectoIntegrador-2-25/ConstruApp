@@ -6,7 +6,7 @@ const PaginationContext = createContext(null);
 export default function PaginationProvider({ children }) {
   // estado base
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);         // 10 | 50 | 100 | 'ALL'
+  const [pageSize, setPageSize] = useState(12);         // 12 | 48 | 96 | 'ALL'
   const [total, setTotal] = useState(0);
   const [labelText, setLabel] = useState('elementos');
 
