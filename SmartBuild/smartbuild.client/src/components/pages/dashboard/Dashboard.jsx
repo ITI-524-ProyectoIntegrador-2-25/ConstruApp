@@ -1,6 +1,6 @@
 // Dashboard.jsx
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { Calendar, Filter, ChevronLeft, ClipboardList, Grid3X3, List, Plus, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { Calendar, Filter, ChevronLeft, ClipboardList, Grid3X3, List, Plus, Search, Eye, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react';
 
 // Hook
@@ -13,6 +13,14 @@ function getInitials(nombre = '') {
   const b = (parts[1] || '').charAt(0).toUpperCase();
   return (a + b) || 'PL';
 }
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('es-CR', {
+    style: 'currency',
+    currency: 'CRC',
+    minimumFractionDigits: 0
+  }).format(amount);
+};
 
 function formatShort(d) {
   if (!d) return '—';
@@ -29,7 +37,7 @@ function getStatusBadgeClass(status) {
     case 'terminado':
     case 'pagado':
       return 'bg-success';
-    case 'en progreso':
+    case 'en proceso':
     case 'pendiente':
       return 'bg-warning';
     case 'cancelado':
@@ -278,32 +286,60 @@ export default function Dashboard() {
           {results.length > 0 ? (
             viewMode === 'grid' ? (
               <div className="projects-grid">
-                {pagedResults.map(p => (
-                  <NavLink
-                    key={p.idPresupuesto}
-                    to={`proyectos/${p.idPresupuesto}`}
-                    className="project-card"
-                  >
-                    <div className="card-image">
-                      <img
-                        src={require('../../../assets/img/dashboard.png')}
-                        alt={p.descripcion}
-                      />
-                    </div>
-                    <div className="card-info">
-                      <h3>{p.descripcion}</h3>
-                      <p>
-                        <Calendar size={14} />{' '}
-                        {new Date(p.fechaInicio).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </NavLink>
-                ))}
+                {pagedResults.map(p => {
+                  const duration = dateDuration(p.fechaFin, p.fechaInicio);
+                  return (
+                    <NavLink
+                      key={p.idPresupuesto}
+                      to={`proyectos/${p.idPresupuesto}`}
+                      className="project-card"
+                    >
+                      <div className="card-image">
+                        <img
+                          src={require('../../../assets/img/dashboard.png')}
+                          alt={p.descripcion}
+                        />
+                      </div>
+                      <div className="card-info">
+                        <h3>{p.descripcion}</h3>
+                        <h4>{formatCurrency(p.montoProyecto)}</h4>
+                        <div className='row' style={{display: '-webkit-inline-box'}}>
+                          <p
+                            style={{width: '75%'}}
+                          >
+                            {p.nombreCliente}
+                          </p>
+                          <p
+                            style={{width: '75%'}}
+                          >
+                            <Clock size={14} />{' '}{duration}
+                          </p>
+                        </div>
+                        
+                        <div className='row' style={{display: '-webkit-inline-box'}}>
+                          <p
+                            style={{width: '75%'}}
+                          >
+                            <Calendar size={14} />{' '}
+                            {new Date(p.fechaInicio).toLocaleDateString()}
+                          </p>
+                          <p
+                            style={{width: '60%'}}
+                          >
+                            <Calendar size={14} />{' '}
+                            {new Date(p.fechaFin).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </NavLink>
+                  );
+                })}
               </div>
             ) : (
               <div className="empleados-table">
                 <div className="table-header">
                   <div className="table-cell">Proyecto</div>
+                  <div className="table-cell">Cliente</div>
                   <div className="table-cell">Fechas</div>
                   <div className="table-cell">Duración</div>
                   <div className="table-cell">Estado</div>
@@ -329,6 +365,11 @@ export default function Dashboard() {
                       </div>
                       <div className="table-cell">
                         <span className="date">
+                          {p.nombreCliente}
+                        </span>
+                      </div>
+                      <div className="table-cell">
+                        <span className="text">
                           <Calendar size={14} /> {formatShort(p?.fechaInicio)} — {formatShort(p?.fechaFin)}
                         </span>
                       </div>
