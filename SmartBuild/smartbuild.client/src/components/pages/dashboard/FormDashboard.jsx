@@ -78,6 +78,7 @@ export default function FormDashboard() {
         fechaFin: presupuestoDetalle.fechaFin?.slice(0, 10) || '',
         fechaFinReal: presupuestoDetalle.fechaFinReal?.slice(0, 10) || '',
         penalizacion: presupuestoDetalle.penalizacion || false,
+        periodoPenalizacion: presupuestoDetalle.periodoPenalizacion || false,
         montoPenalizacion: presupuestoDetalle.montoPenalizacion || 0,
         descripcion: presupuestoDetalle.descripcion || '',
         materiaPrimaCotizada: presupuestoDetalle.materiaPrimaCotizada || 0,
@@ -93,6 +94,7 @@ export default function FormDashboard() {
   }, [idPresupuesto, presupuestoDetalle, clientes])
 
   const handleInputChange = (field, value) => {
+    console.log(field, value)
     setForm(current => ({
       ...current,
       [field]: value
