@@ -1,0 +1,125 @@
+/* --------- Barra fija ---------- */
+.global-pagination{
+  position: fixed;
+  left: var(--sidebar-width, 240px);
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  height: 54px;
+  padding: 0 16px;
+
+  background: rgba(255,255,255,.92);
+  backdrop-filter: saturate(1.1) blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 12px rgba(0,0,0,.04);
+
+  /* variables de progreso/animación */
+  --gp-progress: 0%;
+  --gp-speed: 6s;
+  --gp-c1: #22c55e; /* verde */
+  --gp-c2: #3b82f6; /* azul  */
+  --gp-c3: #f59e0b; /* amarillo */
+}
+@media (max-width: 1024px){ .global-pagination{ left: 0; } }
+
+/* --------- Línea de progreso arriba ---------- */
+.gp-progress{
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 2px;
+  background: #e5e7eb;         /* track gris */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Relleno (mezcla continua G→B→Y + movimiento) */
+.gp-fill{
+  position: absolute;
+  left: 0; top: 0; height: 100%;
+  width: var(--gp-progress, 0%);
+
+  /* Gradiente que ocupa 300% del ancho del fill y se desplaza,
+     generando mezcla progresiva (no bloques) */
+  background: linear-gradient(90deg,
+              var(--gp-c1) 0%,
+              #2bd06c 16%,
+              #34d399 33%,
+              var(--gp-c2) 50%,
+              #5ea2fb 66%,
+              #4f8ef8 77%,
+              var(--gp-c3) 100%);
+  background-size: 300% 100%;
+  animation: gpFlow var(--gp-speed) linear infinite;
+
+  filter: saturate(1.15) contrast(1.03);
+}
+
+/* Destello que recorre el borde y realza el movimiento */
+.gp-sheen{
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 120px;                 /* haz de luz */
+  background: linear-gradient(90deg,
+              rgba(255,255,255,0) 0%,
+              rgba(255,255,255,.75) 45%,
+              rgba(255,255,255,0) 100%);
+  mix-blend-mode: screen;
+  opacity: .9;
+  filter: blur(.6px);
+  transform: translateX(-120px);
+  animation: gpSheen calc(var(--gp-speed) * .7) linear infinite;
+}
+
+/* Flujo del color hacia la derecha */
+@keyframes gpFlow {
+  from { background-position-x: 0%; }
+  to   { background-position-x: 200%; } /* 300% total → recorre 2 “paneles” */
+}
+
+/* Destello avanza a la derecha dentro del fill */
+@keyframes gpSheen {
+  to { transform: translateX(110%); }
+}
+
+/* --------- Controles y pill ---------- */
+.global-pagination__left{ color:#374151; font-size:.95rem; }
+.global-pagination__right{ display:flex; align-items:center; gap:10px; }
+
+.global-pagination .page-size{
+  width:170px; height:36px; font-size:.92rem;
+  border-radius:10px; border:1px solid #e5e7eb; background:#fff; color:#111827;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.global-pagination .page-size:hover{ box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.global-pagination .page-size:focus{ outline:none; border-color:#a5b4fc; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
+
+.btn-group{
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; padding: 4px; border: 1px solid #e5e7eb;
+  border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.nav-btn{
+  width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid transparent; background:#fff; border-radius:10px; cursor:pointer;
+  transition: transform .08s ease, background .15s ease, box-shadow .15s ease;
+}
+.nav-btn:hover{ background:#f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.nav-btn:active{ transform: translateY(1px) scale(.98); }
+.nav-btn:focus-visible{ outline:none; box-shadow: 0 0 0 3px rgba(99,102,241,.25); }
+.nav-btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+
+.page-pill{
+  padding: 6px 12px; font-weight: 600; color:#334155;
+  border-radius: 999px; background: linear-gradient(180deg, #f8fafc, #eef2ff);
+  border: 1px solid #e5e7eb;
+}
+
+/* evita que la barra tape contenido */
+.main .content{ padding-bottom: 64px; }

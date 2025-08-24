@@ -11,7 +11,7 @@ import '../css/Planilla.css';
 import { usePlanillas, usePlanillaDetalles, useInsertarPlanillaDetalle } from '../../../../hooks/Planilla';
 import { useEmpleados } from '../../../../hooks/Empleados';
 import { usePresupuestos } from '../../../../hooks/dashboard';
-import { dateOnly, isHalfStep } from '../../../../utils/date';
+import { dateOnly } from '../../../../utils/date';
 import { getUsuarioOrThrow } from '../../../../utils/user';
 
 const half = (v) => Number.isFinite(Number(v)) && Math.round(Number(v) * 2) === Number(v) * 2;
