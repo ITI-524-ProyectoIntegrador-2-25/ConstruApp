@@ -89,6 +89,8 @@ export default function DetalleDashboard() {
 
   const costBreakdown = useMemo(() => {
     if (presupuestoDetalle) {
+      console.dir(presupuestoDetalle)
+      console.log(presupuestoDetalle.materiaPrimaCotizada)
       var result = [
         {
             category: "Mano de Obra",
@@ -100,7 +102,7 @@ export default function DetalleDashboard() {
             category: "Materia Prima",
             estimado: presupuestoDetalle.materiaPrimaCotizada || 0,
             real: presupuestoDetalle.materiaPrimaCostoReal || 0,
-            variance: (presupuestoDetalle.materiaPrimaCostoReal || 0) - (presupuestoDetalle.materiaPrimaCostoReal || 0)
+            variance: (presupuestoDetalle.materiaPrimaCostoReal || 0) - (presupuestoDetalle.materiaPrimaCotizada || 0)
           },
           {
             category: "Subcontratos",
