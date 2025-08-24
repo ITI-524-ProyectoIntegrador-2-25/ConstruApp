@@ -13,14 +13,17 @@ import {
   MoreVertical,
   CheckCircle,
   XCircle,
-  Eye
+  Eye,
+  ChevronsLeft,
+  ChevronLeft as ChevLeft,
+  ChevronRight as ChevRight,
+  ChevronsRight
 } from 'lucide-react';
 import '../../../../styles/Dashboard.css';
 import '../css/Planilla.css';
 import { usePlanillas } from '../../../../hooks/Planilla';
-import dashboardImg from '../../../../assets/img/dashboard.png';
-import useGlobalPagination from '../../../layout/pagination/useGlobalPagination';
 
+// Helpers
 function toISODateOnly(d) {
   const dt = d ? new Date(d) : null;
   if (!dt || Number.isNaN(dt.getTime())) return '';
@@ -55,11 +58,67 @@ function getInitials(nombre = '') {
   return (a + b) || 'PL';
 }
 
+function Pager({ page, setPage, pageSize, setPageSize, total }) {
+  const isAll = pageSize === 'ALL';
+  const size  = isAll ? Math.max(1, total) : Number(pageSize || 10);
+  const totalPages = Math.max(1, isAll ? 1 : Math.ceil(total / size));
+  const clamp = (n) => Math.min(totalPages, Math.max(1, n));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [totalPages, page, setPage]);
+
+  const from = total === 0 ? 0 : (isAll ? 1 : (page - 1) * size + 1);
+  const to   = isAll ? total : Math.min(total, page * size);
+
+  return (
+    <div className="planilla-pager">
+      <div className="results-count">
+        Mostrando <strong>{from}</strong>–<strong>{to}</strong> de <strong>{total}</strong>
+      </div>
+
+      <div className="pager-right">
+        <select
+          value={pageSize}
+          onChange={(e) => {
+            const v = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value);
+            setPageSize(v);
+            setPage(1);
+          }}
+          className="modern-select page-size"
+          aria-label="Tamaño de página"
+        >
+          <option value={10}>10 por página</option>
+          <option value={50}>50 por página</option>
+          <option value={100}>100 por página</option>
+          <option value="ALL">Todas</option>
+        </select>
+
+        <button className="nav-btn" onClick={() => setPage(clamp(1))} disabled={page === 1 || isAll} title="Primera">
+          <ChevronsLeft size={16} />
+        </button>
+        <button className="nav-btn" onClick={() => setPage(clamp(page - 1))} disabled={page === 1 || isAll} title="Anterior">
+          <ChevLeft size={16} />
+        </button>
+
+        <div className="page-indicator">Página {page}/{totalPages}</div>
+
+        <button className="nav-btn" onClick={() => setPage(clamp(page + 1))} disabled={page === totalPages || isAll} title="Siguiente">
+          <ChevRight size={16} />
+        </button>
+        <button className="nav-btn" onClick={() => setPage(clamp(totalPages))} disabled={page === totalPages || isAll} title="Última">
+          <ChevronsRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Planillas() {
   const navigate = useNavigate();
   const { Planillas, loading, error } = usePlanillas();
 
-  // Estado UI / filtros
+  // Filtros / UI
   const [results, setResults] = useState([]);
   const [q, setQ] = useState('');
   const [fFecha, setFFecha] = useState('');
@@ -68,17 +127,17 @@ export default function Planillas() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showFilters, setShowFilters] = useState(false);
 
-const data = useMemo(
-  () => (Array.isArray(Planillas) ? Planillas : []),
-  [Planillas]
-);
+  // Paginación local
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // default coherente con el selector
+
+  const data = useMemo(() => (Array.isArray(Planillas) ? Planillas : []), [Planillas]);
 
   const estados = useMemo(() => {
     const s = new Set(data.map(p => p?.estado).filter(Boolean));
     return ['', ...Array.from(s)];
   }, [data]);
 
-  // Filtrado y orden
   useEffect(() => {
     let arr = [...data];
 
@@ -96,7 +155,6 @@ const data = useMemo(
       arr = arr.filter(p => (p?.estado || '') === fEstado);
     }
 
-    // Orden
     arr.sort((a, b) => {
       switch (orden) {
         case 'az': return String(a?.nombre || '').localeCompare(String(b?.nombre || ''));
@@ -115,16 +173,30 @@ const data = useMemo(
     });
 
     setResults(arr);
+    setPage(1); // reset al cambiar filtros/orden/datos
   }, [data, q, fFecha, fEstado, orden]);
 
   const clearFilters = () => {
-    setQ('');
-    setFFecha('');
-    setFEstado('');
-    setOrden('recientes');
+    setQ(''); setFFecha(''); setFEstado(''); setOrden('recientes');
   };
 
-  const hasActiveFilters = q || fFecha || fEstado || orden !== 'recientes';
+  // ========= Paginado (arreglado “Todas”) =========
+  const isAll = pageSize === 'ALL';
+  const size  = isAll ? results.length : Number(pageSize || 10);
+  const start = isAll ? 0 : (page - 1) * size;
+  const end   = isAll ? undefined : start + size;
+
+  const pagedResults = useMemo(
+    () => results.slice(start, end), // end=undefined => hasta el final
+    [results, start, end]
+  );
+  // ================================================
+
+  // KPIs
+  const total = data.length;
+  const cerradas = data.filter(p => String(p?.estado || '').toLowerCase().includes('cerr')).length;
+  const abiertas = total - cerradas;
+  const mostrando = results.length;
 
   if (loading) {
     return (
@@ -173,20 +245,20 @@ const data = useMemo(
           >
             <Filter size={16} />
             Filtros
-            {hasActiveFilters && <span className="filter-badge"></span>}
+            {(q || fFecha || fEstado || orden!=='recientes') && <span className="filter-badge"></span>}
           </button>
 
           <div className="view-toggle">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setViewMode('grid')}
+              onClick={() => { setViewMode('grid'); setPage(1); }}
               title="Vista en cuadrícula"
             >
               <Grid3X3 size={16} />
             </button>
             <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
+              onClick={() => { setViewMode('list'); setPage(1); }}
               title="Vista en lista"
             >
               <List size={16} />
@@ -261,13 +333,13 @@ const data = useMemo(
               </div>
             </div>
 
-            {hasActiveFilters && (
+            {(q || fFecha || fEstado || orden!=='recientes') && (
               <div className="filter-actions">
-                <button onClick={clearFilters} className="btn-clear">
+                <button onClick={clearFilters} className="btn-secondary-modern">
                   Limpiar filtros
                 </button>
                 <span className="results-count">
-                  {results.length} de {data.length} planillas
+                  {mostrando} de {total} planillas
                 </span>
               </div>
             )}
@@ -275,38 +347,36 @@ const data = useMemo(
         </div>
       )}
 
-      {/* Tarjetas de estadísticas rápidas */}
+      {/* KPIs */}
       <div className="stats-cards">
         <div className="stat-card">
           <div className="stat-icon">
             <ClipboardList size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-number">{data.length}</span>
+            <span className="stat-number">{total}</span>
             <span className="stat-label">Total planillas</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon active">
-            <CheckCircle size={20} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-number">
-              {data.filter(p => String(p?.estado || '').toLowerCase().includes('cerr')).length}
-            </span>
-            <span className="stat-label">Cerradas</span>
-          </div>
-        </div>
-
+        {/* Cerradas -> rojo */}
         <div className="stat-card">
           <div className="stat-icon inactive">
             <XCircle size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-number">
-              {data.filter(p => !String(p?.estado || '').toLowerCase().includes('cerr')).length}
-            </span>
+            <span className="stat-number">{cerradas}</span>
+            <span className="stat-label">Cerradas</span>
+          </div>
+        </div>
+
+        {/* Abiertas / otras -> verde */}
+        <div className="stat-card">
+          <div className="stat-icon active">
+            <CheckCircle size={20} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-number">{abiertas}</span>
             <span className="stat-label">Abiertas/otras</span>
           </div>
         </div>
@@ -316,125 +386,144 @@ const data = useMemo(
             <Eye size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-number">{results.length}</span>
+            <span className="stat-number">{mostrando}</span>
             <span className="stat-label">Mostrando</span>
           </div>
         </div>
       </div>
 
-      {/* Contenido: grid o lista */}
+      {/* Contenido */}
       <div className={`empleados-container ${viewMode}`}>
-        {results.length > 0 ? (
+        {mostrando > 0 ? (
           viewMode === 'grid' ? (
-            <div className="empleados-grid">
-              {results.map(p => {
-                const inicio = p?.fechaInicio;
-                const fin = p?.fechaFin;
-                const dur = daysBetween(inicio, fin);
-                const estado = p?.estado || '—';
-                const badgeClass = `status-badge ${durBadgeColor(estado)}`;
+            <>
+              <div className="empleados-grid">
+                {pagedResults.map(p => {
+                  const inicio = p?.fechaInicio;
+                  const fin = p?.fechaFin;
+                  const dur = daysBetween(inicio, fin);
+                  const estado = p?.estado || '—';
+                  const badgeClass = `status-badge ${durBadgeColor(estado)}`;
 
-                return (
-                  <NavLink key={p.idPlanilla} to={`${p.idPlanilla}`} className="employee-card-modern">
-                    <div className="card-header">
-                      <div className="employee-avatar">
-                        <span className="avatar-text">{getInitials(p?.nombre || '')}</span>
+                  return (
+                    <NavLink key={p.idPlanilla} to={`${p.idPlanilla}`} className="employee-card-modern">
+                      <div className="card-header">
+                        <div className="employee-avatar">
+                          <span className="avatar-text">{getInitials(p?.nombre || '')}</span>
+                        </div>
+                        <span className={badgeClass}>{estado}</span>
                       </div>
-                      <span className={badgeClass}>{estado}</span>
-                    </div>
 
-                    <div className="card-content">
-                      <h3 className="employee-name">{p?.nombre || `Planilla #${p.idPlanilla}`}</h3>
-                      <p className="employee-position">#{p.idPlanilla}</p>
+                      <div className="card-content">
+                        <h3 className="employee-name">{p?.nombre || `Planilla #${p.idPlanilla}`}</h3>
+                        <p className="employee-position">#{p.idPlanilla}</p>
 
-                      <div className="employee-details">
-                        <div className="detail-item">
-                          <span className="detail-label">Inicio</span>
-                          <span className="detail-value">{formatShort(inicio)}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="detail-label">Fin</span>
-                          <span className="detail-value">{formatShort(fin)}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="detail-label">Duración</span>
-                          <span className="detail-value">{dur ? `${dur} día${dur !== 1 ? 's' : ''}` : '—'}</span>
+                        <div className="employee-details">
+                          <div className="detail-item">
+                            <span className="detail-label">Inicio</span>
+                            <span className="detail-value">{formatShort(inicio)}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Fin</span>
+                            <span className="detail-value">{formatShort(fin)}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Duración</span>
+                            <span className="detail-value">{dur ? `${dur} día${dur !== 1 ? 's' : ''}` : '—'}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="card-footer">
-                      <img src={dashboardImg} alt="Planilla" style={{ width: 24, height: 24, opacity: .9 }} />
-                    </div>
-                  </NavLink>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empleados-table">
-              <div className="table-header">
-                <div className="table-cell">Planilla</div>
-                <div className="table-cell">Rango</div>
-                <div className="table-cell">Duración</div>
-                <div className="table-cell">Estado</div>
-                <div className="table-cell">Acciones</div>
+                    </NavLink>
+                  );
+                })}
               </div>
 
-              {results.map(p => {
-                const inicio = p?.fechaInicio;
-                const fin = p?.fechaFin;
-                const dur = daysBetween(inicio, fin);
-                const estado = p?.estado || '—';
-                const badgeClass = `status-badge ${durBadgeColor(estado)}`;
+              <Pager
+                page={page} setPage={setPage}
+                pageSize={pageSize} setPageSize={setPageSize}
+                total={results.length}
+              />
+            </>
+          ) : (
+            <>
+              <div className="empleados-table">
+                <div className="table-header">
+                  <div className="table-cell">Planilla</div>
+                  <div className="table-cell">Rango</div>
+                  <div className="table-cell">Duración</div>
+                  <div className="table-cell">Estado</div>
+                  <div className="table-cell">Acciones</div>
+                </div>
 
-                return (
-                  <NavLink key={p.idPlanilla} to={`${p.idPlanilla}`} className="table-row">
-                    <div className="table-cell employee-info">
-                      <div className="employee-avatar small">
-                        <span className="avatar-text">{getInitials(p?.nombre || '')}</span>
+                {pagedResults.map(p => {
+                  const inicio = p?.fechaInicio;
+                  const fin = p?.fechaFin;
+                  const dur = daysBetween(inicio, fin);
+                  const estado = p?.estado || '—';
+                  const badgeClass = `status-badge ${durBadgeColor(estado)}`;
+
+                  return (
+                    <div key={p.idPlanilla} className="table-row">
+                      <div className="table-cell employee-info" onClick={()=>navigate(`${p.idPlanilla}`)} style={{ cursor:'pointer' }}>
+                        <div className="employee-avatar small">
+                          <span className="avatar-text">{getInitials(p?.nombre || '')}</span>
+                        </div>
+                        <div className="employee-text">
+                          <span className="name">{p?.nombre || `Planilla #${p.idPlanilla}`}</span>
+                          <span className="email">#{p.idPlanilla}</span>
+                        </div>
                       </div>
-                      <div className="employee-text">
-                        <span className="name">{p?.nombre || `Planilla #${p.idPlanilla}`}</span>
-                        <span className="email">#{p.idPlanilla}</span>
+
+                      <div className="table-cell">
+                        <span className="date">
+                          <Calendar size={14} /> {formatShort(inicio)} — {formatShort(fin)}
+                        </span>
+                      </div>
+
+                      <div className="table-cell">
+                        <span className="position-tag">
+                          {dur ? `${dur} día${dur !== 1 ? 's' : ''}` : '—'}
+                        </span>
+                      </div>
+
+                      <div className="table-cell">
+                        <span className={badgeClass}>{estado}</span>
+                      </div>
+
+                      <div className="table-cell" style={{ display:'flex', gap:8 }}>
+                        <button className="btn-secondary-modern" onClick={() => navigate(`${p.idPlanilla}`)}>
+                          Ver
+                        </button>
+                        <button
+                          className="action-button"
+                          title="Más acciones"
+                          onClick={(e)=>{ e.stopPropagation(); /* hook para más acciones */ }}
+                        >
+                          <MoreVertical size={16} />
+                        </button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
 
-                    <div className="table-cell">
-                      <span className="date">
-                        <Calendar size={14} /> {formatShort(inicio)} — {formatShort(fin)}
-                      </span>
-                    </div>
-
-                    <div className="table-cell">
-                      <span className="position-tag">
-                        {dur ? `${dur} día${dur !== 1 ? 's' : ''}` : '—'}
-                      </span>
-                    </div>
-
-                    <div className="table-cell">
-                      <span className={badgeClass}>{estado}</span>
-                    </div>
-
-                    <div className="table-cell">
-                      <button className="action-button" onClick={(e) => e.preventDefault()}>
-                        <MoreVertical size={16} />
-                      </button>
-                    </div>
-                  </NavLink>
-                );
-              })}
-            </div>
+              <Pager
+                page={page} setPage={setPage}
+                pageSize={pageSize} setPageSize={setPageSize}
+                total={results.length}
+              />
+            </>
           )
         ) : (
           <div className="empty-state">
             <ClipboardList size={64} className="empty-icon" />
             <h3>No se encontraron planillas</h3>
             <p>
-              {hasActiveFilters
+              {(q || fFecha || fEstado || orden!=='recientes')
                 ? 'Ajusta los filtros para ver resultados.'
                 : 'Aún no tienes planillas registradas.'}
             </p>
-            {hasActiveFilters ? (
+            {(q || fFecha || fEstado || orden!=='recientes') ? (
               <button onClick={clearFilters} className="btn-secondary-modern">
                 Limpiar filtros
               </button>

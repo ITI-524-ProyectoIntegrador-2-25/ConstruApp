@@ -1,5 +1,8 @@
 /* src/components/pages/planilla/Planilla.css */
-/* ====== Variables ====== */
+
+/* =========================================================
+   Variables y alias (evita referencias rotas a --clr-* / --shadow)
+   ========================================================= */
 :root{
   --pl-bg:       #f5f7fa;
   --pl-surface:  #ffffff;
@@ -13,9 +16,16 @@
   --pl-info:     #0ea5e9;
   --pl-shadow:   0 10px 25px rgba(0,0,0,.08);
   --pl-radius:   14px;
+
+  /* Aliases usados por otros estilos existentes */
+  --clr-text:    var(--pl-text);
+  --clr-border:  var(--pl-border);
+  --shadow:      var(--pl-shadow);
 }
 
-/* ====== Lienzo general de la página (área Bootstrap usada por DetallePlanilla) ====== */
+/* =========================================================
+   Fondo general (área Bootstrap usada por DetallePlanilla)
+   ========================================================= */
 .bg-light.min-vh-100{
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
@@ -25,7 +35,9 @@
   animation: pl-fade-in .45s ease-out;
 }
 
-/* ====== Header ====== */
+/* =========================================================
+   Header
+   ========================================================= */
 .bg-light.min-vh-100 .row.mb-4:first-child{
   background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
   color:#fff;
@@ -35,7 +47,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .bg-light.min-vh-100 .row.mb-4:first-child::before{
   content:"";
   position:absolute; inset:0;
@@ -44,7 +55,6 @@
    radial-gradient(transparent 60%, rgba(255,255,255,.06) 61%) 9px 9px/18px 18px;
   pointer-events:none;
 }
-
 .bg-light.min-vh-100 .row.mb-4 .btn.btn-outline-secondary.btn-sm{
   color:#fff; border-color:rgba(255,255,255,.5);
   background: rgba(255,255,255,.12);
@@ -53,14 +63,12 @@
 .bg-light.min-vh-100 .row.mb-4 .btn.btn-outline-secondary.btn-sm:hover{
   background: rgba(255,255,255,.22);
 }
-
 .bg-light.min-vh-100 h1.h3{
   margin:0; font-weight:800;
   background: linear-gradient(135deg,#ffffff 0%,#f8f9ff 100%);
   -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent;
 }
-
 .bg-light.min-vh-100 .badge.rounded-pill{
   box-shadow: 0 6px 16px rgba(0,0,0,.12);
   font-weight:700; letter-spacing:.2px;
@@ -69,7 +77,6 @@
 .bg-light.min-vh-100 .badge.bg-primary{ background:#3b82f6 !important; }
 .bg-light.min-vh-100 .badge.bg-warning{ background:#f59e0b !important; color:#1f2937; }
 
-/* Botonera header */
 .bg-light.min-vh-100 .row.mb-4 .ms-auto .btn{
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0,0,0,.08);
@@ -93,7 +100,9 @@
   border: 1px solid #dbeafe;
 }
 
-/* ====== Cards ====== */
+/* =========================================================
+   Cards genéricas
+   ========================================================= */
 .bg-light.min-vh-100 .card{
   border: 1px solid var(--pl-border);
   border-radius: var(--pl-radius);
@@ -105,23 +114,17 @@
   font-weight: 800; color: var(--pl-text);
 }
 
-/* Detalle info - pares etiqueta/valor */
-.bg-light.min-vh-100 .card .card-body .text-muted{
-  color: var(--pl-muted) !important;
-}
-.bg-light.min-vh-100 .card .border-bottom{
-  border-color: var(--pl-border) !important;
-}
+/* Pares etiqueta/valor */
+.bg-light.min-vh-100 .card .card-body .text-muted{ color: var(--pl-muted) !important; }
+.bg-light.min-vh-100 .card .border-bottom{ border-color: var(--pl-border) !important; }
 
-/* Tarjeta “Financiamiento” números */
-.bg-light.min-vh-100 .card .fw-bold.text-success{
-  color: var(--pl-success) !important;
-}
+/* Finance numbers */
+.bg-light.min-vh-100 .card .fw-bold.text-success{ color: var(--pl-success) !important; }
 
-/* ====== Panel de filtros (buscar/fecha/export) ====== */
-.bg-light.min-vh-100 .form-label.small{
-  font-weight: 700; color: #475569;
-}
+/* =========================================================
+   Panel de filtros (buscar/fecha/export)
+   ========================================================= */
+.bg-light.min-vh-100 .form-label.small{ font-weight: 700; color: #475569; }
 .bg-light.min-vh-100 .input-group .input-group-text{
   background: #f1f5f9; border-color: #e2e8f0; color:#64748b;
 }
@@ -133,16 +136,14 @@
   background:#fff; border-color:#667eea;
   box-shadow: 0 0 0 3px rgba(102,126,234,.12);
 }
-.bg-light.min-vh-100 .btn.btn-outline-secondary{
-  border-radius: 12px;
-}
+.bg-light.min-vh-100 .btn.btn-outline-secondary{ border-radius: 12px; }
 .bg-light.min-vh-100 .btn.btn-outline-primary{
-  border-radius: 12px;
-  border-color:#c7d2fe; color:#4f46e5;
-  background: #ffffff;
+  border-radius: 12px; border-color:#c7d2fe; color:#4f46e5; background: #ffffff;
 }
 
-/* ====== Tabla Detalle ====== */
+/* =========================================================
+   Tabla Detalle
+   ========================================================= */
 .bg-light.min-vh-100 .table{
   background: var(--pl-surface);
   border-radius: 14px; overflow: hidden;
@@ -156,58 +157,42 @@
   text-transform: uppercase; letter-spacing:.04em;
   font-weight:800; font-size:.78rem; border-bottom:2px solid #e2e8f0 !important;
 }
-.bg-light.min-vh-100 .table tbody tr{
-  transition: background .15s ease, transform .08s ease;
-}
-.bg-light.min-vh-100 .table tbody tr:hover{
-  background: #f8fafc;
-}
-.bg-light.min-vh-100 .table tbody tr:active{
-  transform: scale(.999);
-}
+.bg-light.min-vh-100 .table tbody tr{ transition: background .15s ease, transform .08s ease; }
+.bg-light.min-vh-100 .table tbody tr:hover{ background: #f8fafc; }
+.bg-light.min-vh-100 .table tbody tr:active{ transform: scale(.999); }
 
-/* Fila separadora por empleado (table-secondary) */
+/* Fila separadora */
 .bg-light.min-vh-100 .table tbody tr.table-secondary{
   background: linear-gradient(90deg, #eef2ff 0%, #f8fafc 100%) !important;
   color:#1f2937;
 }
-.bg-light.min-vh-100 .table tbody tr.table-secondary .text-success{
-  color: var(--pl-success) !important;
-}
-.bg-light.min-vh-100 .table tbody tr.table-secondary .d-flex.gap-3 span{
-  font-weight:600;
-}
+.bg-light.min-vh-100 .table tbody tr.table-secondary .text-success{ color: var(--pl-success) !important; }
+.bg-light.min-vh-100 .table tbody tr.table-secondary .d-flex.gap-3 span{ font-weight:600; }
 
-/* Celdas numéricas a la derecha con tipografía más compacta */
-.bg-light.min-vh-100 .table td.text-end{
-  font-variant-numeric: tabular-nums;
-}
+/* Numéricas a la derecha */
+.bg-light.min-vh-100 .table td.text-end{ font-variant-numeric: tabular-nums; }
 
-/* “Sin registros” */
-.bg-light.min-vh-100 .table td.text-center.text-muted{
-  color:#94a3b8 !important;
-}
+/* Sin registros */
+.bg-light.min-vh-100 .table td.text-center.text-muted{ color:#94a3b8 !important; }
 
-/* ====== Top Empleados tabla ====== */
+/* Compacidad variante .table-sm */
 .bg-light.min-vh-100 .table.table-sm th,
-.bg-light.min-vh-100 .table.table-sm td{
-  padding: .6rem .8rem;
-}
-.bg-light.min-vh-100 .btn.btn-outline-secondary.btn-sm{
-  border-radius:10px;
-}
-.bg-light.min-vh-100 .btn.btn-outline-primary.btn-sm{
-  border-radius:10px;
-}
+.bg-light.min-vh-100 .table.table-sm td{ padding: .6rem .8rem; }
+.bg-light.min-vh-100 .btn.btn-outline-secondary.btn-sm,
+.bg-light.min-vh-100 .btn.btn-outline-primary.btn-sm{ border-radius:10px; }
 
-/* ====== Badges y chips auxiliares ====== */
+/* =========================================================
+   Badges y chips auxiliares
+   ========================================================= */
 .badge-soft{
   display:inline-flex; align-items:center; gap:.35rem;
   padding:.35rem .6rem; border-radius:999px; font-weight:700;
   font-size:.75rem; border:1px solid #e2e8f0; background:#f8fafc; color:#1f2937;
 }
 
-/* ====== React-Select en editor ====== */
+/* =========================================================
+   React-Select (formularios)
+   ========================================================= */
 .react-select__control{
   border:2px solid #e5e7eb !important; border-radius:12px !important;
   background:#f9fafb !important; min-height:42px !important; box-shadow:none !important;
@@ -220,45 +205,92 @@
 .react-select__option--is-focused{ background:#eef2ff !important; }
 .react-select__option--is-selected{ background:#6366f1 !important; color:#fff !important; }
 
-/* ====== Alertas/errores de carga ====== */
+/* =========================================================
+   Estados de carga/error
+   ========================================================= */
 .detalle-loading, .detalle-error{
   display:flex; align-items:center; justify-content:center;
   min-height: 40vh; color:#6b7280;
 }
 
-/* ====== Utilidades de iconos (alineación en celdas) ====== */
-.icon-inline{
-  display:inline-flex; align-items:center; gap:.5rem;
+/* Iconos inline */
+.icon-inline{ display:inline-flex; align-items:center; gap:.5rem; }
+
+/* =========================================================
+   Fix visibilidad de menús / selects dentro de paneles
+   ========================================================= */
+.filters-panel,
+.filters-content,
+.page-content, .main, .app{
+  overflow: visible !important;
 }
 
+/* Asegura que portales (react-select) se muestren arriba */
+.react-select-portal{ z-index: 9999; }
 
-/* src/components/pages/planilla/css/Planilla.css */
-/* Fix: evita que los <select> nativos y menús se recorten dentro de paneles redondeados */
-.filters-panel, .filters-content { overflow: visible !important; }
-
-/* También asegura que los portales (react-select) se muestren arriba */
-.react-select-portal { z-index: 9999; }
-
-.modern-input, .modern-select {
-  height: 38px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  padding: 6px 10px;
+/* Inputs y selects base “modernos” */
+.modern-input, .modern-select{
+  height: 38px; border-radius: 8px; border: 1px solid #e5e7eb; padding: 6px 10px;
+  color: var(--pl-text);
+  background: #fff;
 }
-.input-with-icon { position: relative; }
-.input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .6;}
-.modern-input { padding-left: 30px; }
-/* src/components/pages/planilla/css/Planilla.css */
-.filters-panel, .filters-content, .page-content, .main, .app { overflow: visible !important; }
-.react-select-portal { z-index: 9999; }
-.modern-input, .modern-select { height: 38px; border-radius: 8px; border: 1px solid #e5e7eb; padding: 6px 10px; }
-.input-with-icon { position: relative; }
-.input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .6; }
-.modern-input { padding-left: 30px; }
-.pagination-global { position: sticky; bottom: 64px; z-index: 5; background: transparent; }
+.input-with-icon{ position: relative; }
+.input-icon{ position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .6; }
+.modern-input{ padding-left: 30px; }
 
+/* =========================================================
+   Paginación local (cards/tabla)
+   ========================================================= */
+.planilla-pager{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-top:16px; padding:8px 4px;
+}
+.planilla-pager .results-count{ color: var(--pl-text); font-size:.95rem; }
 
-/* ====== Animaciones ====== */
+.planilla-pager .pager-right{ display:flex; align-items:center; gap:8px; }
+
+/* Select del paginador: texto SIEMPRE visible (incl. Safari/Chromium) */
+.planilla-pager .page-size{
+  width: 200px; height: 36px; font-size:.92rem;
+  background:#fff !important; color:#111827 !important;
+  -webkit-text-fill-color:#111827; /* Safari */
+  text-indent:0; appearance:auto;
+  border:1px solid var(--pl-border); border-radius:10px; padding: 6px 10px;
+}
+.planilla-pager .page-size option{
+  color:#111827 !important; background:#fff !important;
+}
+
+.planilla-pager .nav-btn{
+  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--pl-border); background:#fff; border-radius:10px;
+  cursor:pointer; transition: background .15s, box-shadow .15s;
+}
+.planilla-pager .nav-btn:hover{ background:#f9fafb; box-shadow: var(--pl-shadow); }
+.planilla-pager .nav-btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+
+.planilla-pager .page-indicator{
+  min-width:120px; text-align:center; color:#4b5563; font-weight:600;
+}
+
+/* Espacio inferior para que el pager no tape el último item */
+.empleados-grid,
+.empleados-table{
+  padding-bottom: 96px;
+  margin-bottom: 8px;
+}
+
+/* Paginación global si existiera (no tapa contenido) */
+.pagination-global{
+  position: sticky; bottom: 64px; z-index: 5; background: transparent;
+}
+
+/* KPIs: evita que algo los tape accidentalmente */
+.stat-card{ overflow: hidden; }
+
+/* =========================================================
+   Animaciones
+   ========================================================= */
 @keyframes pl-fade-in{
   from{ opacity:0; transform: translateY(10px); }
   to{ opacity:1; transform: translateY(0); }

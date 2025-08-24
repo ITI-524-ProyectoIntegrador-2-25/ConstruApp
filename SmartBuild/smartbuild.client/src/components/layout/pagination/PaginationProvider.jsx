@@ -1,10 +1,35 @@
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-const Ctx = createContext(null);
-export function PaginationProvider({ children }) {
-  const [state, setState] = useState({ page:1, pageSize:10, total:0, loading:false, pageSizeOptions:[10,25,50,100], onChange:null });
-  const register = useCallback((cfg) => { setState(s => ({ ...s, ...cfg })); return () => setState(s => ({ ...s, page:1, pageSize:10, total:0 })); }, []);
-  const update = useCallback((patch) => setState(s => ({ ...s, ...patch })), []);
-  return <Ctx.Provider value={{ state, register, update }}>{children}</Ctx.Provider>;
+const PaginationContext = createContext(null);
+
+export function usePaginationContext() {
+  const ctx = useContext(PaginationContext);
+  if (!ctx) throw new Error('PaginationProvider faltante');
+  return ctx;
 }
-export function usePaginationContext(){ const ctx = useContext(Ctx); if(!ctx) throw new Error('PaginationProvider faltante'); return ctx; }
+
+/**
+ * Provider "headless": NO genera ningún nodo extra ni listeners globales.
+ * Solo expone el estado de paginación por contexto.
+ */
+export function PaginationProvider({ children, initialPageSize = 10 }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const totalPages = Math.max(1, Math.ceil((total || 0) / (pageSize || 1)));
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(total, page * pageSize) - 1;
+
+  const value = useMemo(() => ({
+    pager: { page, pageSize, total, totalPages, startIndex, endIndex },
+    setPage, setPageSize, setTotal, setLoading
+  }), [page, pageSize, total, totalPages, startIndex, endIndex]);
+
+  return (
+    <PaginationContext.Provider value={value}>
+      {children}
+    </PaginationContext.Provider>
+  );
+}
