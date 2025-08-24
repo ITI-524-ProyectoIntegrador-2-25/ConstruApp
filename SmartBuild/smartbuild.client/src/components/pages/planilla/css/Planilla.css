@@ -127,7 +127,7 @@
 }
 .bg-light.min-vh-100 .form-control{
   border:2px solid #e5e7eb; border-radius: 12px;
-  background:#f9fafb; transition: all .2s ease;
+  transition: all .2s ease;
 }
 .bg-light.min-vh-100 .form-control:focus{
   background:#fff; border-color:#667eea;

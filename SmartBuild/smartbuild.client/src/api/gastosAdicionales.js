@@ -7,6 +7,8 @@ export async function getGastosAdicionales(correo) {
 }
 
 export async function insertGastoAdicional(GastoAdicional) {
+  console.log('GastoAdicional API')
+  console.dir(GastoAdicional)
   const res = await fetch(`${API_BASE}/GastosAdicionalesAPI/InsertGastoAdicional`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

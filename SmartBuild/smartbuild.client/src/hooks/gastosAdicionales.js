@@ -44,11 +44,22 @@ export const useInsertarActualizarGastosAdicionales = () => {
 
   // CAMBIO: esta función ya no comienza con "use"
   const guardarGastoAdicional = async (gastoAdicional) => {
+    const usuarioStr = localStorage.getItem('currentUser');
+    if (!usuarioStr) {
+      setError('Usuario no autenticado');
+      setLoading(false);
+      return;
+    }
+
+    const user = JSON.parse(usuarioStr)
+    const correo = encodeURIComponent(user.correo || user.usuario)
+
     setLoading(true)
     setError('')
     setSuccess(false)
 
     try {
+      gastoAdicional.usuario = correo;
       gastoAdicional.idGastoAdicional
         ? await updateGastoAdicional(gastoAdicional)
         : await insertGastoAdicional(gastoAdicional)
