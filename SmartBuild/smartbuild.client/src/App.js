@@ -12,28 +12,27 @@ import Register       from './components/pages/access/scripts/Register'
 import ForgotPassword from './components/pages/access/scripts/ForgotPassword'
 
 // protected pages
-import Dashboard   from './components/pages/dashboard/Dashboard'
-import DetalleDashboard from './components/pages/dashboard/DetalleDashboard'
-import FormDashboard from './components/pages/dashboard/FormDashboard'
-import Planilla    from './components/pages/planilla/Planilla'
-import FormPlanilla    from './components/pages/planilla/FormPlanilla'
-import DetallePlanilla from './components/pages/planilla/DetallePlanilla'
-import AgregarDetalle from './components/pages/planilla/AgregarDetalle'
-import EditarDetalle from './components/pages/planilla/EditarDetalle'
-import Actividades from './components/pages/productividad/Actividades'
-import FormActividades from './components/pages/productividad/FormActividades'
-import DetalleActividades from './components/pages/productividad/DetalleActividades'
-import Clientes    from './components/pages/productividad/Clientes'
-import DetalleCliente from './components/pages/productividad/DetalleCliente'
-import FormCliente from './components/pages/productividad/FormCliente'
-import Empleados   from './components/pages/productividad/Empleados'
-import FormEmpleado   from './components/pages/productividad/FormEmpleado'
-import DetalleEmpleado from './components/pages/productividad/DetalleEmpleado'
-import Subcontrato   from './components/pages/productividad/Subcontratos'
-import FormSubcontrato   from './components/pages/productividad/FormSubcontrato'
+import Dashboard           from './components/pages/dashboard/Dashboard'
+import DetalleDashboard    from './components/pages/dashboard/DetalleDashboard'
+import FormDashboard       from './components/pages/dashboard/FormDashboard'
+import Planilla            from './components/pages/planilla/scripts/Planilla'
+import FormPlanilla        from './components/pages/planilla/scripts/FormPlanilla'
+import DetallePlanilla     from './components/pages/planilla/scripts/DetallePlanilla'
+import AgregarDetalle      from './components/pages/planilla/scripts/AgregarDetalle'
+import EditarDetalle       from './components/pages/planilla/scripts/EditarDetalle'
+import Actividades         from './components/pages/productividad/Actividades'
+import FormActividades     from './components/pages/productividad/FormActividades'
+import DetalleActividades  from './components/pages/productividad/DetalleActividades'
+import Clientes            from './components/pages/productividad/Clientes'
+import DetalleCliente      from './components/pages/productividad/DetalleCliente'
+import FormCliente         from './components/pages/productividad/FormCliente'
+import Empleados           from './components/pages/productividad/Empleados'
+import FormEmpleado        from './components/pages/productividad/FormEmpleado'
+import DetalleEmpleado     from './components/pages/productividad/DetalleEmpleado'
+import Subcontrato         from './components/pages/productividad/Subcontratos'
+import FormSubcontrato     from './components/pages/productividad/FormSubcontrato'
 import FormPagoSubcontrato from './components/pages/productividad/FormPagoSubcontrato'
-import UserProfile from './components/pages/usuario/UserProfile'
-
+import UserProfile         from './components/pages/usuario/UserProfile'
 import FormContactoSubcontrato from './components/pages/productividad/FormContactoSubcontrato'
 
 export default function App() {
@@ -54,19 +53,31 @@ export default function App() {
         </Route>
 
         {/* Protegido */}
-        <Route path="/dashboard/*" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="proyectos/nuevo" element={<FormDashboard />} />
           <Route path="proyectos/:idPresupuesto" element={<DetalleDashboard />} />
 
-          <Route path="planilla" element={<Planilla />} />
-          <Route path="planilla/nueva" element={<FormPlanilla />} />
-          <Route path="planilla/:idPlanilla" element={<DetallePlanilla />} />
-          <Route path="planilla/:idPlanilla/AgregarDetalle" element={<AgregarDetalle />} />
+          {/* ✅ PLANILLA ANIDADO */}
+          <Route path="planilla">
+            <Route index element={<Planilla />} />                                   {/* /dashboard/planilla */}
+            <Route path="nueva" element={<FormPlanilla />} />                        {/* /dashboard/planilla/nueva */}
+            <Route path=":idPlanilla" element={<DetallePlanilla />} />               {/* /dashboard/planilla/:idPlanilla */}
+            <Route path=":idPlanilla/AgregarDetalle" element={<AgregarDetalle />} /> {/* /dashboard/planilla/:idPlanilla/AgregarDetalle */}
+            <Route
+              path=":idPlanilla/:idDetallePlanilla/EditarDetalle"
+              element={<EditarDetalle />}
+            />
+          </Route>
 
-          {/* 🔧 Arreglo: incluir idPlanilla e idDetallePlanilla */}
-          <Route path="planilla/:idPlanilla/:idDetallePlanilla/EditarDetalle" element={<EditarDetalle />} />
-
+          {/* Otros módulos */}
           <Route path="productividad/actividades" element={<Actividades />} />
           <Route path="productividad/actividades/nueva" element={<FormActividades />} />
           <Route path="productividad/actividades/:idActividad" element={<DetalleActividades />} />
@@ -83,6 +94,7 @@ export default function App() {
           <Route path="productividad/subcontratos/nuevo" element={<FormSubcontrato />} />
           <Route path="productividad/subcontratos/editar/:idSubcontrato" element={<FormSubcontrato />} />
           <Route path="productividad/subcontratos/pagos/nuevo" element={<FormPagoSubcontrato />} />
+
           <Route path="usuario" element={<UserProfile />} />
         </Route>
 

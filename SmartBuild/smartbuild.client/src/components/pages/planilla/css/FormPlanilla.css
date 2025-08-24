@@ -1,240 +1,108 @@
-/* src/components/pages/planilla/Planilla.css */
-
 /* =========================================================
-   Variables
+   Maquetado del formulario de Planilla
+   (header, filtros, grid y tarjetas)
    ========================================================= */
- :root {
-  --clr-bg:      #f8fafc;
-  --clr-white:   #ffffff;
-  --clr-border:  #e5e7eb;
-  --clr-text:    #374151;
-  --clr-muted:   #6b7280;
-  --clr-primary: #2563eb;
-  --radius:      12px;
-  --spacing:     1.5rem;
-  --shadow:      0 4px 16px rgba(0, 0, 0, 0.08);
+
+.form-planilla-modern .page-header{
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+}
+.form-planilla-modern .page-title{
+  display:flex; align-items:center; gap:8px; margin:0;
+}
+.form-planilla-modern .filters-panel{
+  background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.06);
+}
+.form-planilla-modern .filters-content{ padding:16px; }
+
+/* Grid del formulario */
+.filter-row{
+  display:grid; grid-template-columns:repeat(4, minmax(220px,1fr)); gap:16px;
+}
+.filter-actions{ display:flex; align-items:center; justify-content:space-between; }
+
+/* Tarjetas inferiores */
+.stats-cards{
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:12px; margin-top:14px;
+}
+.stat-card{
+  background:#fff; border-radius:14px; padding:14px;
+  display:flex; gap:12px; align-items:center;
+  box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+.stat-icon{
+  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  background:#f1f5f9; border-radius:999px;
 }
 
-/* =========================================================
-   Layout básico
-   ========================================================= */
-.form-dashboard-page {
-  padding: var(--spacing);
-  background: var(--clr-bg);
-  color: var(--clr-text);
+.hint{ color:#6b7280; }
+
+/* Botones */
+.btn-primary-modern{
+  background:linear-gradient(90deg,#ff6a5b,#ff8a3d); color:#fff; border:none;
+  padding:8px 12px; border-radius:10px;
+}
+.btn-back-modern{
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:6px;
+}
+.btn-secondary-modern{
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:8px 12px;
+}
+/* === react-select (prefijo .rs) refinado para verse como .modern-input === */
+.rs{ position:relative; font-size:.95rem; }
+.rs__control{
+  min-height:44px; height:44px;
+  border-radius:var(--radius);
+  border:1px solid var(--clr-border);
+  background:var(--clr-white);
+  box-shadow:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.rs__control:hover{ border-color:#d1d5db; }
+.rs__control--is-focused{
+  border-color:var(--clr-primary) !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.15) !important;
 }
 
-.container {
-  max-width: 100%;
-  width: 100%;
-  padding: 0 var(--spacing);
-  margin: 0;
+.rs__value-container{ padding:0 .75rem; }
+.rs--with-icon .rs__value-container{ padding-left:2.5rem; } /* espacio para el icono */
+.rs__input{ margin:0; padding:0; }
+.rs__single-value{ color:var(--clr-text); }
+.rs__placeholder{ color:var(--clr-muted); }
+
+.rs__indicator{ color:#94a3b8; }
+.rs__indicator:hover{ color:#64748b; }
+.rs__indicator svg{ width:16px; height:16px; }
+.rs__indicator-separator{ background-color:#e5e7eb; opacity:.9; margin:0 6px; }
+
+.rs__menu{
+  margin-top:6px;
+  border:1px solid var(--clr-border);
+  border-radius:12px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 12px 24px rgba(0,0,0,.08);
 }
 
-/* Encabezado */
-.form-dashboard-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: var(--spacing);
-}
-.detalle-title { font-size: 1.75rem; font-weight: 600; }
+.rs__menu-list{ padding:4px 0; }
+.rs__option{ padding:.5rem .75rem; cursor:pointer; }
+.rs__option--is-focused{ background:#f3f4f6; }
+.rs__option--is-selected{ background:var(--clr-primary); color:#fff; }
 
-.back-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--clr-text);
-  padding: 0.5rem;
-  border-radius: 8px;
-  transition: background .2s;
-}
-.back-btn:hover { background: var(--clr-border); }
-
-/* Grid de detalles generales */
-.detalle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing);
-  margin-bottom: var(--spacing);
-}
-.detalle-row .label { font-size: .9rem; color: var(--clr-muted); margin-bottom: .25rem; }
-.detalle-row .value { font-size: 1rem; }
-
-/* =========================================================
-   Formulario / Controles
-   ========================================================= */
-.form-dashboard {
-  background: var(--clr-white);
-  padding: var(--spacing);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: var(--spacing);
-  width: 100%;
+/* icono embebido en el control */
+.rs-control-with-icon{ position:relative; }
+.rs-control-icon{
+  position:absolute; left:.6rem; top:50%;
+  transform:translateY(-50%); opacity:.65; pointer-events:none;
 }
 
-.form-group { display: flex; flex-direction: column; }
-.form-group label { font-size: .9rem; margin-bottom: .25rem; color: var(--clr-text); }
 
-/* Estilo base unificado para inputs/selects “modernos” */
-.modern-input,
-.modern-select {
-  width: 100%;
-  height: 44px;
-  box-sizing: border-box;
-  padding: 0 .75rem;
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius);
-  background: var(--clr-white);
-  font-size: .95rem;
-  line-height: 1.4;
-  outline: none;
-  transition: border-color .2s, box-shadow .2s;
+/* Responsive */
+@media (max-width: 1024px){
+  .filter-row{ grid-template-columns:repeat(2, minmax(220px,1fr)); }
+  .stats-cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
-.modern-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding-right: 2rem;   /* espacio para la flecha nativa */
-}
-.modern-input:focus,
-.modern-select:focus {
-  border-color: var(--clr-primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, .2);
-}
-
-/* Wrapper con icono a la izquierda */
-.input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-}
-.input-with-icon .input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  opacity: .65;
-}
-/* Aporta espacio para el icono en inputs y selects */
-.input-with-icon .modern-input,
-.input-with-icon select.modern-select {
-  padding-left: 2.75rem;   /* texto separado del icono */
-}
-
-/* Acciones del formulario (botón Limpiar + estado) */
-.filter-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Botón secundario “Limpiar” */
-.filter-actions .btn-secondary-modern {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .6rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--radius);
-  background: #f9fafb;
-  color: #111827;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .2s, box-shadow .2s, transform .06s;
-}
-.filter-actions .btn-secondary-modern:hover { background: #f3f4f6; }
-.filter-actions .btn-secondary-modern:disabled { opacity: .6; cursor: not-allowed; }
-
-/* Botón primario genérico (por si se usa aquí) */
-.btn-submit {
-  padding: .75rem 1rem;
-  background: var(--clr-primary);
-  color: var(--clr-white);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background .2s;
-}
-.btn-submit:hover { background: #1e40af; }
-
-/* Bloque de botones al final del formulario */
-.form-dashboard > div:last-child {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* =========================================================
-   Tablas
-   ========================================================= */
-.detalle-items { margin-top: var(--spacing); }
-.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-.detalle-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--clr-white);
-  box-shadow: var(--shadow);
-}
-.detalle-table th,
-.detalle-table td {
-  padding: .75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--clr-border);
-}
-.detalle-table th {
-  background: var(--clr-border);
-  font-weight: 500;
-}
-
-/* === SELECT con icono, sin recortes === */
-.input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-}
-
-.input-with-icon .input-icon{
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  opacity: .65;
-}
-
-/* Regla ÚNICA para el select dentro del wrapper con icono */
-.input-with-icon select.modern-select{
-  box-sizing: border-box;
-
-  /* No fuerces line-height en selects: recorta el texto */
-  line-height: normal;
-
-  /* Centrado vertical real mediante padding */
-  min-height: 44px;         /* misma altura visual que los inputs */
-  height: auto;             /* deja que el navegador ajuste */
-  padding: .5rem 2rem .5rem 2.75rem;  /* top/right/bottom/left (espacio para icono y flecha) */
-
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background-color: #fff;
-  font-size: .95rem;
-
-  /* limpia estilos nativos que interfieren */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-/* Por si el navegador antiguo intenta dibujar la flecha propia */
-.input-with-icon select.modern-select::-ms-expand{
-  display: none;
+@media (max-width: 640px){
+  .filter-row{ grid-template-columns:1fr; }
+  .stats-cards{ grid-template-columns:1fr; }
 }
