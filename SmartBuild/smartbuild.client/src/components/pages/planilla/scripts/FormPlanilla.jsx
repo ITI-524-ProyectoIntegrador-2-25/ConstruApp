@@ -66,7 +66,7 @@ const selectStyles = {
   placeholder: (b) => ({ ...b, color: 'var(--clr-muted)' }),
   indicatorSeparator: (b) => ({ ...b, backgroundColor: '#e5e7eb', margin: 0 }),
   dropdownIndicator: (b, s) => ({ ...b, color: s.isFocused ? '#64748b' : '#94a3b8', '&:hover': { color: '#64748b' } }),
-  menuPortal: (b) => ({ ...b, zIndex: 2000 }),
+  menuPortal: (b) => ({ ...b, zIndex: 9999 }),
   menu: (b) => ({ ...b, marginTop: 6, border: '1px solid var(--clr-border)', borderRadius: 12, overflow: 'hidden',
     boxShadow: '0 12px 24px rgba(0,0,0,.08)' }),
   menuList: (b) => ({ ...b, padding: '4px 0' }),
