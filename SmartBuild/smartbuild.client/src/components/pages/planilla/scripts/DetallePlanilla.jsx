@@ -9,6 +9,7 @@ import {
 import Select from 'react-select';
 import { COLUMN_LABELS } from '../../../../constants/planilla';
 import '../css/Planilla.css';
+import { addDaysYMD } from '../../../../utils/date';
 
 // hooks de datos
 import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../../hooks/Planilla';
@@ -153,10 +154,19 @@ export default function DetallePlanilla() {
     (Array.isArray(presupuestos) ? presupuestos : []).forEach(p => m.set(p.idPresupuesto, p));
     return m;
   }, [presupuestos]);
-  const empleadoNameToId = useMemo(() => {
+  
+  // Helper para mostrar nombre completo de empleado
+  const toDisplayName = (e) => {
+    if (!e) return '';
+    const fromField = (e.nombreEmpleado || e.NombreEmpleado || '').trim?.() || '';
+    if (fromField) return fromField;
+    const parts = [e.nombre || e.Nombre, e.primerApellido || e.apellido || e.PrimerApellido || e.Apellido, e.segundoApellido || e.SegundoApellido].filter(Boolean);
+    return parts.join(' ').replace(/\s+/g,' ').trim();
+  };
+const empleadoNameToId = useMemo(() => {
     const m = new Map();
     (Array.isArray(Empleados) ? Empleados : []).forEach(e => {
-      const nombre = (e.nombreEmpleado || `${e.nombre || ''} ${e.apellido || ''}`).trim();
+      const nombre = toDisplayName(e);
       m.set(nombre, e.idEmpleado);
     });
     return m;
@@ -167,7 +177,7 @@ export default function DetallePlanilla() {
     const base = Array.isArray(Detalles) ? Detalles : [];
     return base.map(d => {
       const emp = empIndex.get(d.empleadoID) || null;
-      const empNombre = emp?.nombreEmpleado || (emp ? `${emp.nombre || ''} ${emp.apellido || ''}`.trim() : d.empleadoID);
+      const empNombre = toDisplayName(emp) || d.empleadoID;
       const presupuestoNombre = presupuestoIndex.get(d.presupuestoID)?.descripcion ?? d.presupuestoID;
       const sh = Number(d.salarioHora ?? emp?.salarioHora ?? 0);
       const ho = Number(d.horasOrdinarias || 0);
@@ -289,7 +299,7 @@ export default function DetallePlanilla() {
   const empleadosCount = resumen.empleados.size;
 
   /* ======================= Handlers edición ======================= */
-  const handleChange = e => { const { name, value } = e.target; setForm(f => ({ ...f, [name]: value })); setError(''); };
+  const handleChange = e => { const { name, value } = e.target; if (name === 'fechaInicio') { const fin = value ? addDaysYMD(value, 14) : ''; setForm(f => ({ ...f, fechaInicio: value, fechaFin: fin })); } else if (name === 'fechaFin') { return; } else { setForm(f => ({ ...f, [name]: value })); } setError(''); };
   const handleSubmit = async e => {
     e.preventDefault(); setError('');
     const diff = daysBetween(form.fechaInicio, form.fechaFin);
@@ -389,13 +399,13 @@ export default function DetallePlanilla() {
                       </div>
                       <div className="col-md-3">
                         <label className="form-label">Fecha fin</label>
-                        <input type="date" className="form-control" name="fechaFin" value={form.fechaFin} onChange={handleChange} required disabled={sending}/>
+                        <input type="date" className="form-control" name="fechaFin" value={form.fechaFin} readOnly  required disabled={sending}/>
                       </div>
                       <div className="col-md-2">
                         <label className="form-label">Estado</label>
                         <Select options={estadoOptions} value={{ value: form.estado, label: form.estado }}
                                 onChange={opt => setForm(f => ({ ...f, estado: opt.value }))} isSearchable={false}
-                                classNamePrefix="react-select" isDisabled={sending}/>
+                                classNamePrefix="react-select" isDisabled={sending} menuPortalTarget={document.body} menuPosition="fixed"/>
                       </div>
                       <div className="col-12 d-flex gap-2">
                         <button type="submit" className="btn btn-primary" disabled={sending}>{sending ? 'Guardando…' : 'Guardar cambios'}</button>
