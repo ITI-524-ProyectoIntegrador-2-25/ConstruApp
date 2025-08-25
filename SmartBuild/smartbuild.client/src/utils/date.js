@@ -46,3 +46,4 @@ export function isWithinRange(d, ini, fin) {
   const F = parseYMD(fin);
   return !!(D && I && F && D.getTime() >= I.getTime() && D.getTime() <= F.getTime());
 }
+
