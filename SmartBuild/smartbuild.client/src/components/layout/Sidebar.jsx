@@ -96,6 +96,11 @@ export default function Sidebar() {
                     <BarChart2 size={18}/> <span>Subcontratos</span>
                   </NavLink>
                 </li>
+                <li>
+                  <NavLink to="/dashboard/productividad/reportes" className="sublink">
+                    <BarChart2 size={18}/> <span>Reportes</span>
+                  </NavLink>
+                </li>
               </ul>
             )}
           </li>
