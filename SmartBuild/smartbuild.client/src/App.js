@@ -34,6 +34,7 @@ import FormSubcontrato     from './components/pages/productividad/FormSubcontrat
 import FormPagoSubcontrato from './components/pages/productividad/FormPagoSubcontrato'
 import UserProfile         from './components/pages/usuario/UserProfile'
 import FormContactoSubcontrato from './components/pages/productividad/FormContactoSubcontrato'
+import Reportes          from './components/pages/productividad/Reportes'
 
 export default function App() {
   const ProtectedRoute = ({ children }) => {
@@ -94,6 +95,9 @@ export default function App() {
           <Route path="productividad/subcontratos/nuevo" element={<FormSubcontrato />} />
           <Route path="productividad/subcontratos/editar/:idSubcontrato" element={<FormSubcontrato />} />
           <Route path="productividad/subcontratos/pagos/nuevo" element={<FormPagoSubcontrato />} />
+          <Route path="productividad/subcontratos/contactos/nuevo" element={<FormContactoSubcontrato />} />
+          
+          <Route path='productividad/reportes' element={<Reportes />} />
 
           <Route path="usuario" element={<UserProfile />} />
         </Route>
