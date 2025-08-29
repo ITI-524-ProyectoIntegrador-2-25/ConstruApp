@@ -48,6 +48,7 @@ export default function LoginForm() {
       if (msg.includes('autorizado') || msg.includes('ingreso')) {
         const userToStore = {
           ...usuarioObj,
+          rol: usuarioObj?.module,
           correo: email,
           usuario: email, // por compatibilidad con otras partes del código
         };
