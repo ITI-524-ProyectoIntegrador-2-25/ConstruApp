@@ -230,126 +230,131 @@ export default function Reportes() {
   };
 
   // =================== EXPORTAR PDF ===================
-  const handleExportPDF = () => {
-    if (!presupuestoDetalle) return;
+const handleExportPDF = async () => {
+  if (!presupuestoDetalle) return;
 
-    const doc = new jsPDF();
-    let y = 12;
+  // Importación dinámica (solo cuando se ejecuta esta función)
+  const { jsPDF } = await import("jspdf");
+  const autoTable = (await import("jspdf-autotable")).default;
 
-    // Encabezado general
-    doc.setFontSize(16);
-    doc.text(
-      `Reporte Presupuesto ${presupuestoDetalle.idPresupuesto ?? ""}`,
-      14,
-      y
-    );
+  const doc = new jsPDF();
+  let y = 12;
+
+  // Encabezado general
+  doc.setFontSize(16);
+  doc.text(
+    `Reporte Presupuesto ${presupuestoDetalle.idPresupuesto ?? ""}`,
+    14,
+    y
+  );
+  y += 6;
+  doc.setFontSize(11);
+  doc.text(`Cliente: ${detalleCliente?.nombre || "N/A"}`, 14, y);
+  y += 6;
+  if (startDate || endDate) {
+    doc.text(`Filtro: desde ${startDate || "-"} hasta ${endDate || "-"}`, 14, y);
     y += 6;
-    doc.setFontSize(11);
-    doc.text(`Cliente: ${detalleCliente?.nombre || "N/A"}`, 14, y);
+  }
+  y += 2;
+
+  if (includePresupuesto) {
+    doc.setFontSize(14);
+    doc.text("Presupuesto", 14, y);
     y += 6;
-    if (startDate || endDate) {
-      doc.text(`Filtro: desde ${startDate || "-"} hasta ${endDate || "-"}`, 14, y);
-      y += 6;
-    }
-    y += 2;
+    autoTable(doc, {
+      startY: y,
+      head: [["Campo", "Valor"]],
+      body: [
+        ["Descripción", presupuestoDetalle.descripcion],
+        ["Fecha inicio", presupuestoDetalle.fechaInicio?.slice(0, 10)],
+        ["Fecha fin", presupuestoDetalle.fechaFin?.slice(0, 10)],
+        ["Monto proyecto", formatCurrency(presupuestoDetalle.montoProyecto)],
+        ["Penalización", presupuestoDetalle.penalizacion ? "Sí" : "No"],
+        ["Monto penalización", formatCurrency(presupuestoDetalle.montoPenalizacion)],
+      ],
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 10 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
 
-    if (includePresupuesto) {
-      doc.setFontSize(14);
-      doc.text("Presupuesto", 14, y);
-      y += 6;
-      autoTable(doc, {
-        startY: y,
-        head: [["Campo", "Valor"]],
-        body: [
-          ["Descripción", presupuestoDetalle.descripcion],
-          ["Fecha inicio", presupuestoDetalle.fechaInicio?.slice(0, 10)],
-          ["Fecha fin", presupuestoDetalle.fechaFin?.slice(0, 10)],
-          ["Monto proyecto", formatCurrency(presupuestoDetalle.montoProyecto)],
-          ["Penalización", presupuestoDetalle.penalizacion ? "Sí" : "No"],
-          ["Monto penalización", formatCurrency(presupuestoDetalle.montoPenalizacion)],
-        ],
-        theme: "grid",
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 10 },
-      });
-      y = doc.lastAutoTable.finalY + 10;
-    }
+  if (includeActividades && actividades.length > 0) {
+    doc.setFontSize(14);
+    doc.text("Actividades", 14, y);
+    y += 6;
+    autoTable(doc, {
+      startY: y,
+      head: [["Descripción", "Fecha inicio", "Fecha fin", "Estado"]],
+      body: actividades.map((a) => [
+        a.descripcion,
+        a.fechaInicioProyectada?.slice(0, 10),
+        a.fechaFinProyectada?.slice(0, 10),
+        a.estado,
+      ]),
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 10 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
 
-    if (includeActividades && actividades.length > 0) {
-      doc.setFontSize(14);
-      doc.text("Actividades", 14, y);
-      y += 6;
-      autoTable(doc, {
-        startY: y,
-        head: [["Descripción", "Fecha inicio", "Fecha fin", "Estado"]],
-        body: actividades.map((a) => [
-          a.descripcion,
-          a.fechaInicioProyectada?.slice(0, 10),
-          a.fechaFinProyectada?.slice(0, 10),
-          a.estado,
-        ]),
-        theme: "grid",
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 10 },
-      });
-      y = doc.lastAutoTable.finalY + 10;
-    }
+  if (includeGastos && gastosAdicionales.length > 0) {
+    doc.setFontSize(14);
+    doc.text("Gastos Adicionales", 14, y);
+    y += 6;
+    autoTable(doc, {
+      startY: y,
+      head: [["Fecha", "Descripción", "Monto", "Estado"]],
+      body: gastosAdicionales.map((g) => [
+        g.fecha?.slice(0, 10),
+        g.descripcion,
+        formatCurrency(g.monto),
+        g.estadoPago,
+      ]),
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 10 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
 
-    if (includeGastos && gastosAdicionales.length > 0) {
-      doc.setFontSize(14);
-      doc.text("Gastos Adicionales", 14, y);
-      y += 6;
-      autoTable(doc, {
-        startY: y,
-        head: [["Fecha", "Descripción", "Monto", "Estado"]],
-        body: gastosAdicionales.map((g) => [
-          g.fecha?.slice(0, 10),
-          g.descripcion,
-          formatCurrency(g.monto),
-          g.estadoPago,
-        ]),
-        theme: "grid",
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 10 },
-      });
-      y = doc.lastAutoTable.finalY + 10;
-    }
+  if (includePlanilla && planillaDetalle.length > 0) {
+    doc.setFontSize(14);
+    doc.text("Planilla Detalle", 14, y);
+    y += 6;
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        "Fecha", "EmpleadoID", "Salario/Hora",
+        "Horas ordinarias", "Horas extras", "Horas dobles",
+        "Total", "Detalle"
+      ]],
+      body: planillaDetalle.map((p) => {
+        const total =
+          (p.horasOrdinarias ?? 0) * (p.salarioHora ?? 0) +
+          (p.horasExtras ?? 0) * (p.salarioHora ?? 0) * 1.5 +
+          (p.horasDobles ?? 0) * (p.salarioHora ?? 0) * 2;
+        return [
+          p.fecha?.slice(0, 10),
+          p.empleadoID,
+          formatCurrency(p.salarioHora),
+          p.horasOrdinarias,
+          p.horasExtras,
+          p.horasDobles,
+          formatCurrency(total),
+          p.detalle,
+        ];
+      }),
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 10 },
+    });
+  }
 
-    if (includePlanilla && planillaDetalle.length > 0) {
-      doc.setFontSize(14);
-      doc.text("Planilla Detalle", 14, y);
-      y += 6;
-      autoTable(doc, {
-        startY: y,
-        head: [[
-          "Fecha", "EmpleadoID", "Salario/Hora",
-          "Horas ordinarias", "Horas extras", "Horas dobles",
-          "Total", "Detalle"
-        ]],
-        body: planillaDetalle.map((p) => {
-          const total =
-            (p.horasOrdinarias ?? 0) * (p.salarioHora ?? 0) +
-            (p.horasExtras ?? 0) * (p.salarioHora ?? 0) * 1.5 +
-            (p.horasDobles ?? 0) * (p.salarioHora ?? 0) * 2;
-          return [
-            p.fecha?.slice(0, 10),
-            p.empleadoID,
-            formatCurrency(p.salarioHora),
-            p.horasOrdinarias,
-            p.horasExtras,
-            p.horasDobles,
-            formatCurrency(total),
-            p.detalle,
-          ];
-        }),
-        theme: "grid",
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 10 },
-      });
-    }
-
-    doc.save(`Reporte_Presupuesto_${presupuestoDetalle.idPresupuesto}.pdf`);
-  };
+  // Guardar PDF
+  doc.save(`Reporte_Presupuesto_${presupuestoDetalle.idPresupuesto}.pdf`);
+};
 
   const toggleSection = (sec) => {
     setExpandedSections((prev) => ({ ...prev, [sec]: !prev[sec] }));
@@ -529,3 +534,4 @@ export default function Reportes() {
     </div>
   );
 }
+
