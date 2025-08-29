@@ -2,14 +2,16 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { Calendar, Filter, ChevronLeft, Plus, Activity, Clock, CheckCircle, Pause, Search, Users, Ruler, Truck, Building2, Paintbrush, Wrench } from 'lucide-react';
 import { useActividades } from '../../../hooks/Actividades';
-import { useEmpleados } from '../../../hooks/Empleados'; // ✅ Cambié a useEmpleados (plural)
+import { useEmpleados } from '../../../hooks/Empleados'; 
 import '../../../styles/Dashboard.css';
 import './Actividades.css';
 import './ActividadesGant.css';
+import { usePresupuestos } from '../../../hooks/dashboard';
 
 export default function Actividades() {
   const navigate = useNavigate();
   const { Actividades, loadingActividades, errorActividades } = useActividades();
+  const { Presupuestos, loading, error } = usePresupuestos();
   
   // ✅ CORREGIDO: Usar useEmpleados para obtener todos los empleados
   const { Empleados, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados();
@@ -47,6 +49,7 @@ export default function Actividades() {
       empleado: empleado || null
     };
   };
+  
 
   const handleFilterChange = field => value => {
     setFiltros(f => ({ ...f, [field]: value }));
@@ -92,19 +95,21 @@ export default function Actividades() {
     });
   };
 
+
+  
   // ✅ CORREGIDO: Estadísticas con verificación de arrays
   const stats = {
     total: (Actividades || []).length,
-    enProgreso: (Actividades || []).filter(a => a.estado === 'En progreso').length,
-    completadas: (Actividades || []).filter(a => a.estado === 'Completada').length,
-    pendientes: (Actividades || []).filter(a => a.estado === 'Sin Iniciar').length
+    enProgreso: (Actividades || []).filter(a => a.estado === 'iniciada').length,
+    completadas: (Actividades || []).filter(a => a.estado === 'completada').length,
+    pendientes: (Actividades || []).filter(a => a.estado === 'pendiente').length
   };
 
   // Agrupar actividades por proyecto/tipo para el árbol
   const groupedActivities = useMemo(() => {
     const groups = {};
     results.forEach(activity => {
-      const group = activity.tipo || 'General';
+      const group = activity.empleadoID || "Pendiente";
       if (!groups[group]) {
         groups[group] = [];
       }
@@ -145,7 +150,6 @@ export default function Actividades() {
     const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
     return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   }
-
   // Generar timeline basado en fechas reales
   const generateTimeline = () => {
     const { start, end } = dateRange;
@@ -179,14 +183,13 @@ export default function Actividades() {
     
     // Determinar fecha de fin real
     let activityEnd;
-    if (activity.estado === 'Completada' && activity.fechaFinReal) {
+    if (activity.estado === 'completada' && activity.fechaFinReal) {
       activityEnd = new Date(activity.fechaFinReal);
-    } else if (activity.fechaFinProyectada) {
+    } else if (activity.estado ==='iniciada') {
       activityEnd = new Date(activity.fechaFinProyectada);
     } else {
-      // Estimar duración por defecto
       activityEnd = new Date(activityStart);
-      activityEnd.setDate(activityStart.getDate() + 21); // 3 semanas
+      activityEnd.setDate(activityStart.getDate() + 21);
     }
     
     // Calcular duración en días y convertir a semanas
@@ -199,9 +202,9 @@ export default function Actividades() {
     const daysPassed = Math.max(0, (currentDate - activityStart) / (24 * 60 * 60 * 1000));
     
     let calculatedProgress;
-    if (activity.estado === 'Completada') {
+    if (activity.estado === 'completada') {
       calculatedProgress = 100;
-    } else if (activity.estado === 'Sin Iniciar') {
+    } else if (activity.estado === 'pendiente') {
       calculatedProgress = 0;
     } else {
       calculatedProgress = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100));
@@ -216,33 +219,34 @@ export default function Actividades() {
       estimatedEndDate: activityEnd,
       realWeekNumber: activityWeekNumber,
       durationDays,
-      isOverdue: activity.estado !== 'Completada' && currentDate > activityEnd
+      isOverdue: activity.estado !== 'completada' && currentDate > activityEnd
     };
   };
 
+
   const getEstadoColor = (estado) => {
     switch(estado) {
-      case 'Completada': return '#059669';
-      case 'En progreso': return '#f59e0b';
-      case 'Sin Iniciar': return '#dc2626';
+      case 'completada': return '#059669';
+      case 'iniciada': return '#f59e0b';
+      case 'pendiente': return '#dc2626';
       default: return '#6b7280';
     }
   };
 
   const getEstadoIcon = (estado) => {
     switch(estado) {
-      case 'Completada': return <CheckCircle size={16} />;
-      case 'En progreso': return <Clock size={16} />;
-      case 'Sin Iniciar': return <Pause size={16} />;
+      case 'completada': return <CheckCircle size={16} />;
+      case 'iniciada': return <Clock size={16} />;
+      case 'pendiente': return <Pause size={16} />;
       default: return <Activity size={16} />;
     }
   };
 
   const getEstadoClass = (estado) => {
     switch(estado) {
-      case 'Completada': return 'status-badge--completada';
-      case 'En progreso': return 'status-badge--en-progreso';
-      case 'Sin Iniciar': return 'status-badge--pendiente';
+      case 'completada': return 'status-badge--completada';
+      case 'iniciada': return 'status-badge--en-progreso';
+      case 'pendiente': return 'status-badge--pendiente';
       default: return 'status-badge--default';
     }
   };
@@ -272,7 +276,7 @@ export default function Actividades() {
     let statusColor = getEstadoColor(activity.estado);
     
     // Ajustar estado visual si está atrasada
-    if (ganttPos.isOverdue && activity.estado !== 'Completada') {
+    if (ganttPos.isOverdue && activity.estado !== 'completada') {
       displayStatus = `${activity.estado} (Atrasada)`;
       statusColor = '#dc2626'; // Rojo para atrasadas
     }
@@ -294,6 +298,7 @@ export default function Actividades() {
 
   // useEffect para configurar los event listeners de scroll sincronizado
   useEffect(() => {
+    
     const headerElement = timelineHeaderRef.current?.querySelector('.gantt-timeline-weeks');
     const contentElement = timelineContentRef.current;
     
@@ -387,9 +392,9 @@ export default function Actividades() {
                   className="gantt-filter-select"
                 >
                   <option value="todos">Estado</option>
-                  <option value="Completada">Completada</option>
-                  <option value="En progreso">En Progreso</option>
-                  <option value="Sin Iniciar">Pendiente</option>
+                  <option value="completada">Completada</option>
+                  <option value="iniciada">iniciada</option>
+                  <option value="pendiente">Pendiente</option>
                 </select>
 
                 <Link to="nueva" className="gantt-btn-add">
@@ -409,11 +414,11 @@ export default function Actividades() {
           </div>
           <div className="gantt-stat">
             <span className="gantt-stat-number">{stats.completadas}</span>
-            <span className="gantt-stat-label">Completadas</span>
+            <span className="gantt-stat-label">completadas</span>
           </div>
           <div className="gantt-stat">
             <span className="gantt-stat-number">{stats.enProgreso}</span>
-            <span className="gantt-stat-label">En Progreso</span>
+            <span className="gantt-stat-label">iniciada</span>
           </div>
           <div className="gantt-stat">
             <span className="gantt-stat-number">{stats.pendientes}</span>
@@ -435,7 +440,7 @@ export default function Actividades() {
                   </div>
                   <div className="legend-item">
                     <div className="legend-color" style={{backgroundColor: '#f59e0b'}}></div>
-                    <span>En Progreso</span>
+                    <span>Iniciada</span>
                   </div>
                   <div className="legend-item">
                     <div className="legend-color" style={{backgroundColor: '#dc2626'}}></div>

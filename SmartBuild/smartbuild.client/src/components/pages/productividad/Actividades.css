@@ -1,8 +1,12 @@
-/* Actividades.css - Estilos Modernos Profesionales con Responsive Optimizado */
+/* Actividades.css - Estilos Modernos Profesionales con Responsive Optimizado - SIN OVERFLOW */
 
-/* Reset y base */
+/* Reset y base - IMPORTANTE: Prevenir overflow horizontal */
 * {
   box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
 }
 
 /* Contenedor principal */
@@ -10,6 +14,9 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Header Principal */
@@ -19,6 +26,7 @@
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(30, 64, 175, 0.3);
+  width: 100%;
 }
 
 .actividades-header::before {
@@ -35,9 +43,10 @@
 .header-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 min(2rem, 5vw);
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
 .header-content {
@@ -45,12 +54,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 2.5rem 0;
+  width: 100%;
+  min-width: 0; /* Permite que flex items se encojan */
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .back-btn-modern {
@@ -66,6 +79,7 @@
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
+  flex-shrink: 0;
 }
 
 .back-btn-modern:hover {
@@ -76,6 +90,8 @@
 
 .header-title-group {
   margin-left: 0.5rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .title-with-icon {
@@ -83,33 +99,40 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
 .main-title {
-  font-size: 2.5rem;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 800;
   margin: 0;
   color: white;
   letter-spacing: -0.025em;
+  word-break: break-word;
+  line-height: 1.1;
 }
 
 .header-subtitle {
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2vw, 1rem);
   font-weight: 400;
+  word-break: break-word;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .filter-btn-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .filter-icon {
@@ -127,6 +150,7 @@
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
@@ -145,6 +169,7 @@
   backdrop-filter: blur(10px);
   font-size: 1.125rem;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .view-toggle-btn:hover {
@@ -165,6 +190,8 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-add-modern:hover {
@@ -178,15 +205,18 @@
 .actividades-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2.5rem 2rem;
+  padding: 2.5rem min(2rem, 5vw);
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Estadísticas modernas */
 .stats-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  width: 100%;
 }
 
 .stat-card-modern {
@@ -198,6 +228,8 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 .stat-card-modern::before {
@@ -225,6 +257,8 @@
   display: flex;
   align-items: center;
   gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .stat-icon {
@@ -234,6 +268,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .stat-icon--blue {
@@ -258,15 +293,17 @@
 
 .stat-info {
   flex: 1;
+  min-width: 0;
 }
 
 .stat-number {
-  font-size: 2.25rem;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
   font-weight: 800;
   color: #0f172a;
   display: block;
   line-height: 1;
   margin-bottom: 0.5rem;
+  word-break: break-word;
 }
 
 .stat-label {
@@ -275,6 +312,7 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  word-break: break-word;
 }
 
 /* Sección de búsqueda */
@@ -285,6 +323,8 @@
   border: 1px solid rgba(226, 232, 240, 0.8);
   padding: 2rem;
   margin-bottom: 2.5rem;
+  width: 100%;
+  overflow: hidden;
 }
 
 .search-content {
@@ -292,12 +332,14 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   align-items: center;
+  width: 100%;
 }
 
 .search-input-container {
   position: relative;
   flex: 1;
-  min-width: 320px;
+  min-width: min(320px, 100%);
+  max-width: 100%;
 }
 
 .search-icon {
@@ -319,6 +361,7 @@
   background: #fff;
   color: #0f172a;
   font-weight: 400;
+  max-width: 100%;
 }
 
 .search-input:focus {
@@ -335,6 +378,7 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .filter-select-modern,
@@ -345,9 +389,10 @@
   font-size: 0.875rem;
   background: white;
   color: #374151;
-  min-width: 200px;
+  min-width: min(200px, 100%);
   transition: all 0.3s ease;
   font-weight: 500;
+  max-width: 100%;
 }
 
 .filter-select-modern:focus,
@@ -367,6 +412,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .clear-filters-btn:hover {
@@ -378,9 +424,10 @@
 /* Grid de actividades */
 .activities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
   gap: 2rem;
   margin-bottom: 2.5rem;
+  width: 100%;
 }
 
 .activity-card-modern {
@@ -394,6 +441,8 @@
   color: inherit;
   display: block;
   position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 
 .activity-card-modern:hover {
@@ -408,6 +457,7 @@
   height: 200px;
   overflow: hidden;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 100%;
 }
 
 .card-image {
@@ -445,14 +495,19 @@
   color: #1e293b;
   font-size: 0.875rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .activity-emoji {
   font-size: 1.125rem;
+  flex-shrink: 0;
 }
 
 .activity-card-content {
   padding: 1.75rem;
+  width: 100%;
+  overflow: hidden;
 }
 
 .activity-card-header {
@@ -460,12 +515,16 @@
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 1.25rem;
+  width: 100%;
+  gap: 1rem;
 }
 
 .activity-meta-info {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .activity-id {
@@ -474,6 +533,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  word-break: break-all;
 }
 
 .activity-date {
@@ -483,6 +543,7 @@
   font-size: 0.875rem;
   color: #475569;
   font-weight: 500;
+  flex-wrap: wrap;
 }
 
 .responsible-avatar {
@@ -497,6 +558,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  flex-shrink: 0;
 }
 
 .activity-title {
@@ -510,10 +572,13 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .activity-details {
   margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .activity-detail-row {
@@ -521,6 +586,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  width: 100%;
+  gap: 1rem;
 }
 
 .activity-detail-row:last-child {
@@ -533,6 +600,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
 
 .detail-value {
@@ -542,10 +610,13 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  word-break: break-word;
+  text-align: right;
 }
 
 .activity-progress {
   margin-top: 1rem;
+  width: 100%;
 }
 
 .progress-info {
@@ -553,6 +624,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
+  width: 100%;
 }
 
 .progress-label {
@@ -591,6 +663,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -605,6 +679,9 @@
   border: 1px solid;
   flex: 1;
   justify-content: center;
+  text-align: center;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .status-badge--completada {
@@ -639,6 +716,7 @@
   border: 1px solid;
   text-align: center;
   min-width: 70px;
+  word-break: break-word;
 }
 
 .priority-badge--alta {
@@ -674,6 +752,8 @@
   padding: 4rem 2rem;
   text-align: center;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 100%;
 }
 
 .no-results-modern:hover {
@@ -692,6 +772,7 @@
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 0.75rem;
+  word-break: break-word;
 }
 
 .no-results-text {
@@ -699,6 +780,7 @@
   margin-bottom: 2rem;
   font-size: 1rem;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .no-results-btn {
@@ -713,6 +795,7 @@
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  white-space: nowrap;
 }
 
 .no-results-btn:hover {
@@ -731,15 +814,20 @@
   border: 1px solid rgba(226, 232, 240, 0.8);
   overflow: hidden;
   margin-bottom: 2.5rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .activities-table-wrapper {
   overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .activities-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px; /* Ancho mínimo para mantener la estructura */
 }
 
 .table-header {
@@ -755,6 +843,7 @@
   color: #1e293b;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .table-body {
@@ -779,10 +868,12 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .table-activity-icon {
   font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .table-activity-name {
@@ -794,13 +885,16 @@
   line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
   margin-bottom: 0.25rem;
+  min-width: 0;
 }
 
 .table-activity-type {
   font-size: 0.8rem;
   color: #64748b;
   font-weight: 500;
+  word-break: break-word;
 }
 
 .table-responsible-avatar {
@@ -815,18 +909,21 @@
   font-weight: 700;
   font-size: 0.875rem;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  flex-shrink: 0;
 }
 
 .table-date {
   color: #0f172a;
   font-size: 0.875rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .table-progress {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 120px;
 }
 
 .table-progress-bar {
@@ -836,6 +933,7 @@
   border-radius: 0.25rem;
   overflow: hidden;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-width: 60px;
 }
 
 .table-progress-fill {
@@ -852,6 +950,7 @@
   min-width: 3rem;
   text-align: right;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Footer */
@@ -862,6 +961,8 @@
   background: white;
   border-radius: 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 100%;
 }
 
 .results-text {
@@ -869,6 +970,7 @@
   font-size: 0.95rem;
   margin: 0;
   font-weight: 500;
+  word-break: break-word;
 }
 
 .results-highlight {
@@ -876,17 +978,25 @@
   color: #1e293b;
 }
 
-/* Responsive Design Mejorado */
+/* Responsive Design Mejorado - SIN OVERFLOW */
 
 /* Tablets grandes y desktop pequeño */
 @media (max-width: 1200px) {
   .activities-grid {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
     gap: 1.5rem;
   }
   
   .stats-grid-modern {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  }
+  
+  .header-container {
+    padding: 0 min(1.5rem, 4vw);
+  }
+  
+  .actividades-container {
+    padding: 2.5rem min(1.5rem, 4vw);
   }
 }
 
@@ -898,10 +1008,15 @@
     align-items: stretch;
   }
   
+  .header-left {
+    width: 100%;
+  }
+  
   .header-actions {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 1rem;
+    width: 100%;
   }
   
   .search-content {
@@ -912,6 +1027,7 @@
   
   .search-input-container {
     min-width: auto;
+    width: 100%;
   }
   
   .filter-group-horizontal {
@@ -923,10 +1039,11 @@
   .date-input-modern {
     flex: 1;
     min-width: auto;
+    max-width: 100%;
   }
 
   .activities-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   }
   
   .stats-grid-modern {
@@ -937,11 +1054,11 @@
 /* Móviles grandes */
 @media (max-width: 768px) {
   .actividades-container {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem min(1rem, 3vw);
   }
   
   .header-container {
-    padding: 0 1rem;
+    padding: 0 min(1rem, 3vw);
   }
   
   .header-content {
@@ -950,14 +1067,15 @@
   
   .header-left {
     gap: 1rem;
+    width: 100%;
   }
   
   .main-title {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
   }
   
   .header-subtitle {
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   
   .stats-grid-modern {
@@ -970,7 +1088,7 @@
   }
 
   .stat-number {
-    font-size: 1.75rem;
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
   }
   
   .stat-label {
@@ -1012,11 +1130,16 @@
   .priority-badge {
     width: 100%;
     justify-content: center;
+    min-width: 0;
   }
   
   /* Tabla responsive en móviles */
   .activities-table-container {
     border-radius: 1rem;
+  }
+  
+  .activities-table {
+    min-width: 600px; /* Reducir el ancho mínimo en móviles */
   }
   
   .table-header-cell,
@@ -1052,6 +1175,7 @@
   
   .table-progress {
     gap: 0.5rem;
+    min-width: 100px;
   }
   
   .table-progress-text {
@@ -1063,11 +1187,11 @@
 /* Móviles pequeños */
 @media (max-width: 480px) {
   .actividades-container {
-    padding: 1rem 0.75rem;
+    padding: 1rem min(0.75rem, 2vw);
   }
 
   .header-container {
-    padding: 0 0.75rem;
+    padding: 0 min(0.75rem, 2vw);
   }
 
   .header-content {
@@ -1078,6 +1202,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    width: 100%;
   }
   
   .back-btn-modern {
@@ -1097,12 +1222,12 @@
   }
   
   .main-title {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 6vw, 1.5rem);
     line-height: 1.2;
   }
   
   .header-subtitle {
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 3vw, 0.85rem);
   }
   
   .stats-grid-modern {
@@ -1119,7 +1244,7 @@
   }
   
   .stat-number {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
   }
 
   .header-actions {
@@ -1153,6 +1278,7 @@
   
   .search-input-container {
     min-width: auto;
+    width: 100%;
   }
   
   .search-input {
@@ -1169,11 +1295,13 @@
     padding: 0.875rem 1rem;
     font-size: 0.8rem;
     min-width: auto;
+    width: 100%;
   }
   
   .clear-filters-btn {
     padding: 0.875rem 1.5rem;
     font-size: 0.8rem;
+    width: 100%;
   }
   
   .activity-card-modern {
@@ -1191,6 +1319,7 @@
   .activity-type-badge {
     padding: 0.5rem 0.875rem;
     font-size: 0.8rem;
+    max-width: calc(100% - 2rem);
   }
   
   .activity-card-content {
@@ -1217,6 +1346,8 @@
   
   .activity-detail-row {
     margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   
   .detail-label {
@@ -1236,11 +1367,16 @@
   .priority-badge {
     padding: 0.625rem 1rem;
     font-size: 0.7rem;
+    width: 100%;
   }
   
   /* Tabla en móviles pequeños - Diseño compacto */
   .activities-table-wrapper {
     -webkit-overflow-scrolling: touch;
+  }
+  
+  .activities-table {
+    min-width: 500px; /* Ancho mínimo más pequeño */
   }
   
   .table-header-cell,
@@ -1285,6 +1421,7 @@
     flex-direction: column;
     gap: 0.25rem;
     align-items: stretch;
+    min-width: 80px;
   }
   
   .table-progress-text {
@@ -1312,6 +1449,8 @@
   .no-results-btn {
     padding: 0.875rem 1.5rem;
     font-size: 0.875rem;
+    width: 100%;
+    max-width: 300px;
   }
   
   .results-footer-modern {
@@ -1326,15 +1465,15 @@
 /* Móviles extra pequeños */
 @media (max-width: 375px) {
   .actividades-container {
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem min(0.5rem, 1vw);
   }
 
   .header-container {
-    padding: 0 0.5rem;
+    padding: 0 min(0.5rem, 1vw);
   }
   
   .main-title {
-    font-size: 1.375rem;
+    font-size: clamp(1.125rem, 7vw, 1.375rem);
   }
   
   .stat-card-modern {
@@ -1348,7 +1487,7 @@
   }
   
   .stat-number {
-    font-size: 1.375rem;
+    font-size: clamp(1.125rem, 6vw, 1.375rem);
   }
   
   .search-section {
@@ -1386,6 +1525,10 @@
   .btn-add-modern {
     padding: 0.875rem 1.25rem;
     font-size: 0.85rem;
+  }
+  
+  .activities-table {
+    min-width: 400px;
   }
   
   /* Ocultar columnas menos importantes en pantallas muy pequeñas */
@@ -1432,6 +1575,7 @@
   
   .detail-value {
     margin-left: 0;
+    text-align: left;
   }
 }
 
@@ -1442,7 +1586,7 @@
   }
   
   .main-title {
-    font-size: 1.75rem;
+    font-size: clamp(1.375rem, 4vw, 1.75rem);
   }
   
   .stats-grid-modern {
@@ -1454,7 +1598,7 @@
   }
   
   .stat-number {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
   }
   
   .activity-card-image {
@@ -1560,6 +1704,7 @@
   justify-content: center;
   height: 400px;
   gap: 1rem;
+  width: 100%;
 }
 
 .loading-spinner {
@@ -1569,6 +1714,7 @@
   border-top: 3px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes spin {
@@ -1586,6 +1732,9 @@
   margin: 2rem;
   text-align: center;
   font-weight: 500;
+  word-break: break-word;
+  width: 100%;
+  max-width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -1611,6 +1760,7 @@
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
+    white-space: nowrap;
   }
   
   .activities-table-container:hover .activities-table-wrapper::after {
@@ -1621,40 +1771,41 @@
 /* Optimización para pantallas con notch */
 @supports (padding: max(0px)) {
   .header-container {
-    padding-left: max(2rem, env(safe-area-inset-left));
-    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-left: max(min(2rem, 5vw), env(safe-area-inset-left));
+    padding-right: max(min(2rem, 5vw), env(safe-area-inset-right));
   }
   
   .actividades-container {
-    padding-left: max(2rem, env(safe-area-inset-left));
-    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-left: max(min(2rem, 5vw), env(safe-area-inset-left));
+    padding-right: max(min(2rem, 5vw), env(safe-area-inset-right));
   }
   
   @media (max-width: 768px) {
     .header-container {
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
+      padding-left: max(min(1rem, 3vw), env(safe-area-inset-left));
+      padding-right: max(min(1rem, 3vw), env(safe-area-inset-right));
     }
     
     .actividades-container {
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
+      padding-left: max(min(1rem, 3vw), env(safe-area-inset-left));
+      padding-right: max(min(1rem, 3vw), env(safe-area-inset-right));
     }
   }
   
   @media (max-width: 480px) {
     .header-container {
-      padding-left: max(0.75rem, env(safe-area-inset-left));
-      padding-right: max(0.75rem, env(safe-area-inset-right));
+      padding-left: max(min(0.75rem, 2vw), env(safe-area-inset-left));
+      padding-right: max(min(0.75rem, 2vw), env(safe-area-inset-right));
     }
     
     .actividades-container {
-      padding-left: max(0.75rem, env(safe-area-inset-left));
-      padding-right: max(0.75rem, env(safe-area-inset-right));
+      padding-left: max(min(0.75rem, 2vw), env(safe-area-inset-left));
+      padding-right: max(min(0.75rem, 2vw), env(safe-area-inset-right));
     }
   }
 }
 
+/* Filtros optimizados */
 .filters-row {
   display: flex;
   align-items: center;
@@ -1665,11 +1816,14 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #f0f0f0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* Select de filtros */
 .filter-select {
-  min-width: 180px;
+  min-width: min(180px, 100%);
   padding: 10px 16px;
   padding-right: 40px;
   background: #ffffff;
@@ -1685,6 +1839,7 @@
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 12px;
+  max-width: 100%;
 }
 
 .filter-select:hover {
@@ -1721,6 +1876,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .filters-row .filter-label {
@@ -1730,6 +1886,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Variante compacta para espacios reducidos */
@@ -1739,13 +1896,13 @@
 }
 
 .filters-row.compact .filter-select {
-  min-width: 140px;
+  min-width: min(140px, 100%);
   padding: 8px 12px;
   padding-right: 32px;
   font-size: 13px;
 }
 
-/* Responsive */
+/* Responsive para filtros */
 @media (max-width: 768px) {
   .filters-row {
     flex-direction: column;
@@ -1755,10 +1912,15 @@
   
   .filter-select {
     min-width: 100%;
+    max-width: 100%;
   }
   
   .filters-row::before {
     display: none;
+  }
+  
+  .filters-row .filter-group {
+    width: 100%;
   }
 }
 
@@ -1791,4 +1953,267 @@
   font-weight: 600;
   border-radius: 10px;
   margin-left: 8px;
+}
+
+/* FIXES ADICIONALES PARA PREVENIR OVERFLOW */
+
+/* (Eliminada la regla global * { max-width: 100%; } que interfería con Gantt) */
+
+/* Contenedores flex que podrían causar overflow */
+.header-content,
+.search-content,
+.filter-group-horizontal,
+.activity-badges,
+.activity-detail-row,
+.table-activity-info,
+.table-progress {
+  flex-wrap: wrap;
+}
+
+/* Prevenir que el texto cause overflow */
+.main-title,
+.header-subtitle,
+.activity-title,
+.table-activity-name,
+.no-results-title,
+.no-results-text {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Asegurar que las imágenes no causen overflow */
+img,
+.card-image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Elementos que podrían tener contenido dinámico largo */
+.activity-id,
+.detail-value,
+.stat-number {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botones que no deben causar overflow */
+.btn-add-modern,
+.filter-btn,
+.clear-filters-btn,
+.no-results-btn {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Asegurar scroll suave en tablas */
+.activities-table-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+}
+
+/* Prevenir overflow en badges */
+.status-badge,
+.priority-badge,
+.activity-type-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Grid responsivo más estricto */
+.activities-grid,
+.stats-grid-modern {
+  overflow: hidden;
+}
+
+/* Contenedores principales con restricción estricta */
+.actividades-page,
+.actividades-header,
+.actividades-container {
+  overflow-x: hidden;
+}
+
+/* Media queries adicionales para pantallas muy pequeñas */
+@media (max-width: 320px) {
+  .actividades-container {
+    padding: 0.5rem min(0.5rem, 1vw);
+  }
+
+  .header-container {
+    padding: 0 min(0.5rem, 1vw);
+  }
+  
+  .main-title {
+    font-size: clamp(1rem, 8vw, 1.25rem);
+  }
+  
+  .search-section {
+    padding: 0.5rem;
+  }
+  
+  .stat-card-modern {
+    padding: 1rem;
+  }
+  
+  .activity-card-content {
+    padding: 0.75rem;
+  }
+  
+  .activities-table {
+    min-width: 350px;
+  }
+  
+  /* Ocultar más columnas en pantallas extremadamente pequeñas */
+  .table-header-cell:nth-child(n+3),
+  .table-cell:nth-child(n+3) {
+    display: none;
+  }
+}
+
+/* Fix para elementos posicionados absolutamente */
+.card-overlay,
+.actividades-header::before {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Asegurar que los pseudo-elementos no causen overflow */
+.stat-card-modern::before {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Contenedores de scroll horizontal seguros */
+.activities-table-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.activities-table-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Prevenir overflow en elementos inline */
+.activity-date,
+.detail-value,
+.table-date {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+/* Estados de carga que no causen overflow */
+.loading-container {
+  max-width: 100%;
+  padding: 1rem;
+}
+
+.dashboard-error {
+  max-width: calc(100% - 2rem);
+}
+
+/* Fix para elementos con gradientes que podrían extenderse */
+.actividades-header {
+  background-attachment: scroll;
+  background-size: cover;
+}
+
+/* Asegurar que los filtros no se desborden */
+@media (max-width: 480px) {
+  .filter-btn-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .filter-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Prevenir problemas con elementos sticky o fixed */
+.actividades-header {
+  position: relative;
+  z-index: 10;
+}
+
+/* Asegurar espaciado consistente */
+.header-left,
+.header-actions {
+  min-width: 0;
+}
+
+/* Fix para contenido que podría expandirse dinámicamente */
+.stat-info,
+.activity-meta-info {
+  overflow: hidden;
+}
+
+/* Botones con iconos que no se desborden */
+.back-btn-modern,
+.view-toggle-btn {
+  overflow: hidden;
+}
+
+/* Asegurar que los elementos de progreso no causen problemas */
+.progress-bar,
+.table-progress-bar {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Fix final para cualquier elemento que pueda causar overflow horizontal */
+.actividades-page * {
+  max-width: 100%;
+}
+
+/* Excepciones necesarias para elementos específicos */
+.progress-fill,
+.table-progress-fill {
+  max-width: none; /* Necesario para la animación del progreso */
+}
+
+.loading-spinner {
+  max-width: none; /* Necesario para mantener el aspect ratio */
+}
+
+/* Contenedores que necesitan scroll horizontal controlado */
+.activities-table-wrapper {
+  max-width: 100%;
+}
+
+/* Últimas medidas para garantizar no overflow */
+@media (max-width: 280px) {
+  .main-title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  
+  .header-subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .activity-card-content {
+    padding: 0.5rem;
+  }
+  
+  .search-section {
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stat-card-modern {
+    padding: 0.75rem;
+  }
+  
+  .activities-table {
+    min-width: 280px;
+  }
 }
