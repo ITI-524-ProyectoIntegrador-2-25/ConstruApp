@@ -19,6 +19,7 @@ import '../../../../styles/Dashboard.css';
 import '../css/Planilla.css';
 import { usePlanillas } from '../../../../hooks/Planilla';
 import { useGlobalPagination } from '../../../layout/pagination';
+import { getCurrentUser } from '../../../../utils/user';
 
 // Utilidades de fecha / texto
 function toISODateOnly(d) {
@@ -129,6 +130,14 @@ export default function Planillas() {
   const { slice, setTotal, setLabel } = useGlobalPagination({ total: results.length, label: 'planillas' });
 
   useEffect(() => {
+    const currentUser = getCurrentUser();
+    
+    if (currentUser?.rol !== 'admin') {
+      navigate('/dashboard', {
+        state: { error: 'No tienes permisos para acceder al módulo de planillas.' }
+      });
+    }
+
     setTotal(results.length);
     setLabel('planillas');
   }, [results.length, setTotal, setLabel]);

@@ -1,5 +1,5 @@
 // Dashboard.jsx
-import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Calendar, Filter, ChevronLeft, ClipboardList, Grid3X3, List, Plus, Search, Eye, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react';
 
@@ -73,6 +73,8 @@ function dateDuration(fecha1, fecha2) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation();
+  const [errorMessage, setError] = useState(location.state?.error || '');
 
   const { presupuestos, loading, error } = usePresupuestos();
 
@@ -139,6 +141,12 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
+      {errorMessage && (
+        <div className="alert alert-warning" role="alert">
+          {errorMessage}
+          <button type="button" className="btn-close" onClick={() => setError('')}></button>
+        </div>
+      )}
       {/* Encabezado */}
       <div className="page-header">
         <div className="header-left">
@@ -374,16 +382,16 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <div className="table-cell">
-                      <span className="position-tag">
-                        {duration}
-                      </span>
-                    </div>
+                        <span className="position-tag">
+                          {duration}
+                        </span>
+                      </div>
                       <div className="table-cell">
                         <span
                           style={{ position: 'relative', padding: 'inherit', fontSize: '1rem' }} 
                           className={`${getStatusBadgeClass(p.estado)} badge rounded-pill`}>
                             { p.estado }
-                          </span>
+                        </span>
                       </div>
                     </NavLink>
                   );
