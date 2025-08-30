@@ -205,10 +205,31 @@
   font-size: 1rem;
 }
 
-
 /* ============================================================================ 
-   Responsive móvil: ≤768px 
+   React Select Dropdown Fix - SOLUCIÓN PARA EL PROBLEMA DEL DROPDOWN
 ============================================================================ */
+.react-select-container .react-select__menu {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+.react-select-container .react-select__menu-list {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.react-select-container .react-select__control {
+  min-height: 40px;
+}
+
+/* Asegurar que el contenedor padre no corte el dropdown */
+.form-group {
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
+}
+
+
 @media (max-width: 768px) {
   .btn-search {
     /* cuadrado con icono centrado */

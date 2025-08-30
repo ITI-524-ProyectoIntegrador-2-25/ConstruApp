@@ -76,6 +76,9 @@
   flex-direction: column;
 }
 
+
+
+
 /* src/components/pages/productividad/FormActividad.css */
 
 /* Mensaje de error */
@@ -151,3 +154,4 @@
 .back-btn:hover {
   color: var(--clr-primary);
 }
+

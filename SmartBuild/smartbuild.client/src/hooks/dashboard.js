@@ -22,6 +22,7 @@ export const usePresupuestos = () => {
     const fetchPresupuestos = async () => {
       try {
         const data = await getPresupuestos(correo);
+        console.dir(data)
         setPresupuestos(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);

@@ -13,7 +13,6 @@ export default function Actividades() {
   const { Actividades, loadingActividades, errorActividades } = useActividades();
   const { Presupuestos, loading, error } = usePresupuestos();
   
-  // ✅ CORREGIDO: Usar useEmpleados para obtener todos los empleados
   const { Empleados, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados();
 
   // Referencias para sincronización de scroll
@@ -31,7 +30,6 @@ export default function Actividades() {
   const [vistaActual, setVistaActual] = useState('gantt');
   const [tabActual, setTabActual] = useState('proyecto');
 
-  // ✅ CORREGIDO: Helper functions para manejo de empleados
   const getEmpleadoInfo = (actividad) => {
     // Buscar el empleado en la lista de empleados por su ID
     const empleado = Empleados.find(emp => emp.idEmpleado === actividad.empleadoID);
@@ -50,6 +48,18 @@ export default function Actividades() {
     };
   };
   
+
+  const getPresupuestoInfo = (actividad) => {
+    // Buscar el empleado en la lista de empleados por su ID
+    const descripcion = Presupuestos.find(pre => pre.idPresupuesto === actividad.PresupuestoID);
+    
+    const nombre = descripcion?.descripcion 
+    
+    return {
+
+      descripcion: nombre || null
+    };
+  };
 
   const handleFilterChange = field => value => {
     setFiltros(f => ({ ...f, [field]: value }));
@@ -97,32 +107,33 @@ export default function Actividades() {
 
 
   
-  // ✅ CORREGIDO: Estadísticas con verificación de arrays
   const stats = {
     total: (Actividades || []).length,
     enProgreso: (Actividades || []).filter(a => a.estado === 'iniciada').length,
     completadas: (Actividades || []).filter(a => a.estado === 'completada').length,
     pendientes: (Actividades || []).filter(a => a.estado === 'pendiente').length
   };
-
   // Agrupar actividades por proyecto/tipo para el árbol
   const groupedActivities = useMemo(() => {
     const groups = {};
+    if (!results || results.length === 0 ) {
+      return groups;
+    }
     results.forEach(activity => {
-      const group = activity.empleadoID || "Pendiente";
-      if (!groups[group]) {
-        groups[group] = [];
-      }
-      groups[group].push(activity);
+      let presupuesto =getPresupuestoInfo(activity)
+      let groupName = presupuesto?.descripcion || "Sin descripcion";
+      if (!groups[groupName]) {
+        groups[groupName] = [];
+      } 
+      groups[groupName].push(activity);
     });
     return groups;
-  }, [results]);
+  }, [results,getPresupuestoInfo]);
 
-  // ✅ CORREGIDO: Calcular rango de fechas usando fechas reales del backend
+
   const dateRange = useMemo(() => {
     if (results.length === 0) return { start: new Date(), end: new Date() };
     
-    // Usar tanto fechas de inicio como de fin reales
     const allDates = [];
     results.forEach(activity => {
       allDates.push(new Date(activity.fechaInicioReal));
@@ -170,8 +181,7 @@ export default function Actividades() {
     }
     return timeline;
   };
-
-  // ✅ CORREGIDO: Calcular posición real en el gantt usando fechas del backend
+// Calcular posición real en el gantt usando fechas del backend
   const getGanttPosition = (activity) => {
     const activityStart = new Date(activity.fechaInicioReal);
     const { start: rangeStart } = dateRange;
@@ -192,7 +202,6 @@ export default function Actividades() {
       activityEnd.setDate(activityStart.getDate() + 21);
     }
     
-    // Calcular duración en días y convertir a semanas
     const durationDays = Math.max(1, Math.ceil((activityEnd - activityStart) / (24 * 60 * 60 * 1000)));
     const duration = Math.max(1, Math.ceil(durationDays / 7));
     
@@ -266,10 +275,9 @@ export default function Actividades() {
         return iconMap[key];
       }
     }
-    return <Wrench className="w-5 h-5" />; // default
+    return <Wrench className="w-5 h-5" />; 
   };
 
-  // ✅ AGREGADO: Función para obtener información del estado mejorada
   const getEstadoInfo = (activity) => {
     const ganttPos = getGanttPosition(activity);
     let displayStatus = activity.estado;
@@ -278,7 +286,7 @@ export default function Actividades() {
     // Ajustar estado visual si está atrasada
     if (ganttPos.isOverdue && activity.estado !== 'completada') {
       displayStatus = `${activity.estado} (Atrasada)`;
-      statusColor = '#dc2626'; // Rojo para atrasadas
+      statusColor = '#dc2626'; 
     }
     
     return {
@@ -316,7 +324,6 @@ export default function Actividades() {
     }
   }, [results]);
 
-  // ✅ CORREGIDO: Manejo de estados de carga
   if (loadingActividades || loadingEmpleados) {
     return (
       <div className="loading-container">

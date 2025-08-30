@@ -132,6 +132,15 @@ export default function FormActividades() {
             placeholder="Seleccionar presupuesto…"
             className="react-select-container"
             classNamePrefix="react-select"
+            menuPortalTarget={document.body}
+            menuPosition="absolute"
+            menuPlacement="auto"
+            styles={{
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999
+              })
+            }}
           />
         </div>
 
@@ -145,8 +154,17 @@ export default function FormActividades() {
             placeholder="Seleccionar empleado…"
             className="react-select-container"
             classNamePrefix="react-select"
+            menuPortalTarget={document.body}
+            menuPlacement="auto"
+            styles={{
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999
+              })
+            }}
           />
-        </div>
+        </div> 
+
 
         <div className="form-group">
           <label>Fecha y hora de inicio</label>
