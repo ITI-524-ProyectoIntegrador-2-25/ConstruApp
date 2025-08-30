@@ -288,9 +288,9 @@ return (
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Seleccionar tipo</option>
                     <option value="Publico">Público</option>
                     <option value="Privado">Privado</option>
+                    <option value="Fisico">Fisico</option>
                   </select>
                 </div>
                 <div className="form-group">

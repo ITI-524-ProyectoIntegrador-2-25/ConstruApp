@@ -8,7 +8,6 @@ import './FormCliente.css'
 
 const API_BASE = 'https://smartbuild-001-site1.ktempurl.com'
 
-// Opciones fijas para “Tipo de cliente”
 const tipoOptions = [
   { value: 'Publico', label: 'Público' },
   { value: 'Privado', label: 'Privado' },
@@ -129,7 +128,6 @@ export default function FormCliente() {
           />
         </div>
 
-        {/* Tipo de cliente (react-select) */}
         <div className="form-group">
           <label>Tipo de cliente</label>
           <Select
@@ -141,6 +139,19 @@ export default function FormCliente() {
             className="react-select-container"
             classNamePrefix="react-select"
             isClearable
+            menuPlacement="auto"
+            menuPosition="absolute"
+            menuPortalTarget={document.body}
+            styles={{
+              menuPortal: (base) => ({ 
+                ...base, 
+                zIndex: 10000 
+              }),
+              menu: (base) => ({ 
+                ...base, 
+                zIndex: 10000 
+              })
+            }}
           />
         </div>
 

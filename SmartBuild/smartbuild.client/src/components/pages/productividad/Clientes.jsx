@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { Calendar, Filter, ChevronLeft, Search, Users, UserCheck, UserX, TrendingUp } from 'lucide-react'
+import { 
+  Calendar, 
+  Filter, 
+  ChevronLeft, 
+  Search, 
+  Users, 
+  UserCheck, 
+  UserX, 
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Building,
+  Landmark,
+  User,
+  UserCheck2
+} from 'lucide-react'
 import './Clientes.css'
 
 // Hook
@@ -25,12 +40,13 @@ export default function Clientes() {
 
   // Estadísticas calculadas
   const estadisticas = useMemo(() => {
-    if (!clientes.length) return { total: 0, publicos: 0, privados: 0, conContacto: 0, sinContacto: 0, nuevosMes: 0 }
+    if (!clientes.length) return { total: 0, publicos: 0, privados: 0, fisicos: 0, conContacto: 0, sinContacto: 0, nuevosMes: 0 }
     
     return {
       total: clientes.length,
       publicos: clientes.filter(c => c.tipo === 'Publico').length,
       privados: clientes.filter(c => c.tipo === 'Privado').length,
+      fisicos: clientes.filter(c => c.tipo === 'Fisico').length,
       conContacto: clientes.filter(c => c.nombreContacto).length,
       sinContacto: clientes.filter(c => !c.nombreContacto).length,
       nuevosMes: clientes.filter(c => 
@@ -223,25 +239,31 @@ export default function Clientes() {
               className={`filter-pill filter-publico ${filtroTipo === 'Publico' ? 'active' : ''}`}
               onClick={() => setFiltroTipo('Publico')}
             >
-              🏛️ Público ({estadisticas.publicos})
+              <Landmark size={16} /> Público ({estadisticas.publicos})
             </button>
             <button 
               className={`filter-pill filter-privado ${filtroTipo === 'Privado' ? 'active' : ''}`}
               onClick={() => setFiltroTipo('Privado')}
             >
-              🏢 Privado ({estadisticas.privados})
+              <Building size={16} /> Privado ({estadisticas.privados})
+            </button>
+            <button 
+              className={`filter-pill filter-fisico ${filtroTipo === 'Fisico' ? 'active' : ''}`}
+              onClick={() => setFiltroTipo('Fisico')}
+            >
+              <UserCheck2 size={16} /> Físico ({estadisticas.fisicos})
             </button>
             <button 
               className={`filter-pill filter-con-contacto ${filtroContacto === 'si' ? 'active' : ''}`}
               onClick={() => setFiltroContacto('si')}
             >
-              👥 Con contacto ({estadisticas.conContacto})
+              <UserCheck size={16} /> Con contacto ({estadisticas.conContacto})
             </button>
             <button 
               className={`filter-pill filter-sin-contacto ${filtroContacto === 'no' ? 'active' : ''}`}
               onClick={() => setFiltroContacto('no')}
             >
-              ❌ Sin contacto ({estadisticas.sinContacto})
+              <UserX size={16} /> Sin contacto ({estadisticas.sinContacto})
             </button>
           </div>
         </div>
@@ -285,17 +307,26 @@ export default function Clientes() {
                   <div className="card-indicators">
                     {cliente.tipo && (
                       <div className={`indicator indicator-${cliente.tipo?.toLowerCase()}`}>
-                        {cliente.tipo === 'Publico' ? '🏛️' : '🏢'} {cliente.tipo}
+                        {cliente.tipo === 'Publico' ? (
+                          <Landmark size={14} />
+                        ) : cliente.tipo === 'Privado' ? (
+                          <Building size={14} />
+                        ) : (
+                          <User size={14} />
+                        )}
+                        <span>{cliente.tipo}</span>
                       </div>
                     )}
                     {!cliente.nombreContacto && (
                       <div className="indicator indicator-warning">
-                        ⚠️ Sin contacto
+                        <AlertTriangle size={14} />
+                        <span>Sin contacto</span>
                       </div>
                     )}
                     {cliente.nombreContacto && (
                       <div className="indicator indicator-success">
-                        ✅ Con contacto
+                        <CheckCircle size={14} />
+                        <span>Con contacto</span>
                       </div>
                     )}
                   </div>
