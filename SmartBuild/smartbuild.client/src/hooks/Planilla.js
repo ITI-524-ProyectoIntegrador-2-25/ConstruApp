@@ -9,7 +9,7 @@ import {
   updatePlanilla        // PUT  /PlanillaApi/UpdatePlanilla
 } from '../api/Planilla'
 
-// ===== API PlanillaDetalle (si lo usas desde la misma página) =====
+// ===== API PlanillaDetalle
 import {
   getPlanillaDetalle,         // GET  /PlanillaDetalleApi/GetPlanillaDetalle (usuario)
   insertPlanillaDetalle,      // POST /PlanillaDetalleApi/InsertPlanillaDetalle
