@@ -89,8 +89,6 @@ export default function DetalleDashboard() {
 
   const costBreakdown = useMemo(() => {
     if (presupuestoDetalle) {
-      console.dir(presupuestoDetalle)
-      console.log(presupuestoDetalle.materiaPrimaCotizada)
       var result = [
         {
             category: "Mano de Obra",
@@ -132,11 +130,12 @@ export default function DetalleDashboard() {
   // Estados para gastos adicionales
   const [showFormGastos, setShowFormGastos] = useState(false);
   const listaGastosAdicionales = useMemo(() => {
-    if (gastosAdicionales?.length > 0 && presupuestoDetalle) {
-      return gastosAdicionales.filter(g => g.presupuestoID === presupuestoDetalle.idPresupuesto);
+    if (Array.isArray(gastosAdicionales) && presupuestoDetalle?.idPresupuesto) {
+      const id = Number(presupuestoDetalle.idPresupuesto);
+      return gastosAdicionales.filter(g => Number(g.presupuestoID) === id);
     }
     return [];
-  }, [gastosAdicionales, presupuestoDetalle])
+  }, [gastosAdicionales, presupuestoDetalle?.idPresupuesto])
 
   const [nuevoGasto, setNuevoGasto] = useState({
     presupuestoID: 0,
@@ -156,6 +155,7 @@ export default function DetalleDashboard() {
     if (nuevoGasto.fecha && nuevoGasto.descripcion && nuevoGasto.monto) {
       nuevoGasto.presupuestoID = presupuestoDetalle.idPresupuesto
       const gasto = {
+        presupuestoID: nuevoGasto.presupuestoID,
         fecha: nuevoGasto.fecha,
         descripcion: nuevoGasto.descripcion,
         monto: parseFloat(nuevoGasto.monto),
@@ -166,7 +166,6 @@ export default function DetalleDashboard() {
       const ok = await guardarGastoAdicional(nuevoGasto)
 
       if (ok) {
-        listaGastosAdicionales.push(nuevoGasto)
         setNuevoGasto({
           fecha: '',
           descripcion: '',
@@ -180,14 +179,16 @@ export default function DetalleDashboard() {
 
   // Función para eliminar gasto
   const handleEliminarGasto = (id) => {
-    setGastosAdicionales(listaGastosAdicionales.filter(gasto => gasto.idGasto !== id));
+    setGastosAdicionales(listaGastosAdicionales.filter(gasto => gasto.idGastoAdicional !== id));
   };
 
   // Función para cambiar el estado de pago
   const handleActualizarGasto = (id, nuevoEstado) => {
-    setGastosAdicionales(listaGastosAdicionales.map(gasto => 
-      gasto.idGasto === id ? { ...gasto, estadoPago: nuevoEstado } : gasto
-    ));
+    setGastosAdicionales(prev =>
+      prev.map(gasto =>
+        gasto.idGastoAdicional === id ? { ...gasto, estadoPago: nuevoEstado } : gasto
+      )
+    );
   };
 
   if (loading) return <p className="detalle-loading">Cargando detalles…</p>
