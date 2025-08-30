@@ -1,4 +1,3 @@
-// src/api/PlanillaDetalle.js
 import { http } from './baseAPI';
 
 export function getPlanillaDetalle(usuario, options) {

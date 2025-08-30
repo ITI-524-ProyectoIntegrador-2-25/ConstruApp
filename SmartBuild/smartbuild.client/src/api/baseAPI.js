@@ -19,6 +19,9 @@ export const http = {
 
     const hasBody = ['POST','PUT','PATCH','DELETE'].includes(method) && data != null;
 
+    const started = Date.now();
+    console.debug('[HTTP][REQ]', { method, url: finalURL, params: params || null, bodyPreview: hasBody ? data : null });
+
     const res = await fetch(finalURL, {
       method,
       mode: 'cors',
@@ -31,9 +34,17 @@ export const http = {
       body: hasBody ? JSON.stringify(data) : undefined,
     });
 
+    const elapsed = Date.now() - started;
     const ct = res.headers.get('content-type') || '';
     const payload = ct.includes('application/json') ? await res.json() : await res.text();
-    if (!res.ok) throw new Error(typeof payload === 'string' ? payload : JSON.stringify(payload));
+
+    console.debug('[HTTP][RES]', { method, url: finalURL, status: res.status, statusText: res.statusText, ms: elapsed, contentType: ct });
+
+    if (!res.ok) {
+      console.error('[HTTP][ERR]', { method, url: finalURL, status: res.status, statusText: res.statusText, responsePreview: payload });
+      throw new Error(`HTTP ${res.status} ${res.statusText} :: ${typeof payload === 'string' ? payload : JSON.stringify(payload)}`);
+    }
+
     return payload;
   },
   get(url, opts) { return this.request('GET', url, opts); },

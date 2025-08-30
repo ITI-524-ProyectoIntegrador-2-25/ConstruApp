@@ -11,12 +11,10 @@ import { COLUMN_LABELS } from '../../../../constants/planilla';
 import '../css/Planilla.css';
 import { addDaysYMD } from '../../../../utils/date';
 
-// hooks de datos
 import { usePlanillas, usePlanillaDetalles, useActualizarPlanilla } from '../../../../hooks/Planilla';
 import { useEmpleados } from '../../../../hooks/Empleados';
 import { usePresupuestos } from '../../../../hooks/dashboard';
 
-// ⬇️ importamos el CSS de la barra global para reutilizar estilos
 import '../../../layout/pagination/GlobalPagination.css';
 
 /* ======================= Helpers ======================= */
@@ -43,7 +41,6 @@ const getBadge = (status) => {
 };
 
 /* ======================= Mini barra local (mismo look) ======================= */
-/** Barra de paginación local con el MISMO diseño que GlobalPagination */
 function LocalPagination({ page, total, pageSize, onPage, onPageSize, labelText = 'elementos' }) {
   const isAll = pageSize === 'ALL';
   const ps = isAll ? Math.max(1, total) : Number(pageSize) || 10;
@@ -111,19 +108,16 @@ export default function DetallePlanilla() {
   const { idPlanilla } = useParams();
   const navigate = useNavigate();
 
-  // Carga
   const { Planillas,  loading: loadingPlanillas }  = usePlanillas();
   const { Detalles,   loading: loadingDetalles }   = usePlanillaDetalles(idPlanilla);
   const { Empleados,  loading: loadingEmpleados }  = useEmpleados();
   const { presupuestos, loading: loadingPres }     = usePresupuestos();
 
-  // Planilla actual
   const planillaActual = useMemo(
     () => (Array.isArray(Planillas) ? Planillas.find(p => String(p.idPlanilla) === String(idPlanilla)) : null),
     [Planillas, idPlanilla]
   );
 
-  // Estado planilla
   const [planilla, setPlanilla] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [expandedEmpleado, setExpandedEmpleado] = useState(null);
@@ -143,7 +137,6 @@ export default function DetallePlanilla() {
     }
   }, [planillaActual]);
 
-  // Índices
   const empIndex = useMemo(() => {
     const m = new Map();
     (Array.isArray(Empleados) ? Empleados : []).forEach(e => m.set(e.idEmpleado, e));
@@ -154,8 +147,7 @@ export default function DetallePlanilla() {
     (Array.isArray(presupuestos) ? presupuestos : []).forEach(p => m.set(p.idPresupuesto, p));
     return m;
   }, [presupuestos]);
-  
-  // Helper para mostrar nombre completo de empleado
+
   const toDisplayName = (e) => {
     if (!e) return '';
     const fromField = (e.nombreEmpleado || e.NombreEmpleado || '').trim?.() || '';
@@ -163,7 +155,7 @@ export default function DetallePlanilla() {
     const parts = [e.nombre || e.Nombre, e.primerApellido || e.apellido || e.PrimerApellido || e.Apellido, e.segundoApellido || e.SegundoApellido].filter(Boolean);
     return parts.join(' ').replace(/\s+/g,' ').trim();
   };
-const empleadoNameToId = useMemo(() => {
+  const empleadoNameToId = useMemo(() => {
     const m = new Map();
     (Array.isArray(Empleados) ? Empleados : []).forEach(e => {
       const nombre = toDisplayName(e);
@@ -172,7 +164,7 @@ const empleadoNameToId = useMemo(() => {
     return m;
   }, [Empleados]);
 
-  // Enriquecer detalles
+  /* ===== Enriquecer filas de detalle ===== */
   const detalles = useMemo(() => {
     const base = Array.isArray(Detalles) ? Detalles : [];
     return base.map(d => {
@@ -197,7 +189,7 @@ const empleadoNameToId = useMemo(() => {
     }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
   }, [Detalles, empIndex, presupuestoIndex]);
 
-  // KPIs
+  /* ===== KPIs generales ===== */
   const resumen = useMemo(() => detalles.reduce((acc, d) => {
     acc.ho += Number(d.horasOrdinarias || 0);
     acc.he += Number(d.horasExtras || 0);
@@ -210,7 +202,7 @@ const empleadoNameToId = useMemo(() => {
     return acc;
   }, { ho:0, he:0, hd:0, bruto:0, seguro:0, neto:0, registros:0, empleados:new Set() }), [detalles]);
 
-  // Top empleados (para la tabla superior)
+  /* ===== Ranking de empleados (tabla superior) ===== */
   const topEmpleados = useMemo(() => {
     const hours = new Map(), money = new Map();
     detalles.forEach(d => {
@@ -228,7 +220,41 @@ const empleadoNameToId = useMemo(() => {
       .sort((a,b) => b.horas - a.horas);
   }, [detalles]);
 
-  /* ======================= Filtros y resultados (tabla grande) ======================= */
+  /* ===== Información expandible por empleado (puesto, salario, proyectos, etc.) ===== */
+  const empleadoInsight = useMemo(() => {
+    const map = new Map();
+    detalles.forEach(d => {
+      const key = d.empleadoNombre || String(d.empleadoID);
+      if (!map.has(key)) {
+        map.set(key, {
+          items: [],
+          puesto: d.empleadoPuesto || '',
+          salario: d.empleadoSalarioHora || 0,
+          min: null,
+          max: null,
+          proyectos: new Map(), // nombre -> { horas, neto, bruto }
+        });
+      }
+      const ref = map.get(key);
+      ref.items.push(d);
+      const horas = Number(d.horasOrdinarias||0) + Number(d.horasExtras||0) + Number(d.horasDobles||0);
+      const pName = d.presupuestoNombre || '—';
+      const p = ref.proyectos.get(pName) || { horas: 0, neto: 0, bruto: 0 };
+      p.horas += horas;
+      p.neto += Number(d.neto||0);
+      p.bruto += Number(d.bruto||0);
+      ref.proyectos.set(pName, p);
+
+      const dt = d.fecha ? new Date(d.fecha) : null;
+      if (dt) {
+        if (!ref.min || dt < ref.min) ref.min = dt;
+        if (!ref.max || dt > ref.max) ref.max = dt;
+      }
+    });
+    return map;
+  }, [detalles]);
+
+  /* ======================= Filtros / paginación resultados (tabla grande) ======================= */
   const [q, setQ] = useState('');
   const [fDate, setFDate] = useState('');
   const results = useMemo(() => {
@@ -241,18 +267,15 @@ const empleadoNameToId = useMemo(() => {
     });
   }, [detalles, q, fDate]);
 
-  /* ======================= Paginación local ======================= */
+  /* ======================= Paginaciones locales ======================= */
   const [empPage, setEmpPage] = useState(1);
   const [empPageSize, setEmpPageSize] = useState(10);
-
   const [actPage, setActPage] = useState(1);
   const [actPageSize, setActPageSize] = useState(10);
 
-  // Resets al cambiar colecciones/filtros
   useEffect(() => { setEmpPage(1); }, [topEmpleados.length, empPageSize]);
   useEffect(() => { setActPage(1); }, [results.length, actPageSize, q, fDate]);
 
-  // Slice empleados (tabla superior)
   const empTotal = topEmpleados.length;
   const empSlice = useMemo(() => {
     const ps = empPageSize === 'ALL' ? empTotal : empPageSize;
@@ -260,7 +283,6 @@ const empleadoNameToId = useMemo(() => {
     return topEmpleados.slice(start, start + ps);
   }, [topEmpleados, empPage, empPageSize, empTotal]);
 
-  // Slice actividades (10 por página) y AGRUPACIÓN por empleado SOLO del tramo visible
   const actTotal = results.length;
   const actSlice = useMemo(() => {
     const ps = actPageSize === 'ALL' ? actTotal : actPageSize;
@@ -292,16 +314,29 @@ const empleadoNameToId = useMemo(() => {
     return [...m.values()].sort((a,b) => (a.empleadoNombre||'').localeCompare(b.empleadoNombre||''));
   }, [actSlice]);
 
-  /* ======================= Estado compuesto ======================= */
   const loadingAny = !!(loadingPlanillas || loadingDetalles || loadingEmpleados || loadingPres);
   const isLoading = loadingAny || !planilla;
   const dur = planilla ? daysBetween(planilla.fechaInicio, planilla.fechaFin) : null;
   const empleadosCount = resumen.empleados.size;
 
-  /* ======================= Handlers edición ======================= */
-  const handleChange = e => { const { name, value } = e.target; if (name === 'fechaInicio') { const fin = value ? addDaysYMD(value, 14) : ''; setForm(f => ({ ...f, fechaInicio: value, fechaFin: fin })); } else if (name === 'fechaFin') { return; } else { setForm(f => ({ ...f, [name]: value })); } setError(''); };
+  /* ======================= Edición planilla (cabecera) ======================= */
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'fechaInicio') {
+      const fin = value ? addDaysYMD(value, 14) : '';
+      setForm(f => ({ ...f, fechaInicio: value, fechaFin: fin }));
+    } else if (name === 'fechaFin') {
+      return;
+    } else {
+      setForm(f => ({ ...f, [name]: value }));
+    }
+    setError('');
+  };
+
   const handleSubmit = async e => {
-    e.preventDefault(); setError('');
+    e.preventDefault();
+    setError('');
+
     const diff = daysBetween(form.fechaInicio, form.fechaFin);
     if (diff == null || diff < 1) return setError('Rango de fechas inválido');
     if (diff > 15) return setError('La planilla no puede exceder 15 días.');
@@ -327,10 +362,11 @@ const empleadoNameToId = useMemo(() => {
       const ok = await actualizarPlanilla(payload);
       if (!ok) throw new Error(updateError || 'No se pudo actualizar la planilla');
       setPlanilla(p => ({ ...p, ...form })); setIsEditing(false);
-    } catch (err) { setError(err.message || 'No se pudo actualizar la planilla'); }
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar la planilla');
+    }
   };
 
-  /* ======================= Render ======================= */
   if (isLoading) return <p className="detalle-loading">Cargando detalles…</p>;
   if (!planilla) return <p className="detalle-error">Planilla no encontrada.</p>;
 
@@ -462,7 +498,7 @@ const empleadoNameToId = useMemo(() => {
             </div>
           </div>
 
-          {/* Empleados por horas + paginación (10 por página) */}
+          {/* Empleados por horas + paginación */}
           {topEmpleados.length > 0 && (
             <div className="row mb-4">
               <div className="col-12">
@@ -482,6 +518,8 @@ const empleadoNameToId = useMemo(() => {
                         <tbody>
                           {empSlice.map((t, i) => {
                             const isOpen = expandedEmpleado === t.empleado;
+                            const insight = empleadoInsight.get(t.empleado);
+                            const empId = empleadoNameToId.get(t.empleado) || '';
                             return (
                               <React.Fragment key={`${t.empleado}-${i}`}>
                                 <tr className="position-relative">
@@ -489,22 +527,78 @@ const empleadoNameToId = useMemo(() => {
                                   <td className="text-end">{t.horas.toFixed(2)}</td>
                                   <td className="text-end">{crc(t.money.neto)}</td>
                                   <td className="text-end">
-                                    <button className="btn btn-outline-secondary btn-sm me-2 d-inline-flex align-items-center gap-1"
-                                            onClick={() => setExpandedEmpleado(isOpen ? null : t.empleado)}>
-                                      {isOpen ? (<><ChevronUp size={14}/> Ocultar</>) : (<><ChevronDown size={14}/> Ver</>)}
+                                    <button
+                                      className={`btn btn-sm ${isOpen ? 'btn-secondary' : 'btn-outline-primary'} me-2 d-inline-flex align-items-center gap-1`}
+                                      onClick={() => setExpandedEmpleado(isOpen ? null : t.empleado)}
+                                      aria-expanded={isOpen}
+                                      aria-controls={`emp-panel-${i}`}
+                                    >
+                                      {isOpen ? (<><ChevronUp size={14}/> Ocultar detalles</>) : (<><ChevronDown size={14}/> Ver detalles</>)}
                                     </button>
-                                    <Link to={`/dashboard/productividad/empleados/${empleadoNameToId.get(t.empleado) || ''}`}
+                                    <Link to={`/dashboard/productividad/empleados/${empId}`}
                                           className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1">
                                       <User size={14}/> Perfil
                                     </Link>
                                   </td>
                                 </tr>
+
                                 {isOpen && (
                                   <tr className="bg-light">
                                     <td colSpan={4}>
-                                      <div className="p-3 border rounded-3">
-                                        <div className="d-flex align-items-center gap-2 mb-2"><Info size={16}/><strong>Resumen del empleado</strong></div>
-                                        <div className="small text-muted">* Puedes extender aquí información adicional (proyectos, puesto, etc.).</div>
+                                      <div id={`emp-panel-${i}`} className="p-3 border rounded-3 bg-white">
+                                        <div className="d-flex align-items-center gap-2 mb-2">
+                                          <Info size={16}/><strong>Resumen del empleado</strong>
+                                        </div>
+
+                                        <div className="row g-3 mb-3">
+                                          <div className="col-md-3">
+                                            <small className="text-muted d-block">Puesto</small>
+                                            <div className="fw-semibold">{insight?.puesto || '—'}</div>
+                                          </div>
+                                          <div className="col-md-3">
+                                            <small className="text-muted d-block">Salario / hora</small>
+                                            <div className="fw-semibold">{crc(insight?.salario || 0)}</div>
+                                          </div>
+                                          <div className="col-md-3">
+                                            <small className="text-muted d-block">Periodo trabajado</small>
+                                            <div className="fw-semibold">
+                                              {insight?.min && insight?.max
+                                                ? `${insight.min.toLocaleDateString()} – ${insight.max.toLocaleDateString()}`
+                                                : '—'}
+                                            </div>
+                                          </div>
+                                          <div className="col-md-3">
+                                            <small className="text-muted d-block">Registros</small>
+                                            <div className="fw-semibold">{insight?.items.length || 0}</div>
+                                          </div>
+                                        </div>
+
+                                        <div className="d-flex align-items-center gap-2 mb-2">
+                                          <Building2 size={16}/><strong>Proyectos</strong>
+                                        </div>
+                                        <div className="table-responsive">
+                                          <table className="table table-sm align-middle">
+                                            <thead className="table-light">
+                                              <tr>
+                                                <th>Proyecto</th>
+                                                <th className="text-end">Horas</th>
+                                                <th className="text-end">Neto</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {insight && insight.proyectos && Array.from(insight.proyectos.entries()).map(([nombre, v]) => (
+                                                <tr key={nombre}>
+                                                  <td>{nombre}</td>
+                                                  <td className="text-end">{Number(v.horas || 0).toFixed(2)}</td>
+                                                  <td className="text-end">{crc(v.neto)}</td>
+                                                </tr>
+                                              ))}
+                                              {!insight || insight.proyectos.size === 0 ? (
+                                                <tr><td colSpan={3} className="text-center text-muted">Sin información adicional</td></tr>
+                                              ) : null}
+                                            </tbody>
+                                          </table>
+                                        </div>
                                       </div>
                                     </td>
                                   </tr>
@@ -577,7 +671,7 @@ const empleadoNameToId = useMemo(() => {
             </div>
           </div>
 
-          {/* Detalle de la planilla (agrupado por empleado) + paginación mini */}
+          {/* Detalle de la planilla (agrupado por empleado) */}
           <div className="card shadow-sm">
             <div className="card-body">
               <h2 className="h6 fw-semibold mb-3">Detalle de la planilla</h2>
@@ -593,7 +687,6 @@ const empleadoNameToId = useMemo(() => {
 
                     {actSliceGrouped.map(group => (
                       <React.Fragment key={group.empleadoID}>
-                        {/* Fila separadora por empleado (totales del TRAMO visible) */}
                         <tr className="table-secondary">
                           <td colSpan={Object.keys(COLUMN_LABELS).length} className="fw-semibold">
                             <div className="d-flex justify-content-between align-items-center">
@@ -609,7 +702,6 @@ const empleadoNameToId = useMemo(() => {
                           </td>
                         </tr>
 
-                        {/* Filas del empleado (sólo las del tramo paginado) */}
                         {group.items.map(item => (
                           <tr
                             key={item.idDetallePlanilla}
@@ -673,7 +765,6 @@ const empleadoNameToId = useMemo(() => {
                 </table>
               </div>
 
-              {/* Paginación local con diseño global */}
               <LocalPagination
                 page={actPage}
                 total={actTotal}

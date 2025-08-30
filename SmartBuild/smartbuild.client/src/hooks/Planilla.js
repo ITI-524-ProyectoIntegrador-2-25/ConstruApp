@@ -48,7 +48,6 @@ export const usePlanillas = () => {
     const fetchPlanillas = async () => {
       try {
         const data = await getPlanilla(correo)
-        console.log('Planillas:', data)
         setPlanillas(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error(err)
@@ -206,27 +205,33 @@ export const usePlanillaDetalles = (idPlanillaOpcional) => {
 }
 
 export const useInsertarPlanillaDetalle = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const insertarPlanillaDetalle = async (Detalle) => {
-    setLoading(true); setError(''); setSuccess(false)
+  const insertarPlanillaDetalleHook = async (Detalle) => {
+    setLoading(true); setError(''); setSuccess(false);
     try {
-      await insertPlanillaDetalle(Detalle)
-      setSuccess(true)
-      return true
+      console.groupCollapsed('[HOOK] insertarPlanillaDetalle');
+      const user = getUserFromStorage();
+      console.debug('user', user ? { correo: user.correo || user.usuario } : null);
+      console.debug('payload', Detalle);
+      const res = await insertPlanillaDetalle(Detalle);
+      console.debug('response', res);
+      setSuccess(true);
+      return true;
     } catch (err) {
-      console.error(err)
-      setError(err.message || 'Error al insertar el Detalle de planilla')
-      return false
+      console.error('[HOOK][insertarPlanillaDetalle] error', err?.message || err);
+      setError(err?.message || 'Error al insertar el Detalle de planilla');
+      return false;
     } finally {
-      setLoading(false)
+      console.groupEnd();
+      setLoading(false);
     }
-  }
+  };
 
-  return { insertarPlanillaDetalle, loading, error, success }
-}
+  return { insertarPlanillaDetalle: insertarPlanillaDetalleHook, loading, error, success };
+};
 
 export const useActualizarPlanillaDetalle = () => {
   const [loading, setLoading] = useState(false)

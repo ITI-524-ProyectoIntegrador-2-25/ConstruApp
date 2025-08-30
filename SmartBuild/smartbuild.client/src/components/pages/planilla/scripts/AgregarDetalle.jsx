@@ -14,7 +14,6 @@ import { usePresupuestos } from '../../../../hooks/dashboard';
 import { dateOnly } from '../../../../utils/date';
 import { getUsuarioOrThrow } from '../../../../utils/user';
 
-/* ====== Estilos react-select ====== */
 const selectStyles = {
   valueContainer: (b) => ({ ...b, paddingLeft: '2.5rem', paddingRight: '.75rem' }),
   menuPortal: (b) => ({ ...b, zIndex: 9999 }),
@@ -35,7 +34,6 @@ const selectStyles = {
   }),
 };
 
-/* ====== Utilidades ====== */
 const half = (v) => Number.isFinite(Number(v)) && Math.round(Number(v) * 2) === Number(v) * 2;
 const arrFrom = (x) =>
   (Array.isArray(x) ? x
@@ -66,7 +64,7 @@ const truthy = (v) => {
 const isEmpleadoActivo = (e = {}) => {
   const keys = ['activo','Activo','estado','Estado','estadoEmpleado','EstadoEmpleado','estatus','Estatus','isActive','IsActive'];
   const found = keys.find(k => e[k] !== undefined && e[k] !== null);
-  if (found === undefined) return true; // si no hay bandera, asumimos activo
+  if (found === undefined) return true;
   return truthy(e[found]);
 };
 const getSalarioEmpleado = (e = {}) => {
@@ -78,10 +76,9 @@ const getSalarioEmpleado = (e = {}) => {
   return null;
 };
 
-/* ====== Opciones para selects ====== */
 const mapEmpleadoOptions = (src) =>
   arrFrom(src)
-    .filter(isEmpleadoActivo) // 👈 solo activos en el combo
+    .filter(isEmpleadoActivo)
     .map((e) => {
       const id = Number(e.idEmpleado ?? e.IdEmpleado ?? e.empleadoID ?? e.EmpleadoID ?? e.id ?? e.Id);
       if (!Number.isFinite(id)) return null;
@@ -102,14 +99,13 @@ const mapPresupuestoOptions = (src) =>
     })
     .filter(Boolean);
 
-/* ====== Límites lógicos de horas (ajustables) ====== */
 const LIMITS = {
   ORDINARIAS_MIN: 0.5,
   ORDINARIAS_MAX: 12,
   EXTRAS_MAX: 8,
   DOBLES_MAX: 4,
   TOTAL_EXTRAS_DOBLES_MAX: 8,
-  TOTAL_DIA_MAX: 16,   // defensa lógica (además del tope técnico 24)
+  TOTAL_DIA_MAX: 16,
 };
 
 export default function AgregarDetalle() {
@@ -119,10 +115,10 @@ export default function AgregarDetalle() {
   const alertRef = useRef(null);
 
   const { Planillas } = usePlanillas();
-  const { Detalles } = usePlanillaDetalles(idPlan);
   const { insertarPlanillaDetalle, loading: sendingApi, error: saveError } = useInsertarPlanillaDetalle();
   const { Empleados, loading: loadingEmpleados } = useEmpleados();
   const { presupuestos: Presupuestos, loading: loadingPresupuestos, error: errorPresupuestos } = usePresupuestos();
+  const { Detalles } = usePlanillaDetalles(); // global para duplicados
 
   const plan = useMemo(
     () => (Array.isArray(Planillas) ? Planillas.find((p) => Number(p?.idPlanilla ?? p?.IdPlanilla) === idPlan) : null),
@@ -133,7 +129,6 @@ export default function AgregarDetalle() {
     [plan]
   );
 
-  /* ====== Esquema con validaciones reforzadas ====== */
   const schema = useMemo(() =>
     z.object({
       fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
@@ -159,65 +154,7 @@ export default function AgregarDetalle() {
           .min(0, 'No puede ser negativo')
           .max(LIMITS.DOBLES_MAX, `Máximo ${LIMITS.DOBLES_MAX} h`)
       ).default(0),
-    }).superRefine((val, ctx) => {
-      const empleadosArr = arrFrom(Empleados);
-      const emp = empleadosArr.find(e =>
-        Number(e.idEmpleado ?? e.IdEmpleado ?? e.empleadoID ?? e.EmpleadoID) === val.empleado?.value
-      );
-
-      // 1) Empleado activo
-      if (!emp || !isEmpleadoActivo(emp)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El empleado está inactivo. No se puede registrar detalle.', path: ['empleado'] });
-      }
-
-      // 2) Salario coherente con el empleado seleccionado
-      const salarioCat = getSalarioEmpleado(emp);
-      if (!Number.isFinite(salarioCat) || salarioCat <= 0) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El empleado no tiene salario válido configurado.', path: ['salarioHora'] });
-      } else if (Number(val.salarioHora) !== Number(salarioCat)) {
-        // defensa en profundidad: el salario debe ser el del catálogo
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El salario no coincide con el del empleado.', path: ['salarioHora'] });
-      }
-
-      // 3) No duplicar (empleado+fecha)
-      const dup = (Array.isArray(Detalles) ? Detalles : []).some(
-        (d) => dateOnly(d?.fecha) === val.fecha && Number(d?.idEmpleado ?? d?.IdEmpleado) === val.empleado?.value
-      );
-      if (dup) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ya existe un registro de este empleado en esa fecha', path: ['empleado'] });
-      }
-
-      // 4) Reglas lógicas de horas
-      const ord = Number(val.horasOrdinarias || 0);
-      const ext = Number(val.horasExtras || 0);
-      const dob = Number(val.horasDobles || 0);
-
-      if (ext + dob > LIMITS.TOTAL_EXTRAS_DOBLES_MAX) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `La suma de extras y dobles no puede superar ${LIMITS.TOTAL_EXTRAS_DOBLES_MAX} h`,
-          path: ['horasExtras'],
-        });
-      }
-
-      const total = ord + ext + dob;
-      if (total > LIMITS.TOTAL_DIA_MAX) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Las horas totales por día no pueden superar ${LIMITS.TOTAL_DIA_MAX} h`,
-          path: ['horasOrdinarias'],
-        });
-      }
-
-      // Tope técnico adicional (defensa)
-      if (total > 24) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'La suma de horas no puede exceder 24 h',
-          path: ['horasOrdinarias'],
-        });
-      }
-    }), [Detalles, Empleados, rango.ini, rango.fin]
+    }), [rango.ini, rango.fin]
   );
 
   const {
@@ -226,6 +163,7 @@ export default function AgregarDetalle() {
     control,
     setValue,
     clearErrors,
+    setError,
     watch,
     formState: { errors, isValid, isDirty, isSubmitting }
   } = useForm({
@@ -245,12 +183,30 @@ export default function AgregarDetalle() {
   const empleadoOptions = useMemo(() => mapEmpleadoOptions(Empleados), [Empleados]);
   const presupuestoOptions = useMemo(() => mapPresupuestoOptions(Presupuestos), [Presupuestos]);
 
-  /* ====== Salario automático desde el empleado (solo lectura) ====== */
+  // Índice global de duplicados por ID+fecha y Nombre+fecha
+  const dupIndex = useMemo(() => {
+    const set = new Set();
+    (Array.isArray(Detalles) ? Detalles : []).forEach(d => {
+      const dFecha = dateOnly(d?.fecha || d?.Fecha);
+      if (!dFecha) return;
+      const id = Number(d?.empleadoID ?? d?.EmpleadoID ?? d?.idEmpleado ?? d?.IdEmpleado);
+      if (Number.isFinite(id)) set.add(`id|${id}|${dFecha}`);
+      const nombre = pickStr(d, [
+        'EmpleadoNombre','empleadoNombre','NombreEmpleado','nombreEmpleado',
+        'empleado','Empleado','nombre','Nombre'
+      ]).trim().toLowerCase();
+      if (nombre) set.add(`name|${nombre}|${dFecha}`);
+    });
+    return set;
+  }, [Detalles]);
+
+  const empleadoSel = watch('empleado');
+  const fechaSel = watch('fecha');
+
+  // Salario auto desde empleado
   useEffect(() => {
-    const empSel = watch('empleado');
-    if (!empSel) return;
-    // tratamos de leer desde options (traen 'salario')
-    const opt = empleadoOptions.find(o => o.value === Number(empSel.value));
+    if (!empleadoSel) return;
+    const opt = empleadoOptions.find(o => o.value === Number(empleadoSel.value));
     const s = Number(opt?.salario);
     if (Number.isFinite(s) && s > 0) {
       setValue('salarioHora', s, { shouldDirty: true });
@@ -258,26 +214,53 @@ export default function AgregarDetalle() {
     } else {
       setValue('salarioHora', '', { shouldDirty: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watch('empleado'), empleadoOptions]);
+  }, [empleadoSel, empleadoOptions, setValue, clearErrors]);
+
+  // Duplicado inmediato por nombre/ID + fecha
+  const dupMsg = useMemo(() => {
+    if (!empleadoSel || !fechaSel) return '';
+    const d = dateOnly(fechaSel);
+    if (!d) return '';
+    const idKey = `id|${Number(empleadoSel.value)}|${d}`;
+    const nameKey = `name|${String(empleadoSel.label || '').trim().toLowerCase()}|${d}`;
+    return (dupIndex.has(idKey) || dupIndex.has(nameKey)) ? 'Ese empleado ya tiene un registro en esa fecha' : '';
+  }, [empleadoSel, fechaSel, dupIndex]);
+
+  useEffect(() => {
+    if (dupMsg) setError('empleado', { type: 'manual', message: dupMsg });
+    else clearErrors('empleado');
+  }, [dupMsg, setError, clearErrors]);
 
   const onSubmit = async (values) => {
+    const d = dateOnly(values.fecha);
+    const preDup =
+      dupIndex.has(`id|${Number(values.empleado.value)}|${d}`) ||
+      dupIndex.has(`name|${String(values.empleado.label || '').trim().toLowerCase()}|${d}`);
+    if (preDup) {
+      setError('empleado', { type: 'manual', message: 'Ese empleado ya tiene un registro en esa fecha' });
+      alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     const usuario = getUsuarioOrThrow();
     const ts = new Date().toISOString();
 
     const payload = {
-      PlanillaID: idPlan, idPlanilla: idPlan,
-      Fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
-      fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
-      IdEmpleado: values.empleado.value, idEmpleado: values.empleado.value,
-      EmpleadoNombre: values.empleado.label, empleadoNombre: values.empleado.label,
-      IdPresupuesto: values.presupuesto.value, idPresupuesto: values.presupuesto.value,
-      PresupuestoNombre: values.presupuesto.label, presupuestoNombre: values.presupuesto.label,
-      SalarioHora: Number(values.salarioHora), salarioHora: Number(values.salarioHora),
-      HorasOrdinarias: Number(values.horasOrdinarias), horasOrdinarias: Number(values.horasOrdinarias),
-      HorasExtras: Number(values.horasExtras), horasExtras: Number(values.horasExtras),
-      HorasDobles: Number(values.horasDobles), horasDobles: Number(values.horasDobles),
-      usuario, quienIngreso: usuario, cuandoIngreso: ts, quienModifico: usuario, cuandoModifico: ts,
+      usuario,
+      quienIngreso: undefined,
+      cuandoIngreso: ts,
+      quienModifico: undefined,
+      cuandoModifico: ts,
+
+      planillaID: idPlan,
+      empleadoID: values.empleado.value,
+      presupuestoID: values.presupuesto.value,
+      fecha: `${values.fecha}T00:00:00.000Z`,
+      salarioHora: Number(Number(values.salarioHora).toFixed(2)),
+      horasOrdinarias: Number(values.horasOrdinarias),
+      horasExtras: Number(values.horasExtras),
+      horasDobles: Number(values.horasDobles),
+      detalle: 'Agregado desde formulario',
     };
 
     const ok = await insertarPlanillaDetalle(payload);
@@ -286,6 +269,7 @@ export default function AgregarDetalle() {
   };
 
   const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
+  const isDuplicateNow = !!dupMsg;
 
   return (
     <motion.div className="page-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -295,11 +279,11 @@ export default function AgregarDetalle() {
           <div className="title-section"><h1 className="page-title"><Plus size={20} /> Agregar detalle</h1></div>
         </div>
         <div className="header-actions">
-          <motion.button whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.02 }} type="submit" form="form-detalle" className="btn-primary-modern" disabled={sendingApi || isSubmitting}><Save size={16}/> Guardar</motion.button>
+          <motion.button whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.02 }} type="submit" form="form-detalle" className="btn-primary-modern" disabled={sendingApi || isSubmitting || isDuplicateNow}><Save size={16}/> Guardar</motion.button>
         </div>
       </motion.div>
 
-      <motion.div className="filters-panel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div className="filters-panel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1 }}>
         <div className="filters-content">
           <AnimatePresence>
             {saveError && (
@@ -322,7 +306,6 @@ export default function AgregarDetalle() {
 
           <motion.form id="form-detalle" onSubmit={handleSubmit(onSubmit)} initial="hidden" animate="show" transition={{ staggerChildren: 0.05 }}>
             <div className="filter-row">
-              {/* Fecha */}
               <motion.div className="filter-field" variants={item}>
                 <label>Fecha</label>
                 <div className="input-with-icon">
@@ -333,7 +316,6 @@ export default function AgregarDetalle() {
                 {rango.ini && rango.fin && <small className="hint">Rango permitido: {rango.ini} – {rango.fin}</small>}
               </motion.div>
 
-              {/* Empleado (solo activos) */}
               <motion.div className="filter-field" variants={item}>
                 <label>Empleado</label>
                 <div className="input-with-icon">
@@ -361,7 +343,6 @@ export default function AgregarDetalle() {
                 {errors.empleado && <small className="hint" style={{ color:'#b91c1c' }}>{errors.empleado.message}</small>}
               </motion.div>
 
-              {/* Proyecto */}
               <motion.div className="filter-field" variants={item}>
                 <label>Proyecto</label>
                 <div className="input-with-icon">
@@ -389,7 +370,6 @@ export default function AgregarDetalle() {
                 {errors.presupuesto && <small className="hint" style={{ color:'#b91c1c' }}>{errors.presupuesto.message}</small>}
               </motion.div>
 
-              {/* Salario (solo lectura, viene del empleado) */}
               <motion.div className="filter-field" variants={item}>
                 <label>Salario/Hora</label>
                 <div className="input-with-icon">
@@ -409,7 +389,6 @@ export default function AgregarDetalle() {
                 <small className="hint">Se obtiene del empleado seleccionado.</small>
               </motion.div>
 
-              {/* Horas */}
               {['horasOrdinarias','horasExtras','horasDobles'].map((name, i) => (
                 <motion.div className="filter-field" variants={item} key={name}>
                   <label>{['Horas Ordinarias','Horas Extras','Horas Dobles'][i]}</label>
@@ -434,15 +413,14 @@ export default function AgregarDetalle() {
               ))}
             </div>
 
-            {/* Estado del formulario */}
             <motion.div className="filter-actions" style={{ marginTop: 8 }} variants={item}>
               <div className="results-count" style={{ display:'flex', alignItems:'center', gap:8 }}>
-                {!saveError && isValid && isDirty
+                {!saveError && isValid && isDirty && !isDuplicateNow
                   ? (<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="ok-msg">
                       <CheckCircle2 size={16} style={{ color:'#16a34a' }}/> <span>Listo para guardar</span>
                     </motion.span>)
                   : (<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <XCircle size={16} style={{ color:'#dc2626' }}/> <span>Rellena todos los campos</span>
+                      <XCircle size={16} style={{ color:'#dc2626' }}/> <span>{isDuplicateNow ? 'El empleado ya tiene un registro en esa fecha' : 'Rellena todos los campos'}</span>
                     </motion.span>)}
               </div>
             </motion.div>

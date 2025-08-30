@@ -15,7 +15,6 @@ import { usePresupuestos } from '../../../../hooks/dashboard';
 import { dateOnly } from '../../../../utils/date';
 import { getUsuarioOrThrow } from '../../../../utils/user';
 
-/* ===== utils ===== */
 const selectStyles = {
   valueContainer: (b) => ({ ...b, paddingLeft: '2.5rem', paddingRight: '.75rem' }),
   menuPortal: (b) => ({ ...b, zIndex: 9999 }),
@@ -39,15 +38,13 @@ const toDisplayName = (e = {}) => {
   const parts = [e.nombre || e.Nombre, e.primerApellido || e.PrimerApellido || e.apellido || e.Apellido, e.segundoApellido || e.SegundoApellido].filter(Boolean);
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 };
-
 const truthy = (v) => { const s = String(v).trim().toLowerCase(); return v === true || v === 1 || s === '1' || s === 'true' || s === 'activo' || s === 'activa'; };
 const isEmpleadoActivo = (e = {}) => {
   const keys = ['activo','Activo','estado','Estado','estadoEmpleado','EstadoEmpleado','estatus','Estatus','isActive','IsActive'];
   const found = keys.find(k => e[k] !== undefined && e[k] !== null);
-  if (found === undefined) return true;           // si no hay bandera, asumimos activo
+  if (found === undefined) return true;
   return truthy(e[found]);
 };
-
 const getSalarioEmpleado = (e = {}) => {
   const keys = ['salarioHora','salario','salarioXHora','SalarioHora','Salario','sueldo','Sueldo'];
   for (const k of keys) { const n = Number(e?.[k]); if (Number.isFinite(n) && n > 0) return n; }
@@ -77,7 +74,6 @@ const mapPresupuestoOptions = (src) =>
     })
     .filter(Boolean);
 
-/* ===== componente ===== */
 export default function EditarDetalle() {
   const { idPlanilla, idPlanillaDetalle, idDetallePlanilla } = useParams();
   const idPlan = Number(idPlanilla);
@@ -110,7 +106,18 @@ export default function EditarDetalle() {
     }).superRefine((val, ctx) => {
       const total = Number(val.horasOrdinarias || 0) + Number(val.horasExtras || 0) + Number(val.horasDobles || 0);
       if (total > 24) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La suma de horas no puede exceder 24', path: ['horasOrdinarias'] });
-      const dup = (Array.isArray(otros) ? otros : []).some((d) => dateOnly(d?.fecha) === val.fecha && Number(d?.idEmpleado ?? d?.IdEmpleado) === val.empleado?.value);
+
+      const fechaSel = val.fecha;
+      const idSel = val.empleado?.value;
+      const nameSel = String(val.empleado?.label || '').trim().toLowerCase();
+
+      const dup = (Array.isArray(otros) ? otros : []).some((d) => {
+        const f = dateOnly(d?.fecha || d?.Fecha);
+        if (f !== fechaSel) return false;
+        const id = Number(d?.idEmpleado ?? d?.IdEmpleado ?? d?.empleadoID ?? d?.EmpleadoID);
+        const nombre = pickStr(d, ['EmpleadoNombre','empleadoNombre','NombreEmpleado','nombreEmpleado']).trim().toLowerCase();
+        return id === idSel || (nombre && nombre === nameSel);
+      });
       if (dup) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ya existe un registro de este empleado en esa fecha', path: ['empleado'] });
     }), [otros, rango.ini, rango.fin]
   );
@@ -122,12 +129,12 @@ export default function EditarDetalle() {
     reset,
     setValue,
     clearErrors,
+    setError,
     trigger,
     watch,
     formState: { errors, isValid, isDirty, isSubmitting }
   } = useForm({ resolver: zodResolver(schema), mode: 'onChange' });
 
-  /* 1) precarga básica (antes de que lleguen catálogos) */
   useEffect(() => {
     if (!current) return;
     const empId = pickNum(current, ['idEmpleado','IdEmpleado','empleadoID','EmpleadoID','id','Id']);
@@ -149,16 +156,11 @@ export default function EditarDetalle() {
   const empleadoOptions = useMemo(() => mapEmpleadoOptions(Empleados), [Empleados]);
   const presupuestoOptions = useMemo(() => mapPresupuestoOptions(Presupuestos), [Presupuestos]);
 
-  /* 2) HIDRATACIÓN ROBUSTA
-        - cuando llegan catálogos, cambiamos los objetos del select por el option real
-        - si el label estaba vacío, lo reconstruimos
-        - reinyectamos salario desde el empleado del catálogo */
   useEffect(() => {
     if (!current) return;
     const empId = pickNum(current, ['idEmpleado','IdEmpleado','empleadoID','EmpleadoID']);
     const proId = pickNum(current, ['idPresupuesto','IdPresupuesto','presupuestoID','PresupuestoID']);
 
-    // EMPLEADO
     if (Number.isFinite(empId)) {
       const opt = empleadoOptions.find(o => o.value === empId);
       if (opt) {
@@ -169,13 +171,11 @@ export default function EditarDetalle() {
           clearErrors('salarioHora');
         }
       } else {
-        // si no está en catálogo (inactivo o sin cargar), al menos mostramos el label
         const empName = pickStr(current, ['empleadoNombre','EmpleadoNombre']) || `Empleado ${empId}`;
         setValue('empleado', { value: empId, label: empName }, { shouldDirty: false });
       }
     }
 
-    // PROYECTO
     if (Number.isFinite(proId)) {
       const pOpt = presupuestoOptions.find(o => o.value === proId);
       if (pOpt) {
@@ -190,7 +190,6 @@ export default function EditarDetalle() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empleadoOptions, presupuestoOptions, current]);
 
-  /* 3) si el usuario cambia de empleado manualmente, actualizamos salario */
   useEffect(() => {
     const empSel = watch('empleado');
     if (empSel && Number.isFinite(Number(empSel.value))) {
@@ -204,30 +203,71 @@ export default function EditarDetalle() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empleadoOptions, watch('empleado')]);
 
+  const empleadoSel = watch('empleado');
+  const fechaSel = watch('fecha');
+
+  const dupMsg = useMemo(() => {
+    if (!empleadoSel || !fechaSel) return '';
+    const d = dateOnly(fechaSel);
+    if (!d) return '';
+    const idSel = Number(empleadoSel.value);
+    const nameSel = String(empleadoSel.label || '').trim().toLowerCase();
+    const dup = (Array.isArray(otros) ? otros : []).some((it) => {
+      const f = dateOnly(it?.fecha || it?.Fecha);
+      if (f !== d) return false;
+      const id = Number(it?.idEmpleado ?? it?.IdEmpleado ?? it?.empleadoID ?? it?.EmpleadoID);
+      const nombre = pickStr(it, ['EmpleadoNombre','empleadoNombre','NombreEmpleado','nombreEmpleado']).trim().toLowerCase();
+      return id === idSel || (nombre && nombre === nameSel);
+    });
+    return dup ? 'Ese empleado ya tiene un registro en esa fecha' : '';
+  }, [empleadoSel, fechaSel, otros]);
+
+  useEffect(() => {
+    if (dupMsg) setError('empleado', { type: 'manual', message: dupMsg });
+    else clearErrors('empleado');
+  }, [dupMsg, setError, clearErrors]);
+
   const onSubmit = async (values) => {
+    const d = dateOnly(values.fecha);
+    const preDup = (Array.isArray(otros) ? otros : []).some((it) => {
+      const f = dateOnly(it?.fecha || it?.Fecha);
+      if (f !== d) return false;
+      const id = Number(it?.idEmpleado ?? it?.IdEmpleado ?? it?.empleadoID ?? it?.EmpleadoID);
+      const nombre = pickStr(it, ['EmpleadoNombre','empleadoNombre','NombreEmpleado','nombreEmpleado']).trim().toLowerCase();
+      return id === Number(values.empleado.value) || (nombre && nombre === String(values.empleado.label || '').trim().toLowerCase());
+    });
+    if (preDup) {
+      setError('empleado', { type: 'manual', message: 'Ese empleado ya tiene un registro en esa fecha' });
+      alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     const usuario = getUsuarioOrThrow();
     const ts = new Date().toISOString();
+
     const payload = {
-      idPlanillaDetalle: idDetalle, IdDetallePlanilla: idDetalle,
-      PlanillaID: idPlan, idPlanilla: idPlan,
-      Fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
-      fecha: new Date(`${values.fecha}T00:00:00Z`).toISOString(),
-      IdEmpleado: values.empleado.value,  idEmpleado: values.empleado.value,
-      EmpleadoNombre: values.empleado.label, empleadoNombre: values.empleado.label,
-      IdPresupuesto: values.presupuesto.value, idPresupuesto: values.presupuesto.value,
-      PresupuestoNombre: values.presupuesto.label, presupuestoNombre: values.presupuesto.label,
-      SalarioHora: Number(values.salarioHora), salarioHora: Number(values.salarioHora),
-      HorasOrdinarias: Number(values.horasOrdinarias), horasOrdinarias: Number(values.horasOrdinarias),
-      HorasExtras: Number(values.horasExtras), horasExtras: Number(values.horasExtras),
-      HorasDobles: Number(values.horasDobles), horasDobles: Number(values.horasDobles),
+      idDetallePlanilla: idDetalle,
+      planillaID: idPlan,
+
+      fecha: new Date(values.fecha).toISOString(),
+      empleadoID: values.empleado.value,
+      presupuestoID: values.presupuesto.value,
+
+      salarioHora: Number(values.salarioHora),
+      horasOrdinarias: Number(values.horasOrdinarias),
+      horasExtras: Number(values.horasExtras),
+      horasDobles: Number(values.horasDobles),
+
       usuario,
       quienIngreso: current?.quienIngreso ?? usuario,
       cuandoIngreso: current?.cuandoIngreso ?? ts,
       quienModifico: usuario,
       cuandoModifico: ts,
+      detalle: current?.detalle ?? 'Editado desde formulario',
     };
+
     const ok = await actualizarPlanillaDetalle(payload);
-    if (ok) navigate(-1);
+    if (ok) navigate(`/dashboard/planilla/${idPlanilla}`, { replace: true });
     else alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -246,6 +286,7 @@ export default function EditarDetalle() {
   }
 
   const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
+  const isDuplicateNow = !!dupMsg;
 
   return (
     <motion.div className="page-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -255,7 +296,7 @@ export default function EditarDetalle() {
           <div className="title-section"><h1 className="page-title"><Save size={20}/> Editar detalle</h1></div>
         </div>
         <div className="header-actions">
-          <motion.button whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.02 }} type="submit" form="form-editar-detalle" className="btn-primary-modern" disabled={sendingApi || isSubmitting}><Save size={16}/> Guardar</motion.button>
+          <motion.button whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.02 }} type="submit" form="form-editar-detalle" className="btn-primary-modern" disabled={sendingApi || isSubmitting || isDuplicateNow}><Save size={16}/> Guardar</motion.button>
         </div>
       </motion.div>
 
@@ -273,7 +314,6 @@ export default function EditarDetalle() {
 
           <motion.form id="form-editar-detalle" onSubmit={handleSubmit(onSubmit)} initial="hidden" animate="show" transition={{ staggerChildren: 0.05 }}>
             <div className="filter-row">
-              {/* Fecha */}
               <motion.div className="filter-field" variants={item}>
                 <label>Fecha</label>
                 <div className="input-with-icon">
@@ -284,7 +324,6 @@ export default function EditarDetalle() {
                 {rango.ini && rango.fin && <small className="hint">Rango permitido: {rango.ini} – {rango.fin}</small>}
               </motion.div>
 
-              {/* Empleado */}
               <motion.div className="filter-field" variants={item}>
                 <label>Empleado</label>
                 <div className="input-with-icon">
@@ -319,7 +358,6 @@ export default function EditarDetalle() {
                 {errors.empleado && <small className="hint" style={{ color:'#b91c1c' }}>{errors.empleado.message}</small>}
               </motion.div>
 
-              {/* Proyecto */}
               <motion.div className="filter-field" variants={item}>
                 <label>Proyecto</label>
                 <div className="input-with-icon">
@@ -347,7 +385,6 @@ export default function EditarDetalle() {
                 {errors.presupuesto && <small className="hint" style={{ color:'#b91c1c' }}>{errors.presupuesto.message}</small>}
               </motion.div>
 
-              {/* Salario (solo lectura) */}
               <motion.div className="filter-field" variants={item}>
                 <label>Salario/Hora</label>
                 <div className="input-with-icon">
@@ -367,7 +404,6 @@ export default function EditarDetalle() {
                 <small className="hint">Se obtiene del empleado seleccionado.</small>
               </motion.div>
 
-              {/* Horas */}
               {['horasOrdinarias','horasExtras','horasDobles'].map((name, i) => (
                 <motion.div className="filter-field" variants={item} key={name}>
                   <label>{['Horas Ordinarias','Horas Extras','Horas Dobles'][i]}</label>
@@ -382,9 +418,9 @@ export default function EditarDetalle() {
 
             <motion.div className="filter-actions" style={{ marginTop: 8 }} variants={item}>
               <div className="results-count" style={{ display:'flex', alignItems:'center', gap:8 }}>
-                {!saveError && isValid && isDirty
+                {!saveError && isValid && isDirty && !isDuplicateNow
                   ? <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="ok-msg"><CheckCircle2 size={16} style={{ color:'#16a34a' }}/> <span>Listo para guardar</span></motion.span>
-                  : <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}><XCircle size={16} style={{ color:'#dc2626' }}/> <span>Rellena todos los campos</span></motion.span>}
+                  : <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}><XCircle size={16} style={{ color:'#dc2626' }}/> <span>{dupMsg || 'Rellena todos los campos'}</span></motion.span>}
               </div>
             </motion.div>
           </motion.form>
