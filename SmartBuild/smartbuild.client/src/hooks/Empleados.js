@@ -24,7 +24,6 @@ export const useEmpleados = () => {
 
     try {
       const data = await getEmpleados(correo)
-      console.log('Empleados recargados:', data)
       setEmpleados(Array.isArray(data) ? data : [])
     } catch (err) {
       setError('No se pudieron cargar los Empleados.')
@@ -67,7 +66,6 @@ export const useEmpleado = (idEmpleado) => {
 
     try {
       const data = await getEmpleado(correo, idEmpleado)
-      console.log('Empleado recargado:', data)
       
       if (Array.isArray(data)) {
         if (data.length === 0) throw new Error('Empleado no encontrado')

@@ -6,12 +6,13 @@ import { useEmpleados } from '../../../hooks/Empleados';
 import '../../../styles/Dashboard.css';
 import './Actividades.css';
 import './ActividadesGant.css';
+import './actividades-fixes.css';
 import { usePresupuestos } from '../../../hooks/dashboard';
 
 export default function Actividades() {
   const navigate = useNavigate();
   const { Actividades, loadingActividades, errorActividades } = useActividades();
-  const { Presupuestos, loading, error } = usePresupuestos();
+  const { presupuestos, loading, error } = usePresupuestos();
   
   const { Empleados, loading: loadingEmpleados, error: errorEmpleados } = useEmpleados();
 
@@ -47,53 +48,50 @@ export default function Actividades() {
       empleado: empleado || null
     };
   };
-  
-
-  const getPresupuestoInfo = (actividad) => {
-    // Buscar el empleado en la lista de empleados por su ID
-    const descripcion = Presupuestos.find(pre => pre.idPresupuesto === actividad.PresupuestoID);
-    
-    const nombre = descripcion?.descripcion 
-    
-    return {
-
-      descripcion: nombre || null
-    };
-  };
 
   const handleFilterChange = field => value => {
     setFiltros(f => ({ ...f, [field]: value }));
   };
 
-  const results = useMemo(() => {
-    let arr = Actividades || [];
-    
-    if (filtros.presupuesto) {
-      arr = arr.filter(a => a.descripcion === filtros.presupuesto.value);
-    }
-    
+const results = useMemo(() => {
+  let arr = Actividades || [];
+  
+  if (filtros.presupuesto) {
+    arr = arr.filter((a) => {
+      if (a.descripcionProyecto) {
+        return a.descripcionProyecto === filtros.presupuesto.value;
+      }
+      const presupuesto = (presupuestos || []).find(
+        (p) => p.idPresupuesto === a.presupuestoID
+      );
+      return presupuesto?.descripcion === filtros.presupuesto.value;
+    });
+  }
+
     if (filtros.fecha) {
-      arr = arr.filter(a =>
-        new Date(a.fechaInicioReal).toISOString().slice(0, 10) === filtros.fecha
+      arr = arr.filter(
+        (a) =>
+          new Date(a.fechaInicioReal).toISOString().slice(0, 10) ===
+          filtros.fecha
       );
     }
 
     if (filtros.busqueda) {
-      arr = arr.filter(a => 
+      arr = arr.filter((a) =>
         a.descripcion.toLowerCase().includes(filtros.busqueda.toLowerCase())
       );
     }
 
-    if (filtros.estado !== 'todos') {
-      arr = arr.filter(a => a.estado === filtros.estado);
+    if (filtros.estado !== "todos") {
+      arr = arr.filter((a) => a.estado === filtros.estado);
     }
 
-    if (filtros.tipo !== 'todos') {
-      arr = arr.filter(a => a.tipo === filtros.tipo);
+    if (filtros.tipo !== "todos") {
+      arr = arr.filter((a) => a.tipo === filtros.tipo);
     }
-    
+
     return arr;
-  }, [Actividades, filtros]);
+  }, [Actividades, presupuestos, filtros]);
 
   const clearFilters = () => {
     setFiltros({ 
@@ -115,20 +113,42 @@ export default function Actividades() {
   };
   // Agrupar actividades por proyecto/tipo para el árbol
   const groupedActivities = useMemo(() => {
-    const groups = {};
-    if (!results || results.length === 0 ) {
-      return groups;
+  const getPresupuestoInfo = (actividad) => {
+    // Opción 1: Usar el campo que ya viene en la actividad (más eficiente)
+    if (actividad.descripcionProyecto) {
+      return {
+        descripcion: actividad.descripcionProyecto,
+      };
     }
-    results.forEach(activity => {
-      let presupuesto =getPresupuestoInfo(activity)
-      let groupName = presupuesto?.descripcion || "Sin descripcion";
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      } 
-      groups[groupName].push(activity);
-    });
+
+    if (!presupuestos || !Array.isArray(presupuestos)) {
+      return {
+        descripcion: "Sin descripción",
+      };
+    }
+    const presupuesto = presupuestos.find(
+      (pre) => pre.idPresupuesto === actividad.presupuestoID
+    );
+
+    return {
+      descripcion: presupuesto?.descripcion || "Sin descripción",
+    };
+  };
+
+  const groups = {};
+  if (!results || results.length === 0) {
     return groups;
-  }, [results,getPresupuestoInfo]);
+  }
+  results.forEach(activity => {
+    let presupuesto = getPresupuestoInfo(activity);
+    let groupName = presupuesto?.descripcion || "Sin descripción";
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    } 
+    groups[groupName].push(activity);
+  });
+  return groups;
+}, [results, presupuestos]);
 
 
   const dateRange = useMemo(() => {
@@ -348,8 +368,8 @@ export default function Actividades() {
           <div className="gantt-header-container">
             <div className="gantt-header-content">
               <div className="gantt-header-left">
-                <button 
-                  onClick={() => navigate(-1)} 
+                <button
+                  onClick={() => navigate(-1)}
                   className="gantt-back-btn"
                   title="Volver"
                 >
@@ -357,22 +377,27 @@ export default function Actividades() {
                 </button>
                 <h1 className="gantt-title">Cronograma de Actividades</h1>
                 <div className="gantt-date-range">
-                  {dateRange.start.toLocaleDateString('es-ES')} - {dateRange.end.toLocaleDateString('es-ES')}
+                  {dateRange.start.toLocaleDateString("es-ES")} -{" "}
+                  {dateRange.end.toLocaleDateString("es-ES")}
                 </div>
               </div>
-              
+
               <div className="gantt-header-actions">
                 {/* Tabs */}
                 <div className="gantt-tabs">
                   <button
-                    onClick={() => setTabActual('proyecto')}
-                    className={`gantt-tab ${tabActual === 'proyecto' ? 'gantt-tab--active' : ''}`}
+                    onClick={() => setTabActual("proyecto")}
+                    className={`gantt-tab ${
+                      tabActual === "proyecto" ? "gantt-tab--active" : ""
+                    }`}
                   >
                     Por proyecto
                   </button>
                   <button
-                    onClick={() => setTabActual('todas')}
-                    className={`gantt-tab ${tabActual === 'todas' ? 'gantt-tab--active' : ''}`}
+                    onClick={() => setTabActual("todas")}
+                    className={`gantt-tab ${
+                      tabActual === "todas" ? "gantt-tab--active" : ""
+                    }`}
                   >
                     Todas
                   </button>
@@ -380,22 +405,30 @@ export default function Actividades() {
 
                 {/* Filtros */}
                 <select
-                  value={filtros.presupuesto?.value || ''}
+                  value={filtros.presupuesto?.value || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    handleFilterChange('presupuesto')(value ? { value, label: value } : null);
+                    handleFilterChange("presupuesto")(
+                      value ? { value, label: value } : null
+                    );
                   }}
                   className="gantt-filter-select"
                 >
-                  <option value="">Proyecto: Selecciona</option>
-                  {[...new Set((Actividades || []).map(a => a.descripcion))].map(desc => (
-                    <option key={desc} value={desc}>{desc}</option>
+                  <option value="">Proyecto</option>
+                  {/* Cambiar de actividades a presupuestos */}
+                  {(presupuestos || []).map((presupuesto) => (
+                    <option
+                      key={presupuesto.idPresupuesto}
+                      value={presupuesto.descripcion}
+                    >
+                      {presupuesto.descripcion}
+                    </option>
                   ))}
                 </select>
 
                 <select
                   value={filtros.estado}
-                  onChange={e => handleFilterChange('estado')(e.target.value)}
+                  onChange={(e) => handleFilterChange("estado")(e.target.value)}
                   className="gantt-filter-select"
                 >
                   <option value="todos">Estado</option>
@@ -438,19 +471,30 @@ export default function Actividades() {
           {/* Panel izquierdo - Estructura de actividades */}
           <div className="gantt-left-panel">
             <div className="gantt-structure-header">
-              <h2 className="gantt-structure-title">Actividades del Proyecto</h2>
+              <h2 className="gantt-structure-title">
+                Actividades del Proyecto
+              </h2>
               <div className="gantt-structure-info">
                 <div className="gantt-structure-legend">
                   <div className="legend-item">
-                    <div className="legend-color" style={{backgroundColor: '#059669'}}></div>
+                    <div
+                      className="legend-color"
+                      style={{ backgroundColor: "#059669" }}
+                    ></div>
                     <span>Completada</span>
                   </div>
                   <div className="legend-item">
-                    <div className="legend-color" style={{backgroundColor: '#f59e0b'}}></div>
+                    <div
+                      className="legend-color"
+                      style={{ backgroundColor: "#f59e0b" }}
+                    ></div>
                     <span>Iniciada</span>
                   </div>
                   <div className="legend-item">
-                    <div className="legend-color" style={{backgroundColor: '#dc2626'}}></div>
+                    <div
+                      className="legend-color"
+                      style={{ backgroundColor: "#dc2626" }}
+                    ></div>
                     <span>Pendiente</span>
                   </div>
                 </div>
@@ -462,21 +506,35 @@ export default function Actividades() {
                 <div key={grupo} className="gantt-group">
                   <div className="gantt-group-header">
                     <div className="gantt-group-info">
-                      <span className="gantt-group-icon">{getTipoIcon(grupo)}</span>
+                      <span className="gantt-group-icon">
+                        {getTipoIcon(grupo)}
+                      </span>
                       <span className="gantt-group-name">{grupo}</span>
                     </div>
                     <div className="gantt-group-stats">
                       <span className="gantt-group-count">
-                        {actividades.length} actividad{actividades.length !== 1 ? 'es' : ''}
+                        {actividades.length} actividad
+                        {actividades.length !== 1 ? "es" : ""}
                       </span>
                       <div className="gantt-group-progress">
-                        {Math.round(actividades.reduce((sum, a) => sum + (getGanttPosition(a).progress || 0), 0) / actividades.length)}% promedio
+                        {Math.round(
+                          actividades.reduce(
+                            (sum, a) =>
+                              sum + (getGanttPosition(a).progress || 0),
+                            0
+                          ) / actividades.length
+                        )}
+                        % promedio
                       </div>
                     </div>
                   </div>
 
                   {actividades
-                    .sort((a, b) => new Date(a.fechaInicioReal) - new Date(b.fechaInicioReal))
+                    .sort(
+                      (a, b) =>
+                        new Date(a.fechaInicioReal) -
+                        new Date(b.fechaInicioReal)
+                    )
                     .map((actividad) => {
                       const empleadoInfo = getEmpleadoInfo(actividad);
                       return (
@@ -487,14 +545,20 @@ export default function Actividades() {
                         >
                           <div className="gantt-activity-content">
                             <div className="gantt-activity-info">
-                              <div 
+                              <div
                                 className="gantt-activity-status"
-                                style={{ backgroundColor: getEstadoInfo(actividad).statusColor }}
+                                style={{
+                                  backgroundColor:
+                                    getEstadoInfo(actividad).statusColor,
+                                }}
                               ></div>
                               <div className="gantt-activity-details">
                                 <span className="gantt-activity-name">
-                                  {actividad.descripcion.length > 30 
-                                    ? `${actividad.descripcion.substring(0, 30)}...` 
+                                  {actividad.descripcion.length > 30
+                                    ? `${actividad.descripcion.substring(
+                                        0,
+                                        30
+                                      )}...`
                                     : actividad.descripcion}
                                 </span>
                                 <div className="gantt-activity-meta">
@@ -502,24 +566,32 @@ export default function Actividades() {
                                     <Users size={14} /> {empleadoInfo.nombre}
                                   </span>
                                   <span className="gantt-activity-progress">
-                                    {getGanttPosition(actividad).progress}% completado
+                                    {getGanttPosition(actividad).progress}%
+                                    completado
                                   </span>
                                 </div>
                               </div>
                             </div>
                             <div className="gantt-activity-dates">
                               <div className="gantt-activity-start-date">
-                                {new Date(actividad.fechaInicioReal).toLocaleDateString('es-ES', { 
-                                  day: '2-digit', 
-                                  month: 'short' 
+                                {new Date(
+                                  actividad.fechaInicioReal
+                                ).toLocaleDateString("es-ES", {
+                                  day: "2-digit",
+                                  month: "short",
                                 })}
                               </div>
                               {getGanttPosition(actividad).estimatedEndDate && (
                                 <div className="gantt-activity-end-date">
-                                  {getGanttPosition(actividad).estimatedEndDate.toLocaleDateString('es-ES', { 
-                                    day: '2-digit', 
-                                    month: 'short' 
-                                  })}
+                                  {getGanttPosition(
+                                    actividad
+                                  ).estimatedEndDate.toLocaleDateString(
+                                    "es-ES",
+                                    {
+                                      day: "2-digit",
+                                      month: "short",
+                                    }
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -534,7 +606,9 @@ export default function Actividades() {
                 <div className="gantt-no-results">
                   <Activity size={48} className="gantt-no-results-icon" />
                   <h3>No hay actividades para mostrar</h3>
-                  <p>Ajusta los filtros o agrega nuevas actividades al proyecto.</p>
+                  <p>
+                    Ajusta los filtros o agrega nuevas actividades al proyecto.
+                  </p>
                 </div>
               )}
             </div>
@@ -548,7 +622,7 @@ export default function Actividades() {
                 <div className="timeline-column-subtitle">Responsable</div>
               </div>
               <div className="gantt-timeline-weeks">
-                {timeline.map(week => (
+                {timeline.map((week) => (
                   <div key={week.week} className="gantt-timeline-week">
                     <div className="week-number">{week.week}</div>
                     <div className="week-date">{week.label}</div>
@@ -560,101 +634,116 @@ export default function Actividades() {
             <div className="gantt-timeline-content" ref={timelineContentRef}>
               {Object.entries(groupedActivities).map(([grupo, actividades]) => (
                 <div key={grupo} className="gantt-timeline-group">
-                  <div className="gantt-timeline-group-separator">
-                    <div className="gantt-timeline-group-name">
-                      <span className="gantt-timeline-group-icon">{getTipoIcon(grupo)}</span>
-                      <span className="group-name">{grupo}</span>
-                      <span className="group-summary">
-                        {actividades.length} actividad{actividades.length !== 1 ? 'es' : ''}
-                      </span>
-                    </div>
-                    <div className="gantt-timeline-group-grid">
-                      {timeline.map((week, index) => (
-                        <div key={week.week} className="timeline-grid-cell"></div>
-                      ))}
-                    </div>
-                  </div>
-
                   {actividades
-                    .sort((a, b) => new Date(a.fechaInicioReal) - new Date(b.fechaInicioReal))
+                    .sort(
+                      (a, b) =>
+                        new Date(a.fechaInicioReal) -
+                        new Date(b.fechaInicioReal)
+                    )
                     .map((actividad) => {
-                    const ganttPos = getGanttPosition(actividad);
-                    const estadoInfo = getEstadoInfo(actividad);
-                    const empleadoInfo = getEmpleadoInfo(actividad);
-                    
-                    return (
-                      <div key={actividad.idActividad} className="gantt-timeline-row">
-                        <div className="gantt-timeline-activity-info">
-                          <div className="gantt-timeline-activity-name">
-                            {actividad.descripcion.length > 25 
-                              ? `${actividad.descripcion.substring(0, 25)}...` 
-                              : actividad.descripcion}
-                          </div>
-                          <div className="gantt-timeline-activity-responsible">
-                            <Users size={12} /> {empleadoInfo.nombre}
-                          </div>
-                          <div className="gantt-timeline-activity-progress-mini">
-                            {ganttPos.progress}%
-                          </div>
-                        </div>
+                      const ganttPos = getGanttPosition(actividad);
+                      const estadoInfo = getEstadoInfo(actividad);
+                      const empleadoInfo = getEmpleadoInfo(actividad);
 
-                        <div className="gantt-timeline-grid">
-                          {timeline.map((week, weekIndex) => {
-                            const isInRange = weekIndex >= ganttPos.startWeek && 
-                                           weekIndex < ganttPos.startWeek + ganttPos.duration;
-                            const isStart = weekIndex === ganttPos.startWeek;
-                            const isEnd = weekIndex === ganttPos.startWeek + ganttPos.duration - 1;
-                            
-                            return (
-                              <div key={week.week} className="gantt-timeline-cell">
-                                {isInRange && (
-                                  <div 
-                                    className={`gantt-bar ${isStart ? 'gantt-bar-start' : ''} ${isEnd ? 'gantt-bar-end' : ''} ${estadoInfo.isOverdue ? 'gantt-bar-overdue' : ''}`}
-                                    style={{ backgroundColor: estadoInfo.statusColor }}
-                                    title={`${actividad.descripcion} - ${ganttPos.progress}% completado - ${estadoInfo.displayStatus} - Responsable: ${empleadoInfo.nombre}`}
-                                  >
-                                    {isStart && (
-                                      <div className="gantt-bar-info">
-                                        <div className="gantt-bar-dates">
-                                          <span className="start-date">
-                                            {ganttPos.startDate.toLocaleDateString('es-ES', { 
-                                              day: '2-digit', 
-                                              month: '2-digit' 
-                                            })}
-                                          </span>
-                                          {ganttPos.estimatedEndDate && (
-                                            <span className="end-date">
-                                              {ganttPos.estimatedEndDate.toLocaleDateString('es-ES', { 
-                                                day: '2-digit', 
-                                                month: '2-digit' 
-                                              })}
+                      return (
+                        <div
+                          key={actividad.idActividad}
+                          className="gantt-timeline-row"
+                        >
+                          <div className="gantt-timeline-activity-info">
+                            <div className="gantt-timeline-activity-name">
+                              {actividad.descripcion.length > 25
+                                ? `${actividad.descripcion.substring(0, 25)}...`
+                                : actividad.descripcion}
+                            </div>
+                            <div className="gantt-timeline-activity-responsible">
+                              <Users size={12} /> {empleadoInfo.nombre}
+                            </div>
+                            <div className="gantt-timeline-activity-progress-mini">
+                              {ganttPos.progress}%
+                            </div>
+                          </div>
+
+                          <div className="gantt-timeline-grid">
+                            {timeline.map((week, weekIndex) => {
+                              const isInRange =
+                                weekIndex >= ganttPos.startWeek &&
+                                weekIndex <
+                                  ganttPos.startWeek + ganttPos.duration;
+                              const isStart = weekIndex === ganttPos.startWeek;
+                              const isEnd =
+                                weekIndex ===
+                                ganttPos.startWeek + ganttPos.duration - 1;
+
+                              return (
+                                <div
+                                  key={week.week}
+                                  className="gantt-timeline-cell"
+                                >
+                                  {isInRange && (
+                                    <div
+                                      className={`gantt-bar ${
+                                        isStart ? "gantt-bar-start" : ""
+                                      } ${isEnd ? "gantt-bar-end" : ""} ${
+                                        estadoInfo.isOverdue
+                                          ? "gantt-bar-overdue"
+                                          : ""
+                                      }`}
+                                      style={{
+                                        backgroundColor: estadoInfo.statusColor,
+                                      }}
+                                      title={`${actividad.descripcion} - ${ganttPos.progress}% completado - ${estadoInfo.displayStatus} - Responsable: ${empleadoInfo.nombre}`}
+                                    >
+                                      {isStart && (
+                                        <div className="gantt-bar-info">
+                                          <div className="gantt-bar-dates">
+                                            <span className="start-date">
+                                              {ganttPos.startDate.toLocaleDateString(
+                                                "es-ES",
+                                                {
+                                                  day: "2-digit",
+                                                  month: "2-digit",
+                                                }
+                                              )}
                                             </span>
-                                          )}
+                                            {ganttPos.estimatedEndDate && (
+                                              <span className="end-date">
+                                                {ganttPos.estimatedEndDate.toLocaleDateString(
+                                                  "es-ES",
+                                                  {
+                                                    day: "2-digit",
+                                                    month: "2-digit",
+                                                  }
+                                                )}
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <div className="gantt-bar-progress">
+                                            <div
+                                              className="gantt-bar-progress-fill"
+                                              style={{
+                                                width: `${ganttPos.progress}%`,
+                                              }}
+                                            ></div>
+                                          </div>
                                         </div>
-                                        
-                                        <div className="gantt-bar-progress">
-                                          <div 
-                                            className="gantt-bar-progress-fill"
-                                            style={{ width: `${ganttPos.progress}%` }}
-                                          ></div>
+                                      )}
+
+                                      {isEnd && (
+                                        <div className="gantt-bar-avatar">
+                                          {empleadoInfo.iniciales}
                                         </div>
-                                      </div>
-                                    )}
-                                    
-                                    {isEnd && (
-                                      <div className="gantt-bar-avatar">
-                                        {empleadoInfo.iniciales}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               ))}
             </div>
@@ -663,7 +752,7 @@ export default function Actividades() {
 
         {/* Botón para cambiar vista */}
         <button
-          onClick={() => setVistaActual('tarjetas')}
+          onClick={() => setVistaActual("tarjetas")}
           className="gantt-view-toggle"
           title="Cambiar a vista de tarjetas"
         >
@@ -680,8 +769,8 @@ export default function Actividades() {
         <div className="header-container">
           <div className="header-content">
             <div className="header-left">
-              <button 
-                onClick={() => navigate(-1)} 
+              <button
+                onClick={() => navigate(-1)}
                 className="back-btn-modern"
                 title="Volver"
               >
@@ -695,10 +784,10 @@ export default function Actividades() {
                 <p className="header-subtitle">Gestiona tu equipo de trabajo</p>
               </div>
             </div>
-            
+
             <div className="header-actions">
-              <button 
-                onClick={() => setVistaActual('gantt')}
+              <button
+                onClick={() => setVistaActual("gantt")}
                 className="view-toggle-btn"
                 title="Vista Gantt"
               >
@@ -761,7 +850,7 @@ export default function Actividades() {
             </div>
           </div>
         </div>
-        
+
         <div className="search-section">
           <div className="search-content">
             <div className="search-input-container">
@@ -770,26 +859,28 @@ export default function Actividades() {
                 type="text"
                 placeholder="Buscar actividades..."
                 value={filtros.busqueda}
-                onChange={e => handleFilterChange('busqueda')(e.target.value)}
+                onChange={(e) => handleFilterChange("busqueda")(e.target.value)}
                 className="search-input"
               />
             </div>
-            
+
             {/* Filtros adicionales */}
             <div className="filters-row">
               <select
                 value={filtros.estado}
-                onChange={e => handleFilterChange('estado')(e.target.value)}
+                onChange={(e) => handleFilterChange("estado")(e.target.value)}
                 className="filter-select"
               >
                 <option value="todos">Todos los estados</option>
-                <option value="Completada">Completada</option>
-                <option value="En progreso">En Progreso</option>
-                <option value="Sin Iniciar">Pendiente</option>
+                <option value="completada">Completada</option>
+                <option value="iniciada">Iniciada</option>
+                <option value="pendiente">Pendiente</option>
               </select>
 
-
-              {(filtros.busqueda || filtros.estado !== 'todos' || filtros.tipo !== 'todos' || filtros.presupuesto) && (
+              {(filtros.busqueda ||
+                filtros.estado !== "todos" ||
+                filtros.tipo !== "todos" ||
+                filtros.presupuesto) && (
                 <button onClick={clearFilters} className="clear-filters-btn">
                   Limpiar filtros
                 </button>
@@ -801,80 +892,107 @@ export default function Actividades() {
         {/* Grid de actividades */}
         <div className="activities-grid">
           {results.length > 0 ? (
-            results.map(actividad => {
+            results.map((actividad) => {
               const empleadoInfo = getEmpleadoInfo(actividad);
               const ganttPos = getGanttPosition(actividad);
-              
+
               return (
-                <NavLink key={actividad.idActividad} to={`${actividad.idActividad}`} className="activity-card-modern">
+                <NavLink
+                  key={actividad.idActividad}
+                  to={`${actividad.idActividad}`}
+                  className="activity-card-modern"
+                >
                   <div className="activity-card-content">
                     <div className="activity-card-header">
                       <h3 className="activity-title">
                         {actividad.descripcion}
                       </h3>
-                      <div className={`status-badge ${getEstadoClass(actividad.estado)}`}>
+                      <div
+                        className={`status-badge ${getEstadoClass(
+                          actividad.estado
+                        )}`}
+                      >
                         {getEstadoIcon(actividad.estado)}
                         <span>{actividad.estado}</span>
                       </div>
                     </div>
-                    
+
                     <div className="activity-details">
                       <div className="activity-detail-row">
-                        <span className="detail-label"><Users size={14} /> Responsable:</span>
-                        <span className="detail-value" title={`ID: ${actividad.empleadoID || 'Sin asignar'}`}>
+                        <span className="detail-label">
+                          <Users size={14} /> Responsable:
+                        </span>
+                        <span
+                          className="detail-value"
+                          title={`ID: ${actividad.empleadoID || "Sin asignar"}`}
+                        >
                           {empleadoInfo.nombre}
                         </span>
                       </div>
-                      
+
                       <div className="activity-detail-row">
-                        <span className="detail-label"><Calendar size={14} /> Inicio:</span>
+                        <span className="detail-label">
+                          <Calendar size={14} /> Inicio:
+                        </span>
                         <span className="detail-value">
-                          {new Date(actividad.fechaInicioReal).toLocaleDateString('es-ES')}
+                          {new Date(
+                            actividad.fechaInicioReal
+                          ).toLocaleDateString("es-ES")}
                         </span>
                       </div>
-                      
+
                       {actividad.fechaFinProyectada && (
                         <div className="activity-detail-row">
-                          <span className="detail-label"><Clock size={14} /> Fin proyectado:</span>
+                          <span className="detail-label">
+                            <Clock size={14} /> Fin proyectado:
+                          </span>
                           <span className="detail-value">
-                            {new Date(actividad.fechaFinProyectada).toLocaleDateString('es-ES')}
+                            {new Date(
+                              actividad.fechaFinProyectada
+                            ).toLocaleDateString("es-ES")}
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="activity-detail-row">
-                        <span className="detail-label"><Activity size={14} /> Progreso:</span>
+                        <span className="detail-label">
+                          <Activity size={14} /> Progreso:
+                        </span>
                         <span className="detail-value">
                           {ganttPos.progress}%
                         </span>
                       </div>
-                      
+
                       {actividad.tipo && (
                         <div className="activity-detail-row">
-                          <span className="detail-label"><Filter size={14} /> Tipo:</span>
+                          <span className="detail-label">
+                            <Filter size={14} /> Tipo:
+                          </span>
                           <span className="detail-value">{actividad.tipo}</span>
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Barra de progreso visual */}
                     <div className="activity-progress-bar">
-                      <div 
+                      <div
                         className="activity-progress-fill"
-                        style={{ 
+                        style={{
                           width: `${ganttPos.progress}%`,
-                          backgroundColor: getEstadoColor(actividad.estado)
+                          backgroundColor: getEstadoColor(actividad.estado),
                         }}
                       ></div>
                     </div>
-                    
+
                     {/* Indicador de empleado */}
                     <div className="activity-employee-badge">
                       <div className="employee-avatar">
                         {empleadoInfo.iniciales}
                       </div>
                       <span className="employee-name-mini">
-                        {empleadoInfo.tieneNombre ? empleadoInfo.nombre.split(' ')[0] : empleadoInfo.nombre}
+                        {empleadoInfo.tieneNombre
+                          ? empleadoInfo.nombre.split(" ")[0]
+                          : empleadoInfo.nombre}
                       </span>
                     </div>
                   </div>
@@ -886,18 +1004,26 @@ export default function Actividades() {
               <Activity size={48} className="no-results-icon" />
               <h3>No se encontraron actividades</h3>
               <p>
-                {filtros.busqueda || filtros.estado !== 'todos' || filtros.tipo !== 'todos' || filtros.presupuesto
-                  ? 'Intenta ajustar los filtros o búsqueda.'
-                  : 'Aún no hay actividades registradas en el sistema.'
-                }
+                {filtros.busqueda ||
+                filtros.estado !== "todos" ||
+                filtros.tipo !== "todos" ||
+                filtros.presupuesto
+                  ? "Intenta ajustar los filtros o búsqueda."
+                  : "Aún no hay actividades registradas en el sistema."}
               </p>
               <div className="no-results-actions">
                 <Link to="nueva" className="no-results-btn">
                   <Plus size={18} />
                   Nueva actividad
                 </Link>
-                {(filtros.busqueda || filtros.estado !== 'todos' || filtros.tipo !== 'todos' || filtros.presupuesto) && (
-                  <button onClick={clearFilters} className="no-results-btn-secondary">
+                {(filtros.busqueda ||
+                  filtros.estado !== "todos" ||
+                  filtros.tipo !== "todos" ||
+                  filtros.presupuesto) && (
+                  <button
+                    onClick={clearFilters}
+                    className="no-results-btn-secondary"
+                  >
                     Limpiar filtros
                   </button>
                 )}
@@ -905,11 +1031,13 @@ export default function Actividades() {
             </div>
           )}
         </div>
-        
+
         {Empleados && Empleados.length > 0 && (
           <div className="empleados-info">
             <p className="empleados-count">
-              <CheckCircle size={16} /> {Empleados.length} empleado{Empleados.length !== 1 ? 's' : ''} disponible{Empleados.length !== 1 ? 's' : ''} en el sistema
+              <CheckCircle size={16} /> {Empleados.length} empleado
+              {Empleados.length !== 1 ? "s" : ""} disponible
+              {Empleados.length !== 1 ? "s" : ""} en el sistema
             </p>
           </div>
         )}
