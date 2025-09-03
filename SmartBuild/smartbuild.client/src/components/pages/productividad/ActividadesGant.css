@@ -5,11 +5,6 @@
   box-sizing: border-box;
 }
 
-html, body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
 /* ===== VISTA GANTT - CONTENEDOR PRINCIPAL ===== */
 .gantt-page {
   height: 100vh;
@@ -17,7 +12,7 @@ html, body {
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
-  overflow: hidden; /* CRÍTICO: Evita scroll horizontal en la página */
+  overflow: hidden; 
   position: relative;
 }
 
@@ -96,9 +91,9 @@ html, body {
 .gantt-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   flex-shrink: 0;
-  max-width: 50%; /* Limita el ancho máximo */
+  max-width: 45%; /* Limita el ancho máximo */
 }
 
 /* ===== ESTADÍSTICAS RESUMIDAS ===== */
@@ -941,9 +936,6 @@ html, body {
     min-width: 50px;
     width: 50px;
   }
-  .gantt-header-actions {
-    gap: 0.4rem;
-  }
   .gantt-tab {
     padding: 0.35rem 0.5rem;
   }
@@ -1059,10 +1051,6 @@ html, body {
   }
   .gantt-title {
     font-size: 1.1rem;
-  }
-  .gantt-header-actions {
-    flex-wrap: wrap;
-    justify-content: space-between;
   }
   .gantt-tabs {
     order: 1;
@@ -1308,14 +1296,148 @@ html, body {
 .gantt-activity-item { animation: gantt-slide-in-left 0.2s ease-out; }
 .gantt-bar { animation: gantt-fade-in 0.4s ease-out; }
 
-.gantt-header-content { 
-  flex-wrap: wrap;              /* permite que baje a otra línea */
-}
 
 .gantt-header-actions {
-  flex: 1 0 100%;               /* ocupa toda la fila */
-  max-width: 60%;              /* quita el límite del 50% */
+  flex:  29%;               /* ocupa toda la fila */
+  max-width: 10%;              /* quita el límite del 50% */
   justify-content: center;      /* centra su contenido */
   margin: 0 auto;               /* asegura centrado horizontal */
-  gap: 0.5rem;                  /* separaciones iguales */
+  gap: 0.3rem;                  /* separaciones iguales */
+}
+
+
+.gantt-timeline-content-inner {
+  min-width: fit-content;
+  height: auto;
+  width: 100%; /* Cambiar de auto a 100% para evitar desbordamiento */
+  max-width: 100%; /* Agregar límite máximo */
+}
+
+/* 2. PROBLEMA: .gantt-timeline-grid y .gantt-timeline-group-grid necesitan contención */
+.gantt-timeline-grid,
+.gantt-timeline-group-grid {
+  flex: 1;
+  display: flex;
+  min-width: fit-content;
+  width: auto; /* Permitir ancho automático pero contenido */
+}
+
+
+/* 5. PROBLEMA: Elementos individuales de timeline necesitan mejor control */
+.gantt-timeline-cell,
+.timeline-grid-cell {
+  min-width: 60px;
+  width: 60px;
+  flex-shrink: 0;
+  max-width: 60px; /* Asegurar límite máximo */
+}
+
+/* 6. PROBLEMA: Asegurar que el panel derecho no cause overflow */
+.gantt-right-panel {
+  flex: 1;
+  min-width: 0; /* CRÍTICO: Permite que se contraiga */
+  max-width: 100%; /* No exceder disponible */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ocultar cualquier desbordamiento del panel */
+  background-color: #fafbfc;
+  height: 100%;
+  contain: layout; /* Contener layout dentro del panel */
+}
+
+/* 8. PROBLEMA: Contenedor principal necesita refuerzo */
+.gantt-container {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  max-width: 100vw; /* Nunca exceder viewport */
+  background-color: white;
+  contain: layout style; /* Contener layout y estilos */
+}
+
+/* 9. REFUERZO: Página principal más estricta */
+.gantt-page {
+  height: 100vh;
+  width: 100vw;
+  max-width: 100vw; /* CRÍTICO: Nunca exceder */
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  overflow: hidden; 
+  position: relative;
+}
+
+/* 10. REFUERZO: Body y HTML más estrictos */
+html {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+/* 11. PROBLEMA: Filas del timeline necesitan mejor control */
+.gantt-timeline-row {
+  display: flex;
+  background-color: white;
+  border-bottom: 1px solid #f3f4f6;
+  min-height: 50px;
+  align-items: center;
+  transition: background-color 0.2s ease;
+  max-width: 100%; /* No exceder contenedor */
+}
+
+/* 12. PROBLEMA: Info de actividad en timeline */
+.gantt-timeline-activity-info {
+  width: 150px;
+  min-width: 130px;
+  max-width: 150px; /* Límite estricto */
+  padding: 0.6rem;
+  border-right: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background-color: white;
+  overflow: hidden; /* Ocultar texto que desborde */
+}
+
+/* 13. PROBLEMA: Columna de actividad en header */
+.gantt-timeline-activity-column {
+  width: 150px;
+  min-width: 130px;
+  max-width: 150px; /* Límite estricto */
+  padding: 0.6rem;
+  border-right: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden; /* Ocultar desbordamiento */
+}
+
+
+/* Pero mantener control en contenedores específicos */
+.gantt-timeline-weeks,
+.gantt-timeline-content {
+  max-width: 100%; /* Mantener límite en contenedores principales */
+}
+
+
+.gantt-page {
+  border: 2px solid red !important;
+}
+.gantt-container {
+  border: 2px solid blue !important;
+}
+.gantt-right-panel {
+  border: 2px solid green !important;
+}
+.gantt-timeline-content {
+  border: 2px solid orange !important;
 }
